@@ -15,22 +15,8 @@ public class IdentityAccountLockServiceComponent {
     private static Log log = LogFactory.getLog(IdentityAccountLockServiceComponent.class);
 
     protected void activate(ComponentContext context) {
-
-//        context.getBundleContext().registerService(EventHandler.class.getName(),
-//                new AccountLockEventHandler(), null);
         context.getBundleContext().registerService(EventHandler.class.getName(),
                 new AccountLockHandler(), null);
-//        try {
-//            EventMgtServiceDataHolder.getInstance().setEventMgtService(new EventMgtServiceImpl(eventHandlerList,
-//                    Integer.parseInt(EventMgtConfigBuilder.getInstance().getThreadPoolSize())));
-//        } catch (EventMgtException e) {
-//            log.error("Error while initiating IdentityMgtService.");
-//        }
-//        init();
-//        listener = new EventMgtListener();
-//        serviceRegistration =
-//                context.getBundleContext().registerService(UserOperationEventListener.class.getName(),
-//                        listener, null);
         if (log.isDebugEnabled()) {
             log.debug("Identity Management Listener is enabled");
         }

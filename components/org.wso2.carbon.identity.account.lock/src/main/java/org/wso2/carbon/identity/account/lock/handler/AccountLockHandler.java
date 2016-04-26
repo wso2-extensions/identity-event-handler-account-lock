@@ -8,7 +8,7 @@ import org.wso2.carbon.identity.event.EventMgtConstants;
 import org.wso2.carbon.identity.event.EventMgtException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
-import org.wso2.carbon.identity.event.store.UserIdentityDataStore;
+import org.wso2.carbon.identity.mgt.store.UserIdentityDataStore;
 import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
