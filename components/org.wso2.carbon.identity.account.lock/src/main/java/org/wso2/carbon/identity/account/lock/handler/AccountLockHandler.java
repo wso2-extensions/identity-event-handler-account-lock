@@ -2,6 +2,7 @@ package org.wso2.carbon.identity.account.lock.handler;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.account.lock.constants.AccountLockConstants;
 import org.wso2.carbon.identity.account.lock.internal.IdentityAccountLockServiceDataHolder;
 import org.wso2.carbon.identity.base.IdentityRuntimeException;
@@ -75,6 +76,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             newClaims.put(AccountLockConstants.ACCOUNT_LOCKED_CLAIM, Boolean.FALSE.toString());
                             newClaims.put(AccountLockConstants.ACCOUNT_UNLOCK_TIME_CLAIM, "0");
                             userStoreManager.setUserClaimValues(userName, newClaims, null);
+                            triggerNotification(userName, "ACCOUNT_UNLOCKED");
                         } else {
                             String errorMsg = "User account is locked for user : " + userName
                                     + ". cannot login until the account is unlocked ";
@@ -99,6 +101,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 }
             } else {
                 try {
+                    Boolean failed = false;
                     int numberOffailedAttermpts = Integer.parseInt(userStoreManager.getUserClaimValue(userName,
                             AccountLockConstants.FAILED_LOGIN_ATTEMPTS_CLAIM, null)) + 1;
                     Map<String, String> newClaims = new HashMap<>();
@@ -112,8 +115,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             long unlockTime = System.currentTimeMillis() + Integer.parseInt(unlockTimeProperty) * 60 * 1000L;
                             newClaims.put(AccountLockConstants.ACCOUNT_UNLOCK_TIME_CLAIM, unlockTime + "");
                         }
+                        failed = true;
                     }
                     userStoreManager.setUserClaimValues(userName, newClaims, null);
+                    if(failed) {
+                        triggerNotification(userName, "ACCOUNT_LOCKED");
+                    }
                 } catch (UserStoreException e) {
                     throw new EventMgtException("Error while locking account.", e);
                 }
@@ -140,6 +147,20 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
     public Map<String, String> getDefaultPropertyValues (String[] propertyNames, String tenantDomain) throws IdentityGovernanceException{
         return null;
+    }
+
+    private void triggerNotification (String userName, String type) throws EventMgtException {
+
+        String eventName = EventMgtConstants.Event.TRIGGER_NOTIFICATION;
+
+        HashMap<String, Object> properties = new HashMap<>();
+        properties.put(EventMgtConstants.EventProperty.USER_NAME, userName);
+        properties.put(EventMgtConstants.EventProperty.TENANT_DOMAIN, PrivilegedCarbonContext
+                .getThreadLocalCarbonContext().getTenantDomain());
+        properties.put("OPERATION_TYPE", type);
+        Event identityMgtEvent = new Event(eventName, properties);
+        IdentityAccountLockServiceDataHolder.getInstance().getEventMgtService().handleEvent(identityMgtEvent);
+
     }
 
 }

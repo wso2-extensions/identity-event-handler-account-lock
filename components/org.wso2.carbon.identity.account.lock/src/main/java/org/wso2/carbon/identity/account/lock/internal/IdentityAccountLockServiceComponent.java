@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.osgi.service.component.ComponentContext;
 import org.wso2.carbon.identity.account.lock.handler.AccountLockHandler;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
+import org.wso2.carbon.identity.event.services.EventMgtService;
 import org.wso2.carbon.identity.mgt.IdentityGovernanceService;
 
 /**
@@ -13,6 +14,9 @@ import org.wso2.carbon.identity.mgt.IdentityGovernanceService;
  * @scr.reference name="IdentityGovernanceService"
  * interface="org.wso2.carbon.identity.mgt.IdentityGovernanceService" cardinality="1..1"
  * policy="dynamic" bind="setIdentityGovernanceService" unbind="unsetIdentityGovernanceService"
+ * @scr.reference name="EventMgtService"
+ * interface="org.wso2.carbon.identity.event.services.EventMgtService" cardinality="1..1"
+ * policy="dynamic" bind="setEventMgtService" unbind="unsetEventMgtService"
  */
 public class IdentityAccountLockServiceComponent {
 
@@ -22,9 +26,7 @@ public class IdentityAccountLockServiceComponent {
 
         IdentityAccountLockServiceDataHolder.getInstance().setBundleContext(context.getBundleContext());
         AccountLockHandler handler = new AccountLockHandler();
-        context.getBundleContext().registerService(AbstractEventHandler.class.getName(),
-                handler, null);
-        //context.getBundleContext().registerService(IdentityGovernanceConnector.class.getName(), handler, null);
+        context.getBundleContext().registerService(AbstractEventHandler.class.getName(), handler, null);
         if (log.isDebugEnabled()) {
             log.debug("Identity Management Listener is enabled");
         }
@@ -42,6 +44,14 @@ public class IdentityAccountLockServiceComponent {
 
     protected void setIdentityGovernanceService(IdentityGovernanceService idpManager) {
         IdentityAccountLockServiceDataHolder.getInstance().setIdentityGovernanceService(idpManager);
+    }
+
+    protected void unsetEventMgtService(EventMgtService eventManager) {
+        IdentityAccountLockServiceDataHolder.getInstance().setEventMgtService(null);
+    }
+
+    protected void setEventMgtService(EventMgtService eventManager) {
+        IdentityAccountLockServiceDataHolder.getInstance().setEventMgtService(eventManager);
     }
 
 }
