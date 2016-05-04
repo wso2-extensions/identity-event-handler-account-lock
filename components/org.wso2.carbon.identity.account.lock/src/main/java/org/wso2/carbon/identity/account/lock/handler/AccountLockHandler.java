@@ -3,12 +3,16 @@ package org.wso2.carbon.identity.account.lock.handler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.account.lock.constants.AccountLockConstants;
+import org.wso2.carbon.identity.account.lock.internal.IdentityAccountLockServiceDataHolder;
+import org.wso2.carbon.identity.base.IdentityRuntimeException;
+import org.wso2.carbon.identity.core.handler.InitConfig;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.EventMgtConstants;
 import org.wso2.carbon.identity.event.EventMgtException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
-import org.wso2.carbon.identity.mgt.store.UserIdentityDataStore;
+import org.wso2.carbon.identity.mgt.IdentityGovernanceException;
+import org.wso2.carbon.identity.mgt.common.IdentityGovernanceConnector;
 import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
@@ -16,25 +20,34 @@ import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
-public class AccountLockHandler extends AbstractEventHandler {
+public class AccountLockHandler extends AbstractEventHandler implements IdentityGovernanceConnector {
 
     private static final Log log = LogFactory.getLog(AccountLockHandler.class);
+
+    public String getName() {
+        return "accountLock";
+    }
+
+    public String getFriendlyName() {
+        return "Account Locking";
+    }
 
     @Override
     public boolean handleEvent(Event event) throws EventMgtException {
         Map<String, Object> eventProperties = event.getEventProperties();
-
-
         String userName = (String) eventProperties.get(EventMgtConstants.EventProperty.USER_NAME);
         UserStoreManager userStoreManager = (UserStoreManager) eventProperties.get(EventMgtConstants.EventProperty.USER_STORE_MANAGER);
-        UserIdentityDataStore module = (UserIdentityDataStore) eventProperties.get(EventMgtConstants.EventProperty.MODULE);
-        int tenantId = (Integer) eventProperties.get(EventMgtConstants.EventProperty.TENANT_ID);
-
-        Map<String, String> identityProperties = getTenantConfigurations(tenantId);
-
+        String tenantDomain = (String) eventProperties.get(EventMgtConstants.EventProperty.TENANT_DOMAIN);
+        Map<String, String> identityProperties = null;
+        try {
+            identityProperties = IdentityAccountLockServiceDataHolder.getInstance()
+                    .getIdentityGovernanceService().getConfiguration(getPropertyNames(), tenantDomain);
+        } catch (IdentityGovernanceException e) {
+            throw new EventMgtException("Error while retrieving account lock handler properties.", e);
+        }
         IdentityUtil.clearIdentityErrorMsg();
-
         if (!Boolean.parseBoolean(identityProperties.get(AccountLockConstants.ACCOUNT_LOCKED_PROPERTY))) {
             return true;
         }
@@ -54,7 +67,7 @@ public class AccountLockHandler extends AbstractEventHandler {
                 try {
                     if (Boolean.parseBoolean(userStoreManager.getUserClaimValue(userName,
                             AccountLockConstants.ACCOUNT_LOCKED_CLAIM, null))) {
-                        int unlockTime = Integer.parseInt(userStoreManager.getUserClaimValue(userName,
+                        long unlockTime = Long.parseLong(userStoreManager.getUserClaimValue(userName,
                                 AccountLockConstants.ACCOUNT_UNLOCK_TIME_CLAIM, null));
                         if ((unlockTime != 0) && (System.currentTimeMillis() >= unlockTime)) {
 
@@ -110,11 +123,23 @@ public class AccountLockHandler extends AbstractEventHandler {
     }
 
     @Override
-    public void init() throws EventMgtException {
+    public void init(InitConfig configuration) throws IdentityRuntimeException {
+        super.init(configuration);
+        IdentityAccountLockServiceDataHolder.getInstance().getBundleContext().registerService
+                (IdentityGovernanceConnector.class.getName(), this, null);
     }
 
-    @Override
-    public String getModuleName() {
-        return "accountLock";
+    public String[] getPropertyNames(){
+        String[] arr = this.properties.keySet().toArray(new String[this.properties.keySet().size()]);
+        return arr;
     }
+
+    public Properties getDefaultPropertyValues (String tenantDomain) throws IdentityGovernanceException{
+       return properties;
+    }
+
+    public Map<String, String> getDefaultPropertyValues (String[] propertyNames, String tenantDomain) throws IdentityGovernanceException{
+        return null;
+    }
+
 }
