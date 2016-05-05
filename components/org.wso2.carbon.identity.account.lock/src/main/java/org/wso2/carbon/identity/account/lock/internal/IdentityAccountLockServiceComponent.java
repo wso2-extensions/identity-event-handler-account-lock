@@ -6,13 +6,13 @@ import org.osgi.service.component.ComponentContext;
 import org.wso2.carbon.identity.account.lock.handler.AccountLockHandler;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.event.services.EventMgtService;
-import org.wso2.carbon.identity.mgt.IdentityGovernanceService;
+import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 
 /**
  * @scr.component name="org.wso2.carbon.identity.account.lock.internal.IdentityAccountLockServiceComponent"
  * immediate="true
  * @scr.reference name="IdentityGovernanceService"
- * interface="org.wso2.carbon.identity.mgt.IdentityGovernanceService" cardinality="1..1"
+ * interface="org.wso2.carbon.identity.governance.IdentityGovernanceService" cardinality="1..1"
  * policy="dynamic" bind="setIdentityGovernanceService" unbind="unsetIdentityGovernanceService"
  * @scr.reference name="EventMgtService"
  * interface="org.wso2.carbon.identity.event.services.EventMgtService" cardinality="1..1"

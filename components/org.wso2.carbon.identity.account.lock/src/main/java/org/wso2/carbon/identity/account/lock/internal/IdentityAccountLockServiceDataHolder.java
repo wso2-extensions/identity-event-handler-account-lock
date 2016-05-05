@@ -20,7 +20,7 @@ package org.wso2.carbon.identity.account.lock.internal;
 
 import org.osgi.framework.BundleContext;
 import org.wso2.carbon.identity.event.services.EventMgtService;
-import org.wso2.carbon.identity.mgt.IdentityGovernanceService;
+import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 
 public class IdentityAccountLockServiceDataHolder {
 
