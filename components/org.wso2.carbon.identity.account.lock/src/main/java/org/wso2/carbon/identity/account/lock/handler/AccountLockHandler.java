@@ -118,8 +118,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             } else {
                 try {
                     Boolean failed = false;
-                    int numberOffailedAttermpts = Integer.parseInt(userStoreManager.getUserClaimValue(userName,
-                            AccountLockConstants.FAILED_LOGIN_ATTEMPTS_CLAIM, null)) + 1;
+                    String currentFailedAttempts = userStoreManager.getUserClaimValue(userName,
+                            AccountLockConstants.FAILED_LOGIN_ATTEMPTS_CLAIM, null);
+                    if (currentFailedAttempts == null) {
+                        currentFailedAttempts = "0";
+                    }
+                    int numberOffailedAttermpts = Integer.parseInt(currentFailedAttempts) + 1;
                     Map<String, String> newClaims = new HashMap<>();
                     newClaims.put(AccountLockConstants.FAILED_LOGIN_ATTEMPTS_CLAIM, numberOffailedAttermpts + "");
                     if (numberOffailedAttermpts >= Integer.parseInt(identityProperties.get
@@ -127,7 +131,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                         newClaims.put(AccountLockConstants.ACCOUNT_LOCKED_CLAIM, "true");
                         String unlockTimeProperty = identityProperties.get(AccountLockConstants
                                 .ACCOUNT_UNLOCK_TIME_PROPERTY);
-                        if (!"0".equals(unlockTimeProperty)) {
+                        if (!"0".equals(unlockTimeProperty) && unlockTimeProperty != null) {
                             long unlockTime = System.currentTimeMillis() + Integer.parseInt(unlockTimeProperty) * 60 * 1000L;
                             newClaims.put(AccountLockConstants.ACCOUNT_UNLOCK_TIME_CLAIM, unlockTime + "");
                         }
