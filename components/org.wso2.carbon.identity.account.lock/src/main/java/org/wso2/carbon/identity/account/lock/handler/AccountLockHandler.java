@@ -43,6 +43,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
     private static final Log log = LogFactory.getLog(AccountLockHandler.class);
 
+    private static ThreadLocal<String> lockedState = new ThreadLocal<>();
+
+    private enum lockedStates {LOCKED, UNLOCKED, NO_CHANGE}
+
     public String getName() {
         return "accountLock";
     }
@@ -92,7 +96,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             newClaims.put(AccountLockConstants.ACCOUNT_LOCKED_CLAIM, Boolean.FALSE.toString());
                             newClaims.put(AccountLockConstants.ACCOUNT_UNLOCK_TIME_CLAIM, "0");
                             userStoreManager.setUserClaimValues(userName, newClaims, null);
-                            triggerNotification(userName, "ACCOUNT_UNLOCKED");
                         } else {
                             String errorMsg = "User account is locked for user : " + userName
                                     + ". cannot login until the account is unlocked ";
@@ -109,7 +112,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 Map<String, String> newClaims = new HashMap<>();
                 newClaims.put(AccountLockConstants.FAILED_LOGIN_ATTEMPTS_CLAIM, "0");
                 newClaims.put(AccountLockConstants.ACCOUNT_UNLOCK_TIME_CLAIM, "0");
-                newClaims.put(AccountLockConstants.ACCOUNT_LOCKED_CLAIM, "false");
+                newClaims.put(AccountLockConstants.ACCOUNT_LOCKED_CLAIM, Boolean.FALSE.toString());
                 try {
                     userStoreManager.setUserClaimValues(userName, newClaims, null);
                 } catch (UserStoreException e) {
@@ -117,7 +120,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 }
             } else {
                 try {
-                    Boolean failed = false;
                     String currentFailedAttempts = userStoreManager.getUserClaimValue(userName,
                             AccountLockConstants.FAILED_LOGIN_ATTEMPTS_CLAIM, null);
                     if (currentFailedAttempts == null) {
@@ -135,16 +137,41 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             long unlockTime = System.currentTimeMillis() + Integer.parseInt(unlockTimeProperty) * 60 * 1000L;
                             newClaims.put(AccountLockConstants.ACCOUNT_UNLOCK_TIME_CLAIM, unlockTime + "");
                         }
-                        failed = true;
                     }
                     userStoreManager.setUserClaimValues(userName, newClaims, null);
-                    if(failed) {
-                        triggerNotification(userName, "ACCOUNT_LOCKED");
-                    }
                 } catch (UserStoreException e) {
                     throw new EventMgtException("Error while locking account.", e);
                 }
             }
+        } else if (EventMgtConstants.Event.PRE_SET_USER_CLAIMS.equals(event.getEventName())) {
+            if (lockedState.get() != null) {
+                return true;
+            }
+            try {
+                Boolean currentState = Boolean.parseBoolean(userStoreManager.getUserClaimValue(userName,
+                        AccountLockConstants.ACCOUNT_LOCKED_CLAIM, null));
+                Boolean newState = Boolean.parseBoolean(((Map<String, String>)((Map<String, Object>) event
+                        .getEventProperties()).get("USER_CLAIMS")).get(AccountLockConstants.ACCOUNT_LOCKED_CLAIM));
+                if (currentState != newState){
+                    if (currentState) {
+                        lockedState.set(lockedStates.UNLOCKED.toString());
+                    } else {
+                        lockedState.set(lockedStates.LOCKED.toString());
+                    }
+                } else {
+                    lockedState.set(lockedStates.NO_CHANGE.toString());
+                }
+            } catch (UserStoreException e) {
+                e.printStackTrace();
+            }
+
+        } else if (EventMgtConstants.Event.POST_SET_USER_CLAIMS.equals(event.getEventName())) {
+            if (lockedStates.UNLOCKED.toString().equals(lockedState.get())) {
+                triggerNotification(userName, "ACCOUNT_UNLOCKED");
+            } else if (lockedStates.LOCKED.toString().equals(lockedState.get())) {
+                triggerNotification(userName, "ACCOUNT_LOCKED");
+            }
+            lockedState.remove();
         }
         return true;
     }

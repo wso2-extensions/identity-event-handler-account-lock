@@ -117,13 +117,24 @@
         </pluginRepository>
     </pluginRepositories>
 
+    <dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>org.wso2.carbon.identity</groupId>
             <artifactId>org.wso2.carbon.identity.event</artifactId>
-            <version>5.0.9-SNAPSHOT</version>
+            <version>${identity.framework.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity</groupId>
+            <artifactId>org.wso2.carbon.identity.governance</artifactId>
+            <version>${identity.governance.version}</version>
         </dependency>
     </dependencies>
+    </dependencyManagement>
+
+    <properties>
+        <identity.governance.version>1.0.0-SNAPSHOT</identity.governance.version>
+    </properties>
 
     <modules>
         <module>components/org.wso2.carbon.identity.account.lock</module>
