@@ -16,7 +16,8 @@
   ~ specific language governing permissions and limitations
   ~ under the License.
   -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <parent>
         <groupId>org.wso2.carbon.identity</groupId>
@@ -38,7 +39,8 @@
 
     <scm>
         <url>https://github.com/wso2-extensions/identity-event-handler-account-lock.git</url>
-        <developerConnection>scm:git:https://github.com/wso2-extensions/identity-event-handler-account-lock.git</developerConnection>
+        <developerConnection>scm:git:https://github.com/wso2-extensions/identity-event-handler-account-lock.git
+        </developerConnection>
         <connection>scm:git:https://github.com/wso2-extensions/identity-event-handler-account-lock.git</connection>
         <tag>HEAD</tag>
     </scm>
@@ -118,18 +120,23 @@
     </pluginRepositories>
 
     <dependencyManagement>
-    <dependencies>
-        <dependency>
-            <groupId>org.wso2.carbon.identity</groupId>
-            <artifactId>org.wso2.carbon.identity.event</artifactId>
-            <version>${identity.framework.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.carbon.identity</groupId>
-            <artifactId>org.wso2.carbon.identity.governance</artifactId>
-            <version>${identity.governance.version}</version>
-        </dependency>
-    </dependencies>
+        <dependencies>
+            <dependency>
+                <groupId>org.wso2.carbon.identity</groupId>
+                <artifactId>org.wso2.carbon.identity.event</artifactId>
+                <version>${identity.framework.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity</groupId>
+                <artifactId>org.wso2.carbon.identity.governance</artifactId>
+                <version>${identity.governance.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity</groupId>
+                <artifactId>org.wso2.carbon.identity.account.lock</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
     </dependencyManagement>
 
     <properties>
