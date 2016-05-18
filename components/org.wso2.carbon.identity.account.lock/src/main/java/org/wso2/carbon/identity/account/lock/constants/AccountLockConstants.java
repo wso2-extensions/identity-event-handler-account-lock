@@ -27,4 +27,7 @@ public class AccountLockConstants {
     public static final String ACCOUNT_UNLOCK_TIME_PROPERTY = "accountLock.Time";
     public static final String FAILED_LOGIN_ATTEMPTS_PROPERTY = "accountLock.On.Failure.Max.Attempts";
 
+    public static final String EMAIL_TEMPLATE_TYPE_ACC_LOCKED =  "accountlock";
+    public static final String EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED = "accountunlock";
+
 }
