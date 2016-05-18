@@ -167,9 +167,9 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
         } else if (EventMgtConstants.Event.POST_SET_USER_CLAIMS.equals(event.getEventName())) {
             if (lockedStates.UNLOCKED.toString().equals(lockedState.get())) {
-                triggerNotification(userName, "ACCOUNT_UNLOCKED");
+                triggerNotification(userName, AccountLockConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED);
             } else if (lockedStates.LOCKED.toString().equals(lockedState.get())) {
-                triggerNotification(userName, "ACCOUNT_LOCKED");
+                triggerNotification(userName, AccountLockConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED);
             }
             lockedState.remove();
         }
@@ -204,7 +204,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         properties.put(EventMgtConstants.EventProperty.USER_NAME, userName);
         properties.put(EventMgtConstants.EventProperty.TENANT_DOMAIN, PrivilegedCarbonContext
                 .getThreadLocalCarbonContext().getTenantDomain());
-        properties.put("OPERATION_TYPE", type);
+        properties.put("TEMPLATE_TYPE", type);
         Event identityMgtEvent = new Event(eventName, properties);
         IdentityAccountLockServiceDataHolder.getInstance().getEventMgtService().handleEvent(identityMgtEvent);
 
