@@ -210,7 +210,7 @@
 
     <properties>
         <!--Carbon Identity Event Handler Account Lock Version-->
-        <identity.event.handler.account.lock.exp.pkg.version>1.0.0-SNAPSHOT
+        <identity.event.handler.account.lock.exp.pkg.version>${project.version}
         </identity.event.handler.account.lock.exp.pkg.version>
 
         <osgi.framework.imp.pkg.version.range>[1.7.0, 2.0.0)</osgi.framework.imp.pkg.version.range>
