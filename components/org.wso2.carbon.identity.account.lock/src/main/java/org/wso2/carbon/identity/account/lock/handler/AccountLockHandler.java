@@ -182,7 +182,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     lockedState.set(lockedStates.NO_CHANGE.toString());
                 }
             } catch (UserStoreException e) {
-                e.printStackTrace();
+                throw new IdentityEventException("Error while retrieving user claims.", e);
             }
 
         } else if (IdentityEventConstants.Event.POST_SET_USER_CLAIMS.equals(event.getEventName())) {
