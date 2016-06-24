@@ -21,11 +21,12 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.account.lock.constants.AccountLockConstants;
 import org.wso2.carbon.identity.account.lock.internal.IdentityAccountLockServiceDataHolder;
+import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.base.IdentityRuntimeException;
 import org.wso2.carbon.identity.core.handler.InitConfig;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.event.EventMgtConstants;
-import org.wso2.carbon.identity.event.EventMgtException;
+import org.wso2.carbon.identity.event.IdentityEventConstants;
+import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.governance.IdentityGovernanceException;
@@ -56,21 +57,42 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     }
 
     @Override
-    public boolean handleEvent(Event event) throws EventMgtException {
+    public Map<String, String> getPropertyNameMapping() {
+        Map<String, String> nameMapping = new HashMap<>();
+        nameMapping.put(AccountLockConstants.ACCOUNT_LOCKED_PROPERTY, "Account Lock Enabled");
+        nameMapping.put(AccountLockConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY, "Maximum Failed Login Attempts");
+        nameMapping.put(AccountLockConstants.ACCOUNT_UNLOCK_TIME_PROPERTY, "Account Unlock Time");
+        return nameMapping;
+    }
+
+    @Override
+    public void handleEvent(Event event) throws IdentityEventException {
         Map<String, Object> eventProperties = event.getEventProperties();
-        String userName = (String) eventProperties.get(EventMgtConstants.EventProperty.USER_NAME);
-        UserStoreManager userStoreManager = (UserStoreManager) eventProperties.get(EventMgtConstants.EventProperty.USER_STORE_MANAGER);
-        String tenantDomain = (String) eventProperties.get(EventMgtConstants.EventProperty.TENANT_DOMAIN);
-        Map<String, String> identityProperties = null;
+        String userName = (String) eventProperties.get(IdentityEventConstants.EventProperty.USER_NAME);
+        UserStoreManager userStoreManager = (UserStoreManager) eventProperties.get(IdentityEventConstants.EventProperty.USER_STORE_MANAGER);
+        String tenantDomain = (String) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_DOMAIN);
+        Property[] identityProperties = null;
+        Boolean accountLockedEnabled = false;
+        String accountLockTime = "0";
+        int maximumFailedAttempts = 0;
         try {
             identityProperties = IdentityAccountLockServiceDataHolder.getInstance()
                     .getIdentityGovernanceService().getConfiguration(getPropertyNames(), tenantDomain);
         } catch (IdentityGovernanceException e) {
-            throw new EventMgtException("Error while retrieving account lock handler properties.", e);
+            throw new IdentityEventException("Error while retrieving account lock handler properties.", e);
+        }
+        for (Property identityProperty : identityProperties) {
+            if (AccountLockConstants.ACCOUNT_LOCKED_PROPERTY.equals(identityProperty.getName())) {
+                accountLockedEnabled = Boolean.parseBoolean(identityProperty.getValue());
+            } else if (AccountLockConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY.equals(identityProperty.getName())) {
+                maximumFailedAttempts = Integer.parseInt(identityProperty.getValue());
+            } else if (AccountLockConstants.ACCOUNT_UNLOCK_TIME_PROPERTY.equals(identityProperty.getName())) {
+                accountLockTime = identityProperty.getValue();
+            }
         }
         IdentityUtil.clearIdentityErrorMsg();
-        if (!Boolean.parseBoolean(identityProperties.get(AccountLockConstants.ACCOUNT_LOCKED_PROPERTY))) {
-            return true;
+        if (!accountLockedEnabled) {
+            return;
         }
         String domainName = userStoreManager.getRealmConfiguration().getUserStoreProperty(UserCoreConstants.RealmConfig.PROPERTY_DOMAIN_NAME);
         String usernameWithDomain = UserCoreUtil.addDomainToName(userName, domainName);
@@ -78,12 +100,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         try {
             isUserExistInCurrentDomain = userStoreManager.isExistingUser(usernameWithDomain);
         } catch (UserStoreException e) {
-            throw new EventMgtException("Error in accessing user store");
+            throw new IdentityEventException("Error in accessing user store");
         }
 
-        if (EventMgtConstants.Event.PRE_AUTHENTICATION.equals(event.getEventName())) {
+        if (IdentityEventConstants.Event.PRE_AUTHENTICATION.equals(event.getEventName())) {
             if (!isUserExistInCurrentDomain) {
-                return true;
+                return;
             } else {
                 try {
                     if (Boolean.parseBoolean(userStoreManager.getUserClaimValue(userName,
@@ -99,16 +121,16 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                         } else {
                             String errorMsg = "User account is locked for user : " + userName
                                     + ". cannot login until the account is unlocked ";
-                            throw new EventMgtException(UserCoreConstants.ErrorCode.USER_IS_LOCKED + " "
+                            throw new IdentityEventException(UserCoreConstants.ErrorCode.USER_IS_LOCKED + " "
                                     + errorMsg);
                         }
                     }
                 } catch (UserStoreException e) {
-                    throw new EventMgtException("Error while retrieving account lock claim value", e);
+                    throw new IdentityEventException("Error while retrieving account lock claim value", e);
                 }
             }
-        } else if (EventMgtConstants.Event.POST_AUTHENTICATION.equals(event.getEventName())) {
-            if ((Boolean)eventProperties.get(EventMgtConstants.EventProperty.OPERATION_STATUS)) {
+        } else if (IdentityEventConstants.Event.POST_AUTHENTICATION.equals(event.getEventName())) {
+            if ((Boolean)eventProperties.get(IdentityEventConstants.EventProperty.OPERATION_STATUS)) {
                 Map<String, String> newClaims = new HashMap<>();
                 newClaims.put(AccountLockConstants.FAILED_LOGIN_ATTEMPTS_CLAIM, "0");
                 newClaims.put(AccountLockConstants.ACCOUNT_UNLOCK_TIME_CLAIM, "0");
@@ -116,7 +138,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 try {
                     userStoreManager.setUserClaimValues(userName, newClaims, null);
                 } catch (UserStoreException e) {
-                    throw new EventMgtException("Error while setting up user identity claims.", e);
+                    throw new IdentityEventException("Error while setting up user identity claims.", e);
                 }
             } else {
                 try {
@@ -128,11 +150,9 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     int numberOffailedAttermpts = Integer.parseInt(currentFailedAttempts) + 1;
                     Map<String, String> newClaims = new HashMap<>();
                     newClaims.put(AccountLockConstants.FAILED_LOGIN_ATTEMPTS_CLAIM, numberOffailedAttermpts + "");
-                    if (numberOffailedAttermpts >= Integer.parseInt(identityProperties.get
-                            (AccountLockConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY))) {
+                    if (numberOffailedAttermpts >= maximumFailedAttempts) {
                         newClaims.put(AccountLockConstants.ACCOUNT_LOCKED_CLAIM, "true");
-                        String unlockTimeProperty = identityProperties.get(AccountLockConstants
-                                .ACCOUNT_UNLOCK_TIME_PROPERTY);
+                        String unlockTimeProperty = accountLockTime;
                         if (!"0".equals(unlockTimeProperty) && unlockTimeProperty != null) {
                             long unlockTime = System.currentTimeMillis() + Integer.parseInt(unlockTimeProperty) * 60 * 1000L;
                             newClaims.put(AccountLockConstants.ACCOUNT_UNLOCK_TIME_CLAIM, unlockTime + "");
@@ -140,12 +160,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     }
                     userStoreManager.setUserClaimValues(userName, newClaims, null);
                 } catch (UserStoreException e) {
-                    throw new EventMgtException("Error while locking account.", e);
+                    throw new IdentityEventException("Error while locking account.", e);
                 }
             }
-        } else if (EventMgtConstants.Event.PRE_SET_USER_CLAIMS.equals(event.getEventName())) {
+        } else if (IdentityEventConstants.Event.PRE_SET_USER_CLAIMS.equals(event.getEventName())) {
             if (lockedState.get() != null) {
-                return true;
+                return;
             }
             try {
                 Boolean currentState = Boolean.parseBoolean(userStoreManager.getUserClaimValue(userName,
@@ -162,10 +182,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     lockedState.set(lockedStates.NO_CHANGE.toString());
                 }
             } catch (UserStoreException e) {
-                e.printStackTrace();
+                throw new IdentityEventException("Error while retrieving user claims.", e);
             }
 
-        } else if (EventMgtConstants.Event.POST_SET_USER_CLAIMS.equals(event.getEventName())) {
+        } else if (IdentityEventConstants.Event.POST_SET_USER_CLAIMS.equals(event.getEventName())) {
             if (lockedStates.UNLOCKED.toString().equals(lockedState.get())) {
                 triggerNotification(userName, AccountLockConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED);
             } else if (lockedStates.LOCKED.toString().equals(lockedState.get())) {
@@ -173,7 +193,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             }
             lockedState.remove();
         }
-        return true;
     }
 
     @Override
@@ -184,29 +203,29 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     }
 
     public String[] getPropertyNames(){
-        String[] arr = this.properties.keySet().toArray(new String[this.properties.keySet().size()]);
+        String[] arr = this.configs.getModuleProperties().keySet().toArray(new String[this.properties.keySet().size()]);
         return arr;
     }
 
     public Properties getDefaultPropertyValues (String tenantDomain) throws IdentityGovernanceException{
-       return properties;
+       return configs.getModuleProperties();
     }
 
     public Map<String, String> getDefaultPropertyValues (String[] propertyNames, String tenantDomain) throws IdentityGovernanceException{
         return null;
     }
 
-    private void triggerNotification (String userName, String type) throws EventMgtException {
+    private void triggerNotification (String userName, String type) throws IdentityEventException {
 
-        String eventName = EventMgtConstants.Event.TRIGGER_NOTIFICATION;
+        String eventName = IdentityEventConstants.Event.TRIGGER_NOTIFICATION;
 
         HashMap<String, Object> properties = new HashMap<>();
-        properties.put(EventMgtConstants.EventProperty.USER_NAME, userName);
-        properties.put(EventMgtConstants.EventProperty.TENANT_DOMAIN, PrivilegedCarbonContext
+        properties.put(IdentityEventConstants.EventProperty.USER_NAME, userName);
+        properties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN, PrivilegedCarbonContext
                 .getThreadLocalCarbonContext().getTenantDomain());
         properties.put("TEMPLATE_TYPE", type);
         Event identityMgtEvent = new Event(eventName, properties);
-        IdentityAccountLockServiceDataHolder.getInstance().getEventMgtService().handleEvent(identityMgtEvent);
+        IdentityAccountLockServiceDataHolder.getInstance().getIdentityEventService().handleEvent(identityMgtEvent);
 
     }
 
