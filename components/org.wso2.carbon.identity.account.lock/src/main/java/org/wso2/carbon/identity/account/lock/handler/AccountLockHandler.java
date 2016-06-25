@@ -64,6 +64,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         nameMapping.put(AccountLockConstants.ACCOUNT_LOCKED_PROPERTY, "Account Lock Enabled");
         nameMapping.put(AccountLockConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY, "Maximum Failed Login Attempts");
         nameMapping.put(AccountLockConstants.ACCOUNT_UNLOCK_TIME_PROPERTY, "Account Unlock Time");
+        nameMapping.put(AccountLockConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY, "Time Ratio for Incorrect Login Attempts");
         return nameMapping;
     }
 
@@ -91,7 +92,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 maximumFailedAttempts = Integer.parseInt(identityProperty.getValue());
             } else if (AccountLockConstants.ACCOUNT_UNLOCK_TIME_PROPERTY.equals(identityProperty.getName())) {
                 accountLockTime = identityProperty.getValue();
-            } else if (AccountLockConstants.ACCOUNT_LOCKOUT_TIME_RATIO_PROPERTY.equals(identityProperty.getName())) {
+            } else if (AccountLockConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY.equals(identityProperty.getName())) {
                 unlockTimeRatio = identityProperty.getValue();
             }
         }

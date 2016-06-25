@@ -28,7 +28,7 @@ public class AccountLockConstants {
     public static final String ACCOUNT_LOCKED_PROPERTY = "accountLock.enable";
     public static final String ACCOUNT_UNLOCK_TIME_PROPERTY = "accountLock.Time";
     public static final String FAILED_LOGIN_ATTEMPTS_PROPERTY = "accountLock.On.Failure.Max.Attempts";
-    public static final String ACCOUNT_LOCKOUT_TIME_RATIO_PROPERTY = "accountLock.Account.Lockout.Time.Increase.Ratio";
+    public static final String LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY = "accountLock.login.fail.timeout.ratio";
 
     public static final String EMAIL_TEMPLATE_TYPE_ACC_LOCKED =  "accountlock";
     public static final String EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED = "accountunlock";
