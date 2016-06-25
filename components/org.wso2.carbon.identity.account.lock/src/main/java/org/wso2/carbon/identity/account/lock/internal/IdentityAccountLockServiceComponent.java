@@ -26,7 +26,7 @@ import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 
 /**
  * @scr.component name="org.wso2.carbon.identity.account.lock.internal.IdentityAccountLockServiceComponent"
- * immediate="true
+ * immediate="true"
  * @scr.reference name="IdentityGovernanceService"
  * interface="org.wso2.carbon.identity.governance.IdentityGovernanceService" cardinality="1..1"
  * policy="dynamic" bind="setIdentityGovernanceService" unbind="unsetIdentityGovernanceService"
@@ -42,7 +42,7 @@ public class IdentityAccountLockServiceComponent {
 
         IdentityAccountLockServiceDataHolder.getInstance().setBundleContext(context.getBundleContext());
         AccountLockHandler handler = new AccountLockHandler();
-        context.getBundleContext().registerService(AbstractEventHandler.class.getName(), handler, null);
+        //context.getBundleContext().registerService(AbstractEventHandler.class.getName(), handler, null);
         if (log.isDebugEnabled()) {
             log.debug("Identity Management Listener is enabled");
         }
