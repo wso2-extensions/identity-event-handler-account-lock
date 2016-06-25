@@ -21,7 +21,7 @@ import org.apache.commons.logging.LogFactory;
 import org.osgi.service.component.ComponentContext;
 import org.wso2.carbon.identity.account.lock.handler.AccountLockHandler;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
-import org.wso2.carbon.identity.event.services.EventMgtService;
+import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 
 /**
@@ -31,8 +31,8 @@ import org.wso2.carbon.identity.governance.IdentityGovernanceService;
  * interface="org.wso2.carbon.identity.governance.IdentityGovernanceService" cardinality="1..1"
  * policy="dynamic" bind="setIdentityGovernanceService" unbind="unsetIdentityGovernanceService"
  * @scr.reference name="EventMgtService"
- * interface="org.wso2.carbon.identity.event.services.EventMgtService" cardinality="1..1"
- * policy="dynamic" bind="setEventMgtService" unbind="unsetEventMgtService"
+ * interface="org.wso2.carbon.identity.event.services.IdentityEventService" cardinality="1..1"
+ * policy="dynamic" bind="setIdentityEventService" unbind="unsetIdentityEventService"
  */
 public class IdentityAccountLockServiceComponent {
 
@@ -62,12 +62,12 @@ public class IdentityAccountLockServiceComponent {
         IdentityAccountLockServiceDataHolder.getInstance().setIdentityGovernanceService(idpManager);
     }
 
-    protected void unsetEventMgtService(EventMgtService eventManager) {
-        IdentityAccountLockServiceDataHolder.getInstance().setEventMgtService(null);
+    protected void unsetIdentityEventService(IdentityEventService eventManager) {
+        IdentityAccountLockServiceDataHolder.getInstance().setIdentityEventService(null);
     }
 
-    protected void setEventMgtService(EventMgtService eventManager) {
-        IdentityAccountLockServiceDataHolder.getInstance().setEventMgtService(eventManager);
+    protected void setIdentityEventService(IdentityEventService eventManager) {
+        IdentityAccountLockServiceDataHolder.getInstance().setIdentityEventService(eventManager);
     }
 
 }
