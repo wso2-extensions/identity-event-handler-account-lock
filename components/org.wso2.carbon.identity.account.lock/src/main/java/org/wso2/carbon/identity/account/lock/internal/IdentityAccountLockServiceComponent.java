@@ -42,7 +42,7 @@ public class IdentityAccountLockServiceComponent {
 
         IdentityAccountLockServiceDataHolder.getInstance().setBundleContext(context.getBundleContext());
         AccountLockHandler handler = new AccountLockHandler();
-        //context.getBundleContext().registerService(AbstractEventHandler.class.getName(), handler, null);
+        context.getBundleContext().registerService(AbstractEventHandler.class.getName(), handler, null);
         if (log.isDebugEnabled()) {
             log.debug("Identity Management Listener is enabled");
         }
