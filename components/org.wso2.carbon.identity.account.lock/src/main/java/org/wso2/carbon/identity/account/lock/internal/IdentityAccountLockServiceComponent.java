@@ -26,7 +26,7 @@ import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 
 /**
  * @scr.component name="org.wso2.carbon.identity.account.lock.internal.IdentityAccountLockServiceComponent"
- * immediate="true
+ * immediate="true"
  * @scr.reference name="IdentityGovernanceService"
  * interface="org.wso2.carbon.identity.governance.IdentityGovernanceService" cardinality="1..1"
  * policy="dynamic" bind="setIdentityGovernanceService" unbind="unsetIdentityGovernanceService"
