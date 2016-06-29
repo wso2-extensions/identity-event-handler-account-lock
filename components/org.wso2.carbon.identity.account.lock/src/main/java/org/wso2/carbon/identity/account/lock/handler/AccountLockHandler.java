@@ -8,6 +8,7 @@ import org.wso2.carbon.identity.account.lock.constants.AccountLockConstants;
 import org.wso2.carbon.identity.account.lock.internal.IdentityAccountLockServiceDataHolder;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.base.IdentityRuntimeException;
+import org.wso2.carbon.identity.core.bean.context.MessageContext;
 import org.wso2.carbon.identity.core.handler.InitConfig;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventConstants;
@@ -47,8 +48,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         nameMapping.put(AccountLockConstants.ACCOUNT_LOCKED_PROPERTY, "Account Lock Enabled");
         nameMapping.put(AccountLockConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY, "Maximum Failed Login Attempts");
         nameMapping.put(AccountLockConstants.ACCOUNT_UNLOCK_TIME_PROPERTY, "Account Unlock Time");
-        nameMapping.put(AccountLockConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY, "Timeout Ratio for Incorrect Login " +
-                                                                                "Attempts");
+        nameMapping.put(AccountLockConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY, "Lock Timeout Increment Factor");
         return nameMapping;
     }
 
@@ -100,8 +100,14 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 try {
                     if (Boolean.parseBoolean(userStoreManager.getUserClaimValue(userName,
                                                                                 AccountLockConstants.ACCOUNT_LOCKED_CLAIM, null))) {
-                        long unlockTime = Long.parseLong(userStoreManager.getUserClaimValue(userName,
-                                                                                            AccountLockConstants.ACCOUNT_UNLOCK_TIME_CLAIM, null));
+                        long unlockTime =  0 ;
+                        String userClaimValue = userStoreManager.getUserClaimValue(userName,
+                                                                                   AccountLockConstants
+                                                                                           .ACCOUNT_UNLOCK_TIME_CLAIM, null);
+                        if(NumberUtils.isNumber(userClaimValue)){
+                            unlockTime = Long.parseLong(userClaimValue);
+                        }
+
                         if ((unlockTime != 0) && (System.currentTimeMillis() >= unlockTime)) {
 
                             Map<String, String> newClaims = new HashMap<>();
@@ -224,6 +230,11 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
     public Map<String, String> getDefaultPropertyValues (String[] propertyNames, String tenantDomain) throws IdentityGovernanceException{
         return null;
+    }
+
+    @Override
+    public int getPriority(MessageContext messageContext) {
+        return 100 ;
     }
 
     private void triggerNotification (String userName, String type) throws IdentityEventException {
