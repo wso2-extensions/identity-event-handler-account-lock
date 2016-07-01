@@ -134,7 +134,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 newClaims.put(AccountLockConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, "0");
                 newClaims.put(AccountLockConstants.ACCOUNT_LOCKED_CLAIM, Boolean.FALSE.toString());
                 try {
-                    userStoreManager.setUserClaimValues(userName, newClaims, null);
+                    //TODO need to support readOnly user stores too. IDENTITY-4754
+                    if (!userStoreManager.isReadOnly()) {
+                        userStoreManager.setUserClaimValues(userName, newClaims, null);
+                    }
                 } catch (UserStoreException e) {
                     throw new IdentityEventException("Error while setting up user identity claims.", e);
                 }
