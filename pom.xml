@@ -119,8 +119,8 @@
     </pluginRepositories>
 
     <modules>
-        <module>components/org.wso2.carbon.identity.account.lock</module>
-        <module>features/org.wso2.carbon.identity.account.lock.feature</module>
+        <module>components/org.wso2.carbon.identity.handler.event.account.lock</module>
+        <module>features/org.wso2.carbon.identity.handler.event.account.lock.feature</module>
     </modules>
 
     <dependencyManagement>
@@ -141,7 +141,7 @@
 
             <dependency>
                 <groupId>org.wso2.carbon.identity</groupId>
-                <artifactId>org.wso2.carbon.identity.account.lock</artifactId>
+                <artifactId>org.wso2.carbon.identity.handler.event.account.lock</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
@@ -210,8 +210,8 @@
 
     <properties>
         <!--Carbon Identity Event Handler Account Lock Version-->
-        <identity.event.handler.account.lock.exp.pkg.version>${project.version}
-        </identity.event.handler.account.lock.exp.pkg.version>
+        <identity.event.handler.account.lock.exp.pkg.version>${project
+        .version}</identity.event.handler.account.lock.exp.pkg.version>
 
         <osgi.framework.imp.pkg.version.range>[1.7.0, 2.0.0)</osgi.framework.imp.pkg.version.range>
         <osgi.service.component.imp.pkg.version.range>[1.2.0, 2.0.0)</osgi.service.component.imp.pkg.version.range>

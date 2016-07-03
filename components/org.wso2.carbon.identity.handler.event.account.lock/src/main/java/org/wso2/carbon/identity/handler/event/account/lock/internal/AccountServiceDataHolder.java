@@ -14,27 +14,26 @@
  * limitations und
  */
 
-package org.wso2.carbon.identity.account.lock.internal;
+package org.wso2.carbon.identity.handler.event.account.lock.internal;
 
 import org.osgi.framework.BundleContext;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 
-public class IdentityAccountLockServiceDataHolder {
+public class AccountServiceDataHolder {
 
-    private static IdentityAccountLockServiceDataHolder identityAccountLockServiceDataHolder = new
-            IdentityAccountLockServiceDataHolder();
+    private static volatile AccountServiceDataHolder accountServiceDataHolder = new AccountServiceDataHolder();
+
     private BundleContext bundleContext;
-
     private IdentityGovernanceService identityGovernanceService;
     private IdentityEventService identityEventService;
 
-    private IdentityAccountLockServiceDataHolder(){
+    private AccountServiceDataHolder(){
 
     }
 
-    public static IdentityAccountLockServiceDataHolder getInstance() {
-        return identityAccountLockServiceDataHolder;
+    public static AccountServiceDataHolder getInstance() {
+        return accountServiceDataHolder;
     }
 
 
