@@ -26,9 +26,9 @@
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>org.wso2.carbon.identity.account.lock.feature</artifactId>
+    <artifactId>org.wso2.carbon.identity.handler.event.account.lock.feature</artifactId>
     <packaging>pom</packaging>
-    <name>User account lock feature</name>
+    <name>User Account Lock Feature</name>
     <url>http://wso2.org</url>
     <description>This feature contains the bundles required for Account Locking</description>
 
@@ -43,7 +43,7 @@
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity</groupId>
-            <artifactId>org.wso2.carbon.identity.account.lock</artifactId>
+            <artifactId>org.wso2.carbon.identity.handler.event.account.lock</artifactId>
         </dependency>
     </dependencies>
 
@@ -94,8 +94,7 @@
                                 </properties>
                             </adviceFile>
                             <bundles>
-                                <bundleDef>org.wso2.carbon.identity:org.wso2.carbon.identity.account.lock
-                                </bundleDef>
+                                <bundleDef>org.wso2.carbon.identity:org.wso2.carbon.identity.handler.event.account.lock</bundleDef>
                             </bundles>
                             <importFeatures>
                                 <importFeatureDef>org.wso2.carbon.core:compatible:${carbon.kernel.version}</importFeatureDef>

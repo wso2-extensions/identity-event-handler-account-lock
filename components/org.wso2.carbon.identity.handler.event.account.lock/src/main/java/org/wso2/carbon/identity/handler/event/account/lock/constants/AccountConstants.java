@@ -14,23 +14,28 @@
  * limitations und
  */
 
-package org.wso2.carbon.identity.account.lock.constants;
+package org.wso2.carbon.identity.handler.event.account.lock.constants;
 
-public class AccountLockConstants {
+public class AccountConstants {
 
     public static final String ACCOUNT_LOCKED_CLAIM = "http://wso2.org/claims/identity/accountLocked";
     public static final String ACCOUNT_UNLOCK_TIME_CLAIM = "http://wso2.org/claims/identity/unlockTime";
+    public static final String ACCOUNT_DISABLED_CLAIM = "http://wso2.org/claims/identity/accountDisabled";
     public static final String FAILED_LOGIN_ATTEMPTS_CLAIM =
             "http://wso2.org/claims/identity/failedLoginAttempts";
     public static final String FAILED_LOGIN_LOCKOUT_COUNT_CLAIM =
             "http://wso2.org/claims/identity/failedLoginLockoutCount";
 
-    public static final String ACCOUNT_LOCKED_PROPERTY = "accountLock.enable";
-    public static final String ACCOUNT_UNLOCK_TIME_PROPERTY = "accountLock.Time";
-    public static final String FAILED_LOGIN_ATTEMPTS_PROPERTY = "accountLock.On.Failure.Max.Attempts";
+    public static final String ACCOUNT_LOCKED_PROPERTY = "account.lock.enable";
+    public static final String ACCOUNT_UNLOCK_TIME_PROPERTY = "account.lock.timeout";
+    public static final String FAILED_LOGIN_ATTEMPTS_PROPERTY = "account.lock.attempts";
     public static final String LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY = "accountLock.login.fail.timeout.ratio";
 
-    public static final String EMAIL_TEMPLATE_TYPE_ACC_LOCKED =  "accountlock";
-    public static final String EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED = "accountunlock";
+    public static final String EMAIL_TEMPLATE_TYPE_ACC_LOCKED =  "account.locked";
+    public static final String EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED = "account.unlocked";
+
+    public static final String EMAIL_TEMPLATE_TYPE_ACC_DISABLED =  "account.disabled";
+    public static final String EMAIL_TEMPLATE_TYPE_ACC_ENABLED = "account.enabled";
+
 
 }
