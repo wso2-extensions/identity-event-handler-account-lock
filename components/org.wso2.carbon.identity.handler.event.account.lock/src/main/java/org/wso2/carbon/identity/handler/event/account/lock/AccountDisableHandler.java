@@ -51,13 +51,6 @@ public class AccountDisableHandler extends AbstractEventHandler {
     }
 
     @Override
-    public void init(InitConfig configuration) {
-        super.init(configuration);
-        AccountServiceDataHolder.getInstance().getBundleContext().registerService
-                (IdentityGovernanceConnector.class.getName(), this, null);
-    }
-
-    @Override
     public void handleEvent(Event event) throws IdentityEventException {
 
         IdentityUtil.clearIdentityErrorMsg();
