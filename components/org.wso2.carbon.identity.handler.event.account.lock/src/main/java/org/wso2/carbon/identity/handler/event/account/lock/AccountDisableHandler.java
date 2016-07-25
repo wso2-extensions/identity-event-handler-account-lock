@@ -180,7 +180,6 @@ public class AccountDisableHandler extends AbstractEventHandler {
 
         HashMap<String, Object> properties = new HashMap<>();
         properties.put(IdentityEventConstants.EventProperty.USER_NAME, userName);
-        properties.put(IdentityEventConstants.EventProperty.USER_STORE_MANAGER, userStoreManager);
         properties.put(IdentityEventConstants.EventProperty.USER_STORE_DOMAIN, userStoreDomainName);
         properties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN, tenantDomain);
         properties.put("TEMPLATE_TYPE", notificationEvent);
