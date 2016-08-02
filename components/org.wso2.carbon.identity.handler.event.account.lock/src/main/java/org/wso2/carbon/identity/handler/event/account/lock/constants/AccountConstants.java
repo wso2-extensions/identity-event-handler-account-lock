@@ -31,11 +31,11 @@ public class AccountConstants {
     public static final String FAILED_LOGIN_ATTEMPTS_PROPERTY = "account.lock.handler.On.Failure.Max.Attempts";
     public static final String LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY = "account.lock.handler.login.fail.timeout.ratio";
 
-    public static final String EMAIL_TEMPLATE_TYPE_ACC_LOCKED = "account.locked";
-    public static final String EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED = "account.unlocked";
+    public static final String EMAIL_TEMPLATE_TYPE_ACC_LOCKED = "accountlock";
+    public static final String EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED = "accountunlock";
 
-    public static final String EMAIL_TEMPLATE_TYPE_ACC_DISABLED = "account.disabled";
-    public static final String EMAIL_TEMPLATE_TYPE_ACC_ENABLED = "account.enabled";
+    public static final String EMAIL_TEMPLATE_TYPE_ACC_DISABLED = "accountdisable";
+    public static final String EMAIL_TEMPLATE_TYPE_ACC_ENABLED = "accountenable";
 
 
 }
