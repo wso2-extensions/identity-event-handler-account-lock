@@ -128,7 +128,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         try {
             userExists = userStoreManager.isExistingUser(usernameWithDomain);
         } catch (UserStoreException e) {
-            throw new IdentityEventException("Error in accessing user store");
+            throw new IdentityEventException("Error in accessing user store", e);
         }
         if (!userExists) {
             return;
@@ -161,7 +161,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     AccountConstants.ACCOUNT_LOCKED_CLAIM, null);
         } catch (UserStoreException e) {
             throw new AccountLockException("Error occurred while retrieving " + AccountConstants
-                    .ACCOUNT_LOCKED_CLAIM + " claim value");
+                    .ACCOUNT_LOCKED_CLAIM + " claim value", e);
         }
         if (Boolean.parseBoolean(accountLockedClaim)) {
             long unlockTime = 0;
@@ -173,7 +173,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 }
             } catch (UserStoreException e) {
                 throw new AccountLockException("Error occurred while retrieving " + AccountConstants
-                        .ACCOUNT_UNLOCK_TIME_CLAIM + " claim value");
+                        .ACCOUNT_UNLOCK_TIME_CLAIM + " claim value", e);
             }
             if (unlockTime != 0 && System.currentTimeMillis() >= unlockTime) {
                 Map<String, String> newClaims = new HashMap<>();
@@ -185,7 +185,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 } catch (UserStoreException e) {
                     throw new AccountLockException("Error occurred while storing " + AccountConstants
                             .ACCOUNT_LOCKED_CLAIM + " and " + AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM +
-                            "claim values");
+                            "claim values", e);
                 }
             } else {
                 String message = null;
@@ -246,7 +246,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
             } catch (UserStoreException e) {
                 throw new AccountLockException("Error occurred while retrieving " + AccountConstants
-                        .FAILED_LOGIN_ATTEMPTS_CLAIM + " claim value");
+                        .FAILED_LOGIN_ATTEMPTS_CLAIM + " claim value", e);
             }
             currentFailedAttempts += 1;
             Map<String, String> newClaims = new HashMap<>();
@@ -268,7 +268,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             try {
                 userStoreManager.setUserClaimValues(userName, newClaims, null);
             } catch (UserStoreException e) {
-                throw new AccountLockException("Error occurred while locking user account");
+                throw new AccountLockException("Error occurred while locking user account", e);
             } catch (NumberFormatException e) {
                 throw new AccountLockException("Error occurred while parsing config values", e);
             }
@@ -291,7 +291,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     AccountConstants.ACCOUNT_LOCKED_CLAIM, null));
         } catch (UserStoreException e) {
             throw new AccountLockException("Error occurred while retrieving " + AccountConstants
-                    .ACCOUNT_LOCKED_CLAIM + " claim value");
+                    .ACCOUNT_LOCKED_CLAIM + " claim value", e);
         }
         String newStateString = ((Map<String, String>) event.getEventProperties().get("USER_CLAIMS")).get(AccountConstants.ACCOUNT_LOCKED_CLAIM);
         if (StringUtils.isNotBlank(newStateString)) {
@@ -358,7 +358,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
     protected void triggerNotification(Event event, String userName, UserStoreManager userStoreManager,
                                        String userStoreDomainName, String tenantDomain,
-                                       Property[] identityProperties, String notificationEvent) {
+                                       Property[] identityProperties, String notificationEvent) throws
+            AccountLockException {
 
         String eventName = IdentityEventConstants.Event.TRIGGER_NOTIFICATION;
 
@@ -372,8 +373,9 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             AccountServiceDataHolder.getInstance().getIdentityEventService().handleEvent(identityMgtEvent);
         } catch (IdentityEventException e) {
             String errorMsg = "Error occurred while calling triggerNotification, detail : " + e.getMessage();
-            log.error(errorMsg);
-            //We are not throwing any exception from here, because this event notification should not break the main flow.
+            //We are not throwing any exception from here, because this event notification should not break the main
+            // flow.
+            log.error(errorMsg, e);
         }
     }
 

@@ -67,7 +67,7 @@ public class AccountDisableHandler extends AbstractEventHandler {
         try {
             userExists = userStoreManager.isExistingUser(usernameWithDomain);
         } catch (UserStoreException e) {
-            throw new IdentityEventException("Error in accessing user store");
+            throw new IdentityEventException("Error in accessing user store", e);
         }
         if (!userExists) {
             return;
@@ -92,7 +92,7 @@ public class AccountDisableHandler extends AbstractEventHandler {
                     AccountConstants.ACCOUNT_DISABLED_CLAIM, null);
         } catch (UserStoreException e) {
             throw new AccountLockException("Error occurred while retrieving " + AccountConstants
-                    .ACCOUNT_DISABLED_CLAIM + " claim value");
+                    .ACCOUNT_DISABLED_CLAIM + " claim value", e);
         }
         if (Boolean.parseBoolean(accountDisabledClaim)) {
             String message = null;
@@ -122,7 +122,7 @@ public class AccountDisableHandler extends AbstractEventHandler {
                     userName, AccountConstants.ACCOUNT_DISABLED_CLAIM, null));
         } catch (UserStoreException e) {
             throw new AccountLockException("Error occurred while retrieving " + AccountConstants
-                    .ACCOUNT_DISABLED_CLAIM + " claim value");
+                    .ACCOUNT_DISABLED_CLAIM + " claim value", e);
         }
 
         String newAccountDisableString = ((Map<String, String>) event.getEventProperties().get("USER_CLAIMS")).get
@@ -187,7 +187,10 @@ public class AccountDisableHandler extends AbstractEventHandler {
         try {
             AccountServiceDataHolder.getInstance().getIdentityEventService().handleEvent(identityMgtEvent);
         } catch (IdentityEventException e) {
-            throw new AccountLockException("Error occurred while sending notification", e);
+            String errorMsg = "Error occurred while calling triggerNotification, detail : " + e.getMessage();
+            //We are not throwing any exception from here, because this event notification should not break the main
+            // flow.
+            log.error(errorMsg, e);
         }
     }
 }
