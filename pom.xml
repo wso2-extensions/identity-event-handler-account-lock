@@ -229,7 +229,7 @@
 
 
         <!--Carbon Identity Governance Version-->
-        <identity.governance.version>0.1.0</identity.governance.version>
+        <identity.governance.version>0.1.14</identity.governance.version>
         <identity.governance.imp.pkg.version.range>[0.0.0, 1.0.0)</identity.governance.imp.pkg.version.range>
 
         <!--Maven Plugin Version-->
