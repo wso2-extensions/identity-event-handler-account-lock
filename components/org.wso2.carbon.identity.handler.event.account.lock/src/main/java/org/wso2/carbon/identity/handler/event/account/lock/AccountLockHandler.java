@@ -29,7 +29,7 @@ import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.governance.IdentityGovernanceException;
-import org.wso2.carbon.identity.governance.common.IdentityGovernanceConnector;
+import org.wso2.carbon.identity.governance.common.IdentityConnectorConfig;
 import org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants;
 import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockException;
 import org.wso2.carbon.identity.handler.event.account.lock.internal.AccountServiceDataHolder;
@@ -43,7 +43,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-public class AccountLockHandler extends AbstractEventHandler implements IdentityGovernanceConnector {
+public class AccountLockHandler extends AbstractEventHandler implements IdentityConnectorConfig {
 
     private static final Log log = LogFactory.getLog(AccountLockHandler.class);
 
@@ -56,14 +56,29 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     }
 
     public String getFriendlyName() {
-        return "Account Locking Connector";
+        return "Account Locking";
+    }
+
+    @Override
+    public String getCategory() {
+        return "Login Policies";
+    }
+
+    @Override
+    public String getSubCategory() {
+        return "DEFAULT";
+    }
+
+    @Override
+    public int getOrder() {
+        return 0;
     }
 
     @Override
     public void init(InitConfig initConfig) {
         super.init(initConfig);
         AccountServiceDataHolder.getInstance().getBundleContext().registerService
-                (IdentityGovernanceConnector.class.getName(), this, null);
+                (IdentityConnectorConfig.class.getName(), this, null);
     }
 
     public Map<String, String> getPropertyNameMapping() {
@@ -73,6 +88,15 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         nameMapping.put(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY, "Account Unlock Time");
         nameMapping.put(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY, "Lock Timeout Increment Factor");
         return nameMapping;
+    }
+
+    @Override
+    public Map<String, String> getPropertyDescriptionMapping() {
+        Map<String, String> descriptionMapping = new HashMap<>();
+        descriptionMapping.put(AccountConstants.ACCOUNT_LOCKED_PROPERTY, "Enable account locking for failed logins");
+        descriptionMapping.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY, "Number of failed attempts allows without locking the account");
+        descriptionMapping.put(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY, "Account locked time span in minutes");
+        return descriptionMapping;
     }
 
     @Override
