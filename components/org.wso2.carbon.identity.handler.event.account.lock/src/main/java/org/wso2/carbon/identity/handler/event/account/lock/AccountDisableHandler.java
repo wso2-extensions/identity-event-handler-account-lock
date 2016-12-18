@@ -19,6 +19,7 @@ package org.wso2.carbon.identity.handler.event.account.lock;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.core.model.IdentityErrorMsgContext;
 import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventConstants;
@@ -31,6 +32,7 @@ import org.wso2.carbon.identity.handler.event.account.lock.internal.AccountServi
 import org.wso2.carbon.identity.handler.event.account.lock.util.AccountUtil;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
+import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.HashMap;
@@ -111,6 +113,7 @@ public class AccountDisableHandler extends AbstractEventHandler {
                                                   String userStoreDomainName,
                                                   String tenantDomain) throws AccountLockException {
 
+
         if (disabledState.get() != null) {
             return true;
         }
@@ -134,6 +137,11 @@ public class AccountDisableHandler extends AbstractEventHandler {
                     disabledState.set(disabledStates.ENABLED_MODIFIED.toString());
                 } else {
                     disabledState.set(disabledStates.DISABLED_MODIFIED.toString());
+                    IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(
+                            IdentityCoreConstants.USER_ACCOUNT_DISABLED);
+                    IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
+                    IdentityUtil.threadLocalProperties.get().put(IdentityCoreConstants.USER_ACCOUNT_STATE,
+                            IdentityCoreConstants.USER_ACCOUNT_DISABLED_ERROR_CODE);
                 }
             } else {
                 if (existingAccountDisabledValue) {

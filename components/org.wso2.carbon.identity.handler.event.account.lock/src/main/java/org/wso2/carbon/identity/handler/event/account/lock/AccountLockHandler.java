@@ -23,6 +23,8 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
 import org.wso2.carbon.identity.core.handler.InitConfig;
+import org.wso2.carbon.identity.core.model.IdentityErrorMsgContext;
+import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventConstants;
 import org.wso2.carbon.identity.event.IdentityEventException;
@@ -108,8 +110,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
     @Override
     public void handleEvent(Event event) throws IdentityEventException {
-
-        IdentityUtil.clearIdentityErrorMsg();
 
         Map<String, Object> eventProperties = event.getEventProperties();
         String userName = (String) eventProperties.get(IdentityEventConstants.EventProperty.USER_NAME);
@@ -293,6 +293,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             }
             try {
                 userStoreManager.setUserClaimValues(userName, newClaims, null);
+
+                IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(UserCoreConstants
+                        .ErrorCode.USER_IS_LOCKED, currentFailedAttempts, maximumFailedAttempts);
+                IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
+                IdentityUtil.threadLocalProperties.get().put(IdentityCoreConstants.USER_ACCOUNT_STATE,
+                        UserCoreConstants.ErrorCode.USER_IS_LOCKED);
             } catch (UserStoreException e) {
                 throw new AccountLockException("Error occurred while locking user account", e);
             } catch (NumberFormatException e) {
@@ -329,6 +335,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     lockedState.set(lockedStates.UNLOCKED_MODIFIED.toString());
                 } else {
                     lockedState.set(lockedStates.LOCKED_MODIFIED.toString());
+                    IdentityUtil.threadLocalProperties.get().put(IdentityCoreConstants.USER_ACCOUNT_STATE,
+                            UserCoreConstants.ErrorCode.USER_IS_LOCKED);
                 }
             } else {
                 if (existingAccountLockedValue) {
