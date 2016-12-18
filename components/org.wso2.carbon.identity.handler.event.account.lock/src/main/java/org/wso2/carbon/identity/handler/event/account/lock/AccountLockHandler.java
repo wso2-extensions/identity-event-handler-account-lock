@@ -42,6 +42,8 @@ import org.wso2.carbon.user.core.util.UserCoreUtil;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.List;
+import java.util.ArrayList;
 
 public class AccountLockHandler extends AbstractEventHandler implements IdentityConnectorConfig {
 
@@ -366,9 +368,13 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     }
 
     public String[] getPropertyNames() {
+        List<String> properties = new ArrayList<>();
+        properties.add(AccountConstants.ACCOUNT_LOCKED_PROPERTY);
+        properties.add(AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY);
+        properties.add(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY);
+        properties.add(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY);
 
-        String[] arr = this.configs.getModuleProperties().keySet().toArray(new String[this.properties.keySet().size()]);
-        return arr;
+        return properties.toArray(new String[properties.size()]);
     }
 
     public Properties getDefaultPropertyValues(String tenantDomain) throws IdentityGovernanceException {
