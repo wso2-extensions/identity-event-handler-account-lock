@@ -88,8 +88,10 @@ public class AccountDisableHandler extends AbstractEventHandler {
 
         String accountDisabledClaim;
         try {
-            accountDisabledClaim = userStoreManager.getUserClaimValue(userName,
-                    AccountConstants.ACCOUNT_DISABLED_CLAIM, null);
+            Map<String, String> claimValues = userStoreManager.getUserClaimValues(userName, new String[]{
+                    AccountConstants.ACCOUNT_DISABLED_CLAIM}, UserCoreConstants.DEFAULT_PROFILE);
+            accountDisabledClaim = claimValues.get(AccountConstants.ACCOUNT_DISABLED_CLAIM);
+
         } catch (UserStoreException e) {
             throw new AccountLockException("Error occurred while retrieving " + AccountConstants
                     .ACCOUNT_DISABLED_CLAIM + " claim value", e);
@@ -119,8 +121,10 @@ public class AccountDisableHandler extends AbstractEventHandler {
         }
         boolean existingAccountDisabledValue;
         try {
-            existingAccountDisabledValue = Boolean.parseBoolean(userStoreManager.getUserClaimValue(
-                    userName, AccountConstants.ACCOUNT_DISABLED_CLAIM, null));
+            Map<String, String> claimValues = userStoreManager.getUserClaimValues(userName, new String[]{
+                    AccountConstants.ACCOUNT_DISABLED_CLAIM}, UserCoreConstants.DEFAULT_PROFILE);
+            existingAccountDisabledValue = Boolean.parseBoolean(claimValues.get(AccountConstants
+                    .ACCOUNT_DISABLED_CLAIM));
         } catch (UserStoreException e) {
             throw new AccountLockException("Error occurred while retrieving " + AccountConstants
                     .ACCOUNT_DISABLED_CLAIM + " claim value", e);
