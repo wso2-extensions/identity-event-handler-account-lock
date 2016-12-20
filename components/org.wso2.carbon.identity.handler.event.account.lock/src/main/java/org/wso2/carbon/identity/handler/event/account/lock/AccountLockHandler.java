@@ -183,8 +183,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
         String accountLockedClaim = null;
         try {
-            accountLockedClaim = userStoreManager.getUserClaimValue(userName,
-                    AccountConstants.ACCOUNT_LOCKED_CLAIM, null);
+            Map<String, String> values = userStoreManager.getUserClaimValues(userName, new String[]{
+                    AccountConstants.ACCOUNT_LOCKED_CLAIM}, UserCoreConstants.DEFAULT_PROFILE);
+            accountLockedClaim = values.get(AccountConstants.ACCOUNT_LOCKED_CLAIM);
+
         } catch (UserStoreException e) {
             throw new AccountLockException("Error occurred while retrieving " + AccountConstants
                     .ACCOUNT_LOCKED_CLAIM + " claim value", e);
@@ -192,8 +194,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         if (Boolean.parseBoolean(accountLockedClaim)) {
             long unlockTime = 0;
             try {
-                String userClaimValue = userStoreManager.getUserClaimValue(userName,
-                        AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM, null);
+                Map<String, String> values = userStoreManager.getUserClaimValues(userName, new String[]{
+                        AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM}, UserCoreConstants.DEFAULT_PROFILE);
+                String userClaimValue = values.get(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM);
+
                 if (NumberUtils.isNumber(userClaimValue)) {
                     unlockTime = Long.parseLong(userClaimValue);
                 }
@@ -255,15 +259,18 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             int failedLoginLockoutCountValue = 0;
             int currentFailedAttempts;
             try {
-                String loginAttemptCycles = userStoreManager.getUserClaimValue(userName,
-                        AccountConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM,
-                        null);
+                Map<String, String> values = userStoreManager.getUserClaimValues(userName, new String[]{
+                        AccountConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM}, UserCoreConstants.DEFAULT_PROFILE);
+                String loginAttemptCycles = values.get(AccountConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM);
+
                 if (NumberUtils.isNumber(loginAttemptCycles)) {
                     failedLoginLockoutCountValue = Integer.parseInt(loginAttemptCycles);
                 }
-                String currentFailedAttemptCount = userStoreManager.getUserClaimValue(userName,
-                        AccountConstants.FAILED_LOGIN_ATTEMPTS_CLAIM,
-                        null);
+
+                Map<String, String> claimValues = userStoreManager.getUserClaimValues(userName, new String[]{
+                        AccountConstants.FAILED_LOGIN_ATTEMPTS_CLAIM}, UserCoreConstants.DEFAULT_PROFILE);
+                String currentFailedAttemptCount = claimValues.get(AccountConstants.FAILED_LOGIN_ATTEMPTS_CLAIM);
+
                 if (StringUtils.isBlank(currentFailedAttemptCount)) {
                     currentFailedAttempts = 0;
                 } else {
@@ -319,8 +326,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         }
         Boolean existingAccountLockedValue;
         try {
-            existingAccountLockedValue = Boolean.parseBoolean(userStoreManager.getUserClaimValue(userName,
-                    AccountConstants.ACCOUNT_LOCKED_CLAIM, null));
+            Map<String, String> claimValues = userStoreManager.getUserClaimValues(userName, new String[]{
+                    AccountConstants.ACCOUNT_LOCKED_CLAIM}, UserCoreConstants.DEFAULT_PROFILE);
+             existingAccountLockedValue = Boolean.valueOf(claimValues.get(AccountConstants.ACCOUNT_LOCKED_CLAIM));
+
         } catch (UserStoreException e) {
             throw new AccountLockException("Error occurred while retrieving " + AccountConstants
                     .ACCOUNT_LOCKED_CLAIM + " claim value", e);
