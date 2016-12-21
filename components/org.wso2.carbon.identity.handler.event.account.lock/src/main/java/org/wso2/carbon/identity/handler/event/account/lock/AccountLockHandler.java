@@ -227,6 +227,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     message = "Account is locked for user " + userName + " in tenant " + tenantDomain + ". Cannot" +
                             " login until the account is unlocked.";
                 }
+                IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(UserCoreConstants.ErrorCode.USER_IS_LOCKED);
+                IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
                 throw new AccountLockException(UserCoreConstants.ErrorCode.USER_IS_LOCKED + " " + message);
             }
         }
@@ -297,13 +299,19 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
                 newClaims.put(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM, unlockTime + "");
                 newClaims.put(AccountConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, failedLoginLockoutCountValue + "");
-            }
-            try {
-                userStoreManager.setUserClaimValues(userName, newClaims, null);
+                newClaims.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_CLAIM, "0");
 
                 IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(UserCoreConstants
                         .ErrorCode.USER_IS_LOCKED, currentFailedAttempts, maximumFailedAttempts);
                 IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
+
+            } else {
+                IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(UserCoreConstants.ErrorCode.INVALID_CREDENTIAL,
+                        currentFailedAttempts, maximumFailedAttempts);
+                IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
+            }
+            try {
+                userStoreManager.setUserClaimValues(userName, newClaims, null);
                 IdentityUtil.threadLocalProperties.get().put(IdentityCoreConstants.USER_ACCOUNT_STATE,
                         UserCoreConstants.ErrorCode.USER_IS_LOCKED);
             } catch (UserStoreException e) {

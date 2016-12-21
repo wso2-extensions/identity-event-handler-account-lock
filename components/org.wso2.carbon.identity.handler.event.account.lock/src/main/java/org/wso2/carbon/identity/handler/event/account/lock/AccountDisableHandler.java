@@ -53,8 +53,6 @@ public class AccountDisableHandler extends AbstractEventHandler {
     @Override
     public void handleEvent(Event event) throws IdentityEventException {
 
-        IdentityUtil.clearIdentityErrorMsg();
-
         Map<String, Object> eventProperties = event.getEventProperties();
         String userName = (String) eventProperties.get(IdentityEventConstants.EventProperty.USER_NAME);
         UserStoreManager userStoreManager = (UserStoreManager) eventProperties.get(IdentityEventConstants.EventProperty
@@ -106,6 +104,11 @@ public class AccountDisableHandler extends AbstractEventHandler {
                 message = "Account is disabled for user " + userName + " in tenant " + tenantDomain + ". Cannot" +
                         " login until the account is enabled.";
             }
+
+            IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(
+                    IdentityCoreConstants.USER_ACCOUNT_DISABLED_ERROR_CODE);
+            IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
+
             throw new AccountLockException(IdentityCoreConstants.USER_ACCOUNT_DISABLED_ERROR_CODE + " " + message);
         }
         return true;
