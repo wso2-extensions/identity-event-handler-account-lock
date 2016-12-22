@@ -199,11 +199,14 @@ public class AccountDisableHandler extends AbstractEventHandler {
         Event identityMgtEvent = new Event(eventName, properties);
         try {
             AccountServiceDataHolder.getInstance().getIdentityEventService().handleEvent(identityMgtEvent);
-        } catch (IdentityEventException e) {
+        } catch (Exception e) {
             String errorMsg = "Error occurred while calling triggerNotification, detail : " + e.getMessage();
             //We are not throwing any exception from here, because this event notification should not break the main
             // flow.
-            log.error(errorMsg, e);
+            log.warn(errorMsg);
+            if (log.isDebugEnabled()) {
+                log.debug(errorMsg, e);
+            }
         }
     }
 }
