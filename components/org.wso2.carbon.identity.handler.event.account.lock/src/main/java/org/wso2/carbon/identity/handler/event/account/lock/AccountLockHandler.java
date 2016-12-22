@@ -292,9 +292,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 if (NumberUtils.isNumber(accountLockTime)) {
                     unlockTimePropertyValue = Integer.parseInt(accountLockTime);
                 }
-                failedLoginLockoutCountValue = failedLoginLockoutCountValue + 1;
                 unlockTimePropertyValue = (long) (unlockTimePropertyValue * 1000 * 60 * Math.pow(unlockTimeRatio,
                         failedLoginLockoutCountValue));
+                failedLoginLockoutCountValue = failedLoginLockoutCountValue + 1;
+
                 long unlockTime = System.currentTimeMillis() + Long.parseLong(unlockTimePropertyValue + "");
 
                 newClaims.put(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM, unlockTime + "");
@@ -304,6 +305,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(UserCoreConstants
                         .ErrorCode.USER_IS_LOCKED, currentFailedAttempts, maximumFailedAttempts);
                 IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
+                IdentityUtil.threadLocalProperties.get().put(IdentityCoreConstants.USER_ACCOUNT_STATE,
+                        UserCoreConstants.ErrorCode.USER_IS_LOCKED);
 
             } else {
                 IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(UserCoreConstants.ErrorCode.INVALID_CREDENTIAL,
@@ -312,8 +315,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             }
             try {
                 userStoreManager.setUserClaimValues(userName, newClaims, null);
-                IdentityUtil.threadLocalProperties.get().put(IdentityCoreConstants.USER_ACCOUNT_STATE,
-                        UserCoreConstants.ErrorCode.USER_IS_LOCKED);
             } catch (UserStoreException e) {
                 throw new AccountLockException("Error occurred while locking user account", e);
             } catch (NumberFormatException e) {
