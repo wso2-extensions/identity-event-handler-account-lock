@@ -26,7 +26,7 @@
 
     <groupId>org.wso2.carbon.identity.event.handler.accountlock</groupId>
     <artifactId>identity-handler-account-lock</artifactId>
-    <version>1.0.10-SNAPSHOT</version>
+    <version>1.1.0-SNAPSHOT</version>
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
     <name>WSO2 Carbon - Identity Account Lock Module</name>
@@ -209,8 +209,7 @@
 
     <properties>
         <!--Carbon Identity Event Handler Account Lock Version-->
-        <identity.event.handler.account.lock.exp.pkg.version>${project
-        .version}</identity.event.handler.account.lock.exp.pkg.version>
+        <identity.event.handler.account.lock.exp.pkg.version>${project.version}</identity.event.handler.account.lock.exp.pkg.version>
 
         <osgi.framework.imp.pkg.version.range>[1.7.0, 2.0.0)</osgi.framework.imp.pkg.version.range>
         <osgi.service.component.imp.pkg.version.range>[1.2.0, 2.0.0)</osgi.service.component.imp.pkg.version.range>
@@ -223,14 +222,14 @@
         <carbon.user.api.imp.pkg.version.range>[1.0.1, 2.0.0)</carbon.user.api.imp.pkg.version.range>
 
         <!--Carbon Identity Framework Version-->
-        <carbon.identity.framework.version>5.6.56</carbon.identity.framework.version>
-        <carbon.identity.framework.imp.pkg.version.range>[5.0.0, 6.0.0)
+        <carbon.identity.framework.version>5.7.0</carbon.identity.framework.version>
+        <carbon.identity.framework.imp.pkg.version.range>[5.7.0, 6.0.0)
         </carbon.identity.framework.imp.pkg.version.range>
 
 
         <!--Carbon Identity Governance Version-->
-        <identity.governance.version>0.1.14</identity.governance.version>
-        <identity.governance.imp.pkg.version.range>[0.0.0, 1.0.0)</identity.governance.imp.pkg.version.range>
+        <identity.governance.version>1.0.0</identity.governance.version>
+        <identity.governance.imp.pkg.version.range>[1.0.0, 2.0.0)</identity.governance.imp.pkg.version.range>
 
         <!--Maven Plugin Version-->
         <carbon.p2.plugin.version>1.5.3</carbon.p2.plugin.version>
