@@ -17,9 +17,14 @@
 package org.wso2.carbon.identity.handler.event.account.lock.util;
 
 import org.apache.commons.lang.StringUtils;
+import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.event.IdentityEventException;
+import org.wso2.carbon.identity.governance.IdentityGovernanceException;
+import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockRuntimeException;
+import org.wso2.carbon.identity.handler.event.account.lock.internal.AccountServiceDataHolder;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.user.core.UserCoreConstants;
@@ -44,6 +49,18 @@ public class AccountUtil {
             return IdentityTenantUtil.getTenantDomain(userStoreManager.getTenantId());
         } catch (UserStoreException e) {
             throw AccountLockRuntimeException.error(e.getMessage(), e);
+        }
+    }
+
+    public static String getConnectorConfig(String key, String tenantDomain) throws IdentityEventException {
+        try {
+            Property[] connectorConfigs;
+            IdentityGovernanceService identityGovernanceService = AccountServiceDataHolder.getInstance()
+                    .getIdentityGovernanceService();
+            connectorConfigs = identityGovernanceService.getConfiguration(new String[]{key,}, tenantDomain);
+            return connectorConfigs[0].getValue();
+        } catch (IdentityGovernanceException e) {
+            throw new IdentityEventException("Error while getting connector configurations", e);
         }
     }
 
