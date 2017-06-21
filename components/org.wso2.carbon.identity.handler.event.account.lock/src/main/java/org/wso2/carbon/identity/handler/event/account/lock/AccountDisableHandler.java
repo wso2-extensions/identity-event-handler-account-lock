@@ -19,6 +19,7 @@ package org.wso2.carbon.identity.handler.event.account.lock;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.core.handler.InitConfig;
 import org.wso2.carbon.identity.core.model.IdentityErrorMsgContext;
 import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
@@ -26,6 +27,8 @@ import org.wso2.carbon.identity.event.IdentityEventConstants;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
+import org.wso2.carbon.identity.governance.IdentityGovernanceException;
+import org.wso2.carbon.identity.governance.common.IdentityConnectorConfig;
 import org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants;
 import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockException;
 import org.wso2.carbon.identity.handler.event.account.lock.internal.AccountServiceDataHolder;
@@ -34,11 +37,13 @@ import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
-
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
-public class AccountDisableHandler extends AbstractEventHandler {
+public class AccountDisableHandler extends AbstractEventHandler implements IdentityConnectorConfig {
 
     private static final Log log = LogFactory.getLog(AccountDisableHandler.class);
 
@@ -48,6 +53,65 @@ public class AccountDisableHandler extends AbstractEventHandler {
 
     public String getName() {
         return "account.disable.handler";
+    }
+
+    @Override
+    public String getFriendlyName() {
+        return "Account Disabling";
+    }
+
+    @Override
+    public String getCategory() {
+        return "Login Policies";
+    }
+
+    @Override
+    public String getSubCategory() {
+        return "DEFAULT";
+    }
+
+    @Override
+    public int getOrder() {
+        return 0;
+    }
+
+    @Override
+    public void init(InitConfig initConfig) {
+        super.init(initConfig);
+        AccountServiceDataHolder.getInstance().getBundleContext().registerService
+                (IdentityConnectorConfig.class.getName(), this, null);
+    }
+
+    @Override
+    public Map<String, String> getPropertyNameMapping() {
+        Map<String, String> nameMapping = new HashMap<>();
+        nameMapping.put(AccountConstants.ACCOUNT_DISABLED_PROPERTY, "Enable Account Disabling");
+        return nameMapping;
+    }
+
+    @Override
+    public Map<String, String> getPropertyDescriptionMapping() {
+        Map<String, String> descriptionMapping = new HashMap<>();
+        descriptionMapping.put(AccountConstants.ACCOUNT_DISABLED_PROPERTY, "Enable account disable Feature");
+        return descriptionMapping;
+    }
+
+    @Override
+    public String[] getPropertyNames() {
+        List<String> properties = new ArrayList<>();
+        properties.add(AccountConstants.ACCOUNT_DISABLED_PROPERTY);
+
+        return properties.toArray(new String[properties.size()]);
+    }
+
+    @Override
+    public Properties getDefaultPropertyValues(String s) throws IdentityGovernanceException {
+        return configs.getModuleProperties();
+    }
+
+    @Override
+    public Map<String, String> getDefaultPropertyValues(String[] strings, String s) throws IdentityGovernanceException {
+        return null;
     }
 
     @Override
@@ -61,6 +125,16 @@ public class AccountDisableHandler extends AbstractEventHandler {
         String tenantDomain = (String) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_DOMAIN);
 
         String usernameWithDomain = UserCoreUtil.addDomainToName(userName, userStoreDomainName);
+        boolean isAccountDisabledEnabled = Boolean.parseBoolean(AccountUtil.getConnectorConfig(AccountConstants
+                .ACCOUNT_DISABLED_PROPERTY, tenantDomain));
+
+        if (!isAccountDisabledEnabled) {
+            if (log.isDebugEnabled()) {
+                log.debug("Account disable feature is disabled for tenanat :" + tenantDomain);
+            }
+            return;
+        }
+
         boolean userExists;
         try {
             userExists = userStoreManager.isExistingUser(usernameWithDomain);
