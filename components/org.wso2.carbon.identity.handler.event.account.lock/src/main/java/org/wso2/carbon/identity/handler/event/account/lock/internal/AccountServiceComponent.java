@@ -22,8 +22,11 @@ import org.osgi.service.component.ComponentContext;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
+import org.wso2.carbon.identity.governance.common.IdentityConnectorConfig;
 import org.wso2.carbon.identity.handler.event.account.lock.AccountDisableHandler;
 import org.wso2.carbon.identity.handler.event.account.lock.AccountLockHandler;
+import org.wso2.carbon.identity.handler.event.account.lock.IdentityManagementConfigImpl;
+import org.wso2.carbon.identity.handler.event.account.lock.XACMLEndpointConfigImpl;
 
 /**
  * @scr.component name="handler.event.account.lock"
@@ -51,6 +54,17 @@ public class AccountServiceComponent {
         context.getBundleContext().registerService(AbstractEventHandler.class.getName(), accountDisableHandler, null);
         if (log.isDebugEnabled()) {
             log.debug("AccountDisableHandler is registered");
+        }
+        XACMLEndpointConfigImpl xacmlEndpointConfigImpl = new XACMLEndpointConfigImpl();
+        context.getBundleContext().registerService(IdentityConnectorConfig.class.getName(), xacmlEndpointConfigImpl, null);
+        if (log.isDebugEnabled()) {
+            log.debug("XACMLEndpointConfigImpl is registered");
+        }
+        IdentityManagementConfigImpl identityManagementConfigImpl = new IdentityManagementConfigImpl();
+        context.getBundleContext().registerService(IdentityConnectorConfig.class.getName(),
+                identityManagementConfigImpl, null);
+        if (log.isDebugEnabled()) {
+            log.debug("IdentityManagementConfigImpl is registered");
         }
     }
 
