@@ -345,10 +345,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         }
         String newStateString = ((Map<String, String>) event.getEventProperties().get("USER_CLAIMS")).get(AccountConstants.ACCOUNT_LOCKED_CLAIM);
         if (StringUtils.isNotBlank(newStateString)) {
-            Boolean newAccountLockedValue = Boolean.parseBoolean(
+            Boolean newAccountLockedValue = Boolean.valueOf(
                     ((Map<String, String>) event.getEventProperties().get("USER_CLAIMS"))
                             .get(AccountConstants.ACCOUNT_LOCKED_CLAIM));
-            if (existingAccountLockedValue != newAccountLockedValue) {
+            if (!existingAccountLockedValue.equals(newAccountLockedValue)) {
                 if (existingAccountLockedValue) {
                     lockedState.set(lockedStates.UNLOCKED_MODIFIED.toString());
                 } else {
