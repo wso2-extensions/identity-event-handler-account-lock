@@ -27,4 +27,8 @@ public class AccountLockException extends IdentityEventException {
     public AccountLockException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    public AccountLockException(String code, String message) {
+        super(code, message);
+    }
 }
