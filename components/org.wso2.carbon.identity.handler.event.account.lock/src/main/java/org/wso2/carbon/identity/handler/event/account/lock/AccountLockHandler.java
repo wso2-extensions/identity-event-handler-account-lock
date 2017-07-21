@@ -229,7 +229,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 }
                 IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(UserCoreConstants.ErrorCode.USER_IS_LOCKED);
                 IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
-                throw new AccountLockException(UserCoreConstants.ErrorCode.USER_IS_LOCKED + " " + message);
+                throw new AccountLockException(UserCoreConstants.ErrorCode.USER_IS_LOCKED, message);
             }
         }
         return true;
