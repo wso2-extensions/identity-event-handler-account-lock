@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.wso2.carbon.identity.handler.event.account.lock;
 
 import org.apache.commons.lang.StringUtils;
@@ -31,87 +32,111 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+/**
+ * class for store identity management endpoint attributes
+ */
 public class IdentityManagementConfigImpl implements IdentityConnectorConfig {
 
-        private static String connectorName = "identity-management";
+    private static final String connectorName = "identity-management";
+    private static final String lable = "lable";
 
-        @Override
-        public String getName() {
-            return connectorName;
-        }
 
-        public String getFriendlyName() {
-            return "Identity Management Endpoints";
-        }
+    @Override
+    public String getName() {
 
-        @Override
-        public String getCategory() {
-            return "DEFAULT";
-        }
-
-        @Override
-        public String getSubCategory() {
-            return "DEFAULT";
-        }
-
-        @Override
-        public int getOrder() {
-            return 0;
-        }
-
-        public Map<String, String> getPropertyNameMapping() {
-            Map<String, String> nameMapping = new HashMap<>();
-            nameMapping.put(IdentityManagementEndpointConstants.RECOVERY_REST_ENDPOINT, "Recovery Rest Endpoint");
-            nameMapping.put(IdentityManagementEndpointConstants.SELF_REGISTRATION_ENDPOINT, "Self Registration Endpoint");
-            return nameMapping;
-        }
-
-        @Override
-        public Map<String, String> getPropertyDescriptionMapping() {
-            Map<String,String> descriptionMap = new HashMap<>();
-            descriptionMap.put(IdentityManagementEndpointConstants.RECOVERY_REST_ENDPOINT, "endpoint");
-            descriptionMap.put(IdentityManagementEndpointConstants.SELF_REGISTRATION_ENDPOINT, "endpoint");
-            return descriptionMap;
-        }
-
-        public String[] getPropertyNames() {
-            List<String> properties = new ArrayList<>();
-            properties.add(IdentityManagementEndpointConstants.RECOVERY_REST_ENDPOINT);
-            properties.add(IdentityManagementEndpointConstants.SELF_REGISTRATION_ENDPOINT);
-            return properties.toArray(new String[properties.size()]);
-        }
-
-        public Properties getDefaultPropertyValues(String tenantDomain) throws IdentityGovernanceException {
-            String tenantContext = "";
-
-            if (!MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equalsIgnoreCase(tenantDomain)) {
-                tenantContext = MultitenantConstants.TENANT_AWARE_URL_PREFIX + "/" + tenantDomain + "/";
-            }
-            String recoveryRestEndpoint = IdentityUtil.getProperty
-                    (IdentityConstants.IdentityManagement.Recovery_REST_EP_URL);
-            String selfRegistrationEndpoint = IdentityUtil.getProperty(IdentityConstants
-                    .IdentityManagement.Self_Registration_EP_URL);
-            if (StringUtils.isBlank(recoveryRestEndpoint)) {
-                recoveryRestEndpoint = IdentityUtil.getServerURL(IdentityConstants.IdentityManagement.Recovery_REST_EP, true, false);
-            }
-            if (StringUtils.isNotBlank(selfRegistrationEndpoint)) {
-                selfRegistrationEndpoint = selfRegistrationEndpoint.replace(IdentityConstants.IdentityManagement.Self_Registration_EP, tenantContext +
-                        IdentityConstants.IdentityManagement.Self_Registration_EP);
-            } else {
-                selfRegistrationEndpoint = IdentityUtil.getServerURL( tenantContext + IdentityConstants.IdentityManagement.Self_Registration_EP,
-                        true, true);
-            }
-            Map<String, String> defaultProperties = new HashMap<>();
-            defaultProperties.put(IdentityManagementEndpointConstants.RECOVERY_REST_ENDPOINT, recoveryRestEndpoint);
-            defaultProperties.put(IdentityManagementEndpointConstants.SELF_REGISTRATION_ENDPOINT, selfRegistrationEndpoint);
-            Properties properties = new Properties();
-            properties.putAll(defaultProperties);
-            return properties;
-        }
-
-        public Map<String, String> getDefaultPropertyValues(String[] propertyNames, String tenantDomain)
-                throws IdentityGovernanceException {
-            return null;
-        }
-
+        return connectorName;
     }
+
+    public String getFriendlyName() {
+
+        return "Identity Management Endpoints";
+    }
+
+    @Override
+    public String getCategory() {
+
+        return "DEFAULT";
+    }
+
+    @Override
+    public String getSubCategory() {
+
+        return "DEFAULT";
+    }
+
+    @Override
+    public int getOrder() {
+
+        return 0;
+    }
+
+    public Map<String, String> getPropertyNameMapping() {
+
+        Map<String, String> nameMapping = new HashMap<>();
+        nameMapping.put(IdentityManagementEndpointConstants.RECOVERY_REST_ENDPOINT, "Recovery Rest Endpoint");
+        nameMapping.put(IdentityManagementEndpointConstants.SELF_REGISTRATION_ENDPOINT, "Self Registration Endpoint");
+        return nameMapping;
+    }
+
+    @Override
+    public Map<String, String> getPropertyDescriptionMapping() {
+
+        Map<String, String> descriptionMap = new HashMap<>();
+        return descriptionMap;
+    }
+
+    public String[] getPropertyNames() {
+
+        List<String> properties = new ArrayList<>();
+        properties.add(IdentityManagementEndpointConstants.RECOVERY_REST_ENDPOINT);
+        properties.add(IdentityManagementEndpointConstants.SELF_REGISTRATION_ENDPOINT);
+        return properties.toArray(new String[properties.size()]);
+    }
+
+    public Properties getDefaultPropertyValues(String tenantDomain) throws IdentityGovernanceException {
+
+        String tenantContext = "";
+
+        if (!MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equalsIgnoreCase(tenantDomain)) {
+            tenantContext = MultitenantConstants.TENANT_AWARE_URL_PREFIX + "/" + tenantDomain + "/";
+        }
+        String recoveryRestEndpoint = IdentityUtil.getProperty
+                (IdentityConstants.IdentityManagement.Recovery_REST_EP_URL);
+        String selfRegistrationEndpoint = IdentityUtil.getProperty(IdentityConstants
+                .IdentityManagement.Self_Registration_EP_URL);
+        if (StringUtils.isBlank(recoveryRestEndpoint)) {
+            recoveryRestEndpoint =
+                    IdentityUtil.getServerURL(IdentityConstants.IdentityManagement.Recovery_REST_EP, true, false);
+        }
+        if (StringUtils.isNotBlank(selfRegistrationEndpoint)) {
+            selfRegistrationEndpoint = selfRegistrationEndpoint
+                    .replace(IdentityConstants.IdentityManagement.Self_Registration_EP, tenantContext +
+                            IdentityConstants.IdentityManagement.Self_Registration_EP);
+        } else {
+            selfRegistrationEndpoint =
+                    IdentityUtil.getServerURL(tenantContext + IdentityConstants.IdentityManagement.Self_Registration_EP,
+                            true, true);
+        }
+        Map<String, String> defaultProperties = new HashMap<>();
+        defaultProperties.put(IdentityManagementEndpointConstants.RECOVERY_REST_ENDPOINT, recoveryRestEndpoint);
+        defaultProperties.put(IdentityManagementEndpointConstants.SELF_REGISTRATION_ENDPOINT, selfRegistrationEndpoint);
+        Properties properties = new Properties();
+        properties.putAll(defaultProperties);
+        return properties;
+    }
+
+    public Map<String, String> getDefaultPropertyValues(String[] propertyNames, String tenantDomain)
+            throws IdentityGovernanceException {
+        return null;
+    }
+
+    @Override
+    public Map<String, String> getPropertyTypeMapping() {
+
+        Map<String, String> typeMap = new HashMap<>();
+        typeMap.put(IdentityManagementEndpointConstants.RECOVERY_REST_ENDPOINT, lable);
+        typeMap.put(IdentityManagementEndpointConstants.SELF_REGISTRATION_ENDPOINT, lable);
+        return typeMap;
+    }
+
+}

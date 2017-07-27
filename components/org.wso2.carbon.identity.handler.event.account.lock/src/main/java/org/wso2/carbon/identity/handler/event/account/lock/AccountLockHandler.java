@@ -104,6 +104,13 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     }
 
     @Override
+    public Map<String, String> getPropertyTypeMapping() {
+
+        Map<String, String> typeMapping = new HashMap<>();
+        return typeMapping;
+    }
+
+    @Override
     public int getPriority(MessageContext messageContext) {
         return 100;
     }
