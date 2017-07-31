@@ -130,7 +130,7 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
 
         if (!isAccountDisabledEnabled) {
             if (log.isDebugEnabled()) {
-                log.debug("Account disable feature is disabled for tenanat :" + tenantDomain);
+                log.debug("Account disable feature is disabled for tenant :" + tenantDomain);
             }
             return;
         }
@@ -169,7 +169,7 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                     .ACCOUNT_DISABLED_CLAIM + " claim value", e);
         }
         if (Boolean.parseBoolean(accountDisabledClaim)) {
-            String message = null;
+            String message;
             if (StringUtils.isNotBlank(userStoreDomainName)) {
                 message = "Account is disabled for user " + userName + " in user store "
                         + userStoreDomainName + " in tenant " + tenantDomain + ". Cannot login until the " +
@@ -177,6 +177,10 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
             } else {
                 message = "Account is disabled for user " + userName + " in tenant " + tenantDomain + ". Cannot" +
                         " login until the account is enabled.";
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("Authentication failed for user %s as the account is disabled", userName));
             }
 
             IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(
@@ -247,9 +251,19 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
 
         try {
             if (disabledStates.ENABLED_MODIFIED.toString().equals(disabledState.get())) {
+
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("User %s is enabled", userName));
+                }
+
                 triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
                         AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_ENABLED);
             } else if (disabledStates.DISABLED_MODIFIED.toString().equals(disabledState.get())) {
+
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("User %s is disabled", userName));
+                }
+
                 triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
                         AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_DISABLED);
             }
