@@ -86,6 +86,7 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
     public Map<String, String> getPropertyNameMapping() {
         Map<String, String> nameMapping = new HashMap<>();
         nameMapping.put(AccountConstants.ACCOUNT_DISABLED_PROPERTY, "Enable Account Disabling");
+        nameMapping.put(AccountConstants.ACCOUNT_DISABLED_NOTIFICATION_INTERNALLY_MANAGE, "Enable Notification Internally Management");
         return nameMapping;
     }
 
@@ -93,6 +94,7 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
     public Map<String, String> getPropertyDescriptionMapping() {
         Map<String, String> descriptionMapping = new HashMap<>();
         descriptionMapping.put(AccountConstants.ACCOUNT_DISABLED_PROPERTY, "Enable account disable Feature");
+        descriptionMapping.put(AccountConstants.ACCOUNT_DISABLED_NOTIFICATION_INTERNALLY_MANAGE, "Set false if the client application handles notification sending");
         return descriptionMapping;
     }
 
@@ -100,6 +102,7 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
     public String[] getPropertyNames() {
         List<String> properties = new ArrayList<>();
         properties.add(AccountConstants.ACCOUNT_DISABLED_PROPERTY);
+        properties.add(AccountConstants.ACCOUNT_DISABLED_NOTIFICATION_INTERNALLY_MANAGE);
 
         return properties.toArray(new String[properties.size()]);
     }
@@ -250,22 +253,39 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                                                    String tenantDomain) throws AccountLockException {
 
         try {
+
+            boolean notificationInternallyManage = true;
+
+            try {
+                notificationInternallyManage = Boolean.parseBoolean(AccountUtil.getConnectorConfig(AccountConstants
+                        .ACCOUNT_DISABLED_NOTIFICATION_INTERNALLY_MANAGE, tenantDomain));
+            } catch (IdentityEventException e) {
+                log.warn("Error while reading Notification internally manage property in account lock handler");
+                if (log.isDebugEnabled()) {
+                    log.debug("Error while reading Notification internally manage property in account lock handler", e);
+                }
+            }
+
             if (disabledStates.ENABLED_MODIFIED.toString().equals(disabledState.get())) {
 
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("User %s is enabled", userName));
                 }
 
-                triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
-                        AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_ENABLED);
+                if (notificationInternallyManage) {
+                    triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                            AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_ENABLED);
+                }
             } else if (disabledStates.DISABLED_MODIFIED.toString().equals(disabledState.get())) {
 
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("User %s is disabled", userName));
                 }
 
-                triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
-                        AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_DISABLED);
+                if (notificationInternallyManage) {
+                    triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                            AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_DISABLED);
+                }
             }
         } finally {
             disabledState.remove();
