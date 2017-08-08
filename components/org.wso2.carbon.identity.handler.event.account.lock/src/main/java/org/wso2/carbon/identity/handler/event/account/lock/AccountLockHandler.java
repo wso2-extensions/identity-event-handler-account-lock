@@ -91,6 +91,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         nameMapping.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY, "Maximum Failed Login Attempts");
         nameMapping.put(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY, "Account Unlock Time");
         nameMapping.put(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY, "Lock Timeout Increment Factor");
+        nameMapping.put(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE, "Enable Notification Internally Management");
         return nameMapping;
     }
 
@@ -100,6 +101,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         descriptionMapping.put(AccountConstants.ACCOUNT_LOCKED_PROPERTY, "Enable account locking for failed logins");
         descriptionMapping.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY, "Number of failed attempts allows without locking the account");
         descriptionMapping.put(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY, "Account locked time span in minutes");
+        descriptionMapping.put(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE, "Set false if the client application handles notification sending");
         return descriptionMapping;
     }
 
@@ -389,22 +391,38 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             throws AccountLockException {
 
         try {
+            boolean notificationInternallyManage = true;
+
+            try {
+                 notificationInternallyManage = Boolean.parseBoolean(AccountUtil.getConnectorConfig(AccountConstants
+                        .NOTIFICATION_INTERNALLY_MANAGE, tenantDomain));
+            } catch (IdentityEventException e) {
+                log.warn("Error while reading Notification internally manage property in account lock handler");
+                if (log.isDebugEnabled()) {
+                    log.debug("Error while reading Notification internally manage property in account lock handler", e);
+                }
+            }
+
             if (lockedStates.UNLOCKED_MODIFIED.toString().equals(lockedState.get())) {
 
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("User %s is unlocked", userName));
                 }
 
-                triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
-                        AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED);
+                if (notificationInternallyManage) {
+                    triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
+                            AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED);
+                }
             } else if (lockedStates.LOCKED_MODIFIED.toString().equals(lockedState.get())) {
 
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("User %s is locked", userName));
                 }
 
-                triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
-                        AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED);
+                if (notificationInternallyManage) {
+                    triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
+                            AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED);
+                }
             }
         } finally {
             lockedState.remove();
@@ -418,6 +436,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         properties.add(AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY);
         properties.add(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY);
         properties.add(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY);
+        properties.add(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE);
 
         return properties.toArray(new String[properties.size()]);
     }
