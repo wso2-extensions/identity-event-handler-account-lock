@@ -187,6 +187,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                                               String accountLockTime, double unlockTimeRatio)
             throws AccountLockException {
 
+        if (isAuthPolicyAccountExistCheck() && !isUserExistsInDomain(userStoreManager, userName)) {
+            IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(UserCoreConstants
+                    .ErrorCode.USER_DOES_NOT_EXIST);
+            IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
+        }
+
         if (isAccountLock(userName, userStoreManager)) {
             //User account is locked. If the current time is not exceeded user unlock time, send a error message
             // saying user is locked, otherwise users can try to authenticate and unlock their account upon a
@@ -509,5 +515,24 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         }
         return Boolean.parseBoolean(accountLockedClaim);
     }
+
+    private boolean isUserExistsInDomain(UserStoreManager userStoreManager, String userName) throws AccountLockException {
+
+        boolean isExists = false;
+        try {
+            if (userStoreManager.isExistingUser(userName)) {
+                isExists = true;
+            }
+        } catch (UserStoreException e) {
+            throw new AccountLockException("Error occurred while check user existence: " + userName, e);
+        }
+        return isExists;
+    }
+
+    private boolean isAuthPolicyAccountExistCheck() {
+
+        return Boolean.parseBoolean(IdentityUtil.getProperty("AuthenticationPolicy.CheckAccountExist"));
+    }
+
 
 }
