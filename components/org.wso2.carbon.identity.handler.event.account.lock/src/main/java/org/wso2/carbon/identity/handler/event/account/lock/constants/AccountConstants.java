@@ -28,7 +28,7 @@ public class AccountConstants {
 
     public static final String ACCOUNT_LOCKED_PROPERTY = "account.lock.handler.enable";
     public static final String ACCOUNT_DISABLED_PROPERTY = "account.disable.handler.enable";
-    public static final String ACCOUNT_DISABLED_NOTIFICATION_INTERNALLY_MANAGE = "account.disable.handler.notification.internally.manage";
+    public static final String ACCOUNT_DISABLED_NOTIFICATION_INTERNALLY_MANAGE = "account.disable.handler.notification.manageInternally";
 
     public static final String ACCOUNT_UNLOCK_TIME_PROPERTY = "account.lock.handler.Time";
     public static final String FAILED_LOGIN_ATTEMPTS_PROPERTY = "account.lock.handler.On.Failure.Max.Attempts";
