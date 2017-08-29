@@ -57,9 +57,11 @@ public class AccountUtil {
             Property[] connectorConfigs;
             IdentityGovernanceService identityGovernanceService = AccountServiceDataHolder.getInstance()
                     .getIdentityGovernanceService();
-            connectorConfigs = identityGovernanceService.getConfiguration(new String[]{key}, tenantDomain);
-            if (connectorConfigs != null && connectorConfigs.length > 0) {
-                return connectorConfigs[0].getValue();
+            if (identityGovernanceService != null) {
+                connectorConfigs = identityGovernanceService.getConfiguration(new String[]{key}, tenantDomain);
+                if (connectorConfigs != null && connectorConfigs.length > 0) {
+                    return connectorConfigs[0].getValue();
+                }
             }
             return null;
         } catch (IdentityGovernanceException e) {
