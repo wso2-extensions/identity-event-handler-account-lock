@@ -26,6 +26,7 @@ import org.wso2.carbon.identity.handler.event.account.lock.constants.XACMLEndpoi
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,40 +37,33 @@ import java.util.Properties;
  */
 public class XACMLEndpointConfigImpl implements IdentityConnectorConfig {
 
-    private static String connectorName = "xacml";
-    private static final String lable = "lable";
+    private static final String label = "label";
 
     @Override
     public String getName() {
-
-        return connectorName;
+        return "xacml";
     }
 
     public String getFriendlyName() {
-
         return "XACML Endpoints";
     }
 
     @Override
     public String getCategory() {
-
         return "Inbound Authorization Endpoints";
     }
 
     @Override
     public String getSubCategory() {
-
         return "DEFAULT";
     }
 
     @Override
     public int getOrder() {
-
         return 0;
     }
 
     public Map<String, String> getPropertyNameMapping() {
-
         Map<String, String> nameMapping = new HashMap<>();
         nameMapping.put(XACMLEndpointConstants.XACML_DISCOVERY_ENDPOINT, "Discovery Endpoint");
         nameMapping.put(XACMLEndpointConstants.XACML_PDP_ENDPOINT, "PDP Endpoint");
@@ -78,15 +72,10 @@ public class XACMLEndpointConfigImpl implements IdentityConnectorConfig {
 
     @Override
     public Map<String, String> getPropertyDescriptionMapping() {
-
-        Map<String, String> descriptionMap = new HashMap<>();
-        descriptionMap.put(XACMLEndpointConstants.XACML_DISCOVERY_ENDPOINT, "endpoint");
-        descriptionMap.put(XACMLEndpointConstants.XACML_PDP_ENDPOINT, "endpoint");
-        return descriptionMap;
+        return Collections.emptyMap();
     }
 
     public String[] getPropertyNames() {
-
         List<String> properties = new ArrayList<>();
         properties.add(XACMLEndpointConstants.XACML_DISCOVERY_ENDPOINT);
         properties.add(XACMLEndpointConstants.XACML_PDP_ENDPOINT);
@@ -94,9 +83,7 @@ public class XACMLEndpointConfigImpl implements IdentityConnectorConfig {
     }
 
     public Properties getDefaultPropertyValues(String tenantDomain) throws IdentityGovernanceException {
-
         String tenantContext = "";
-
         if (!MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equalsIgnoreCase(tenantDomain)) {
             tenantContext = MultitenantConstants.TENANT_AWARE_URL_PREFIX + "/" + tenantDomain + "/";
         }
@@ -123,15 +110,14 @@ public class XACMLEndpointConfigImpl implements IdentityConnectorConfig {
 
     public Map<String, String> getDefaultPropertyValues(String[] propertyNames, String tenantDomain)
             throws IdentityGovernanceException {
-        return null;
+        return Collections.emptyMap();
     }
 
     @Override
     public Map<String, String> getPropertyTypeMapping() {
-
         Map<String, String> typeMap = new HashMap<>();
-        typeMap.put(XACMLEndpointConstants.XACML_DISCOVERY_ENDPOINT, lable);
-        typeMap.put(XACMLEndpointConstants.XACML_PDP_ENDPOINT, lable);
+        typeMap.put(XACMLEndpointConstants.XACML_DISCOVERY_ENDPOINT, label);
+        typeMap.put(XACMLEndpointConstants.XACML_PDP_ENDPOINT, label);
         return typeMap;
     }
 

@@ -41,6 +41,7 @@ import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -105,9 +106,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
     @Override
     public Map<String, String> getPropertyTypeMapping() {
-
-        Map<String, String> typeMapping = new HashMap<>();
-        return typeMapping;
+        return Collections.emptyMap();
     }
 
     @Override
@@ -117,7 +116,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
     @Override
     public void handleEvent(Event event) throws IdentityEventException {
-
         Map<String, Object> eventProperties = event.getEventProperties();
         String userName = (String) eventProperties.get(IdentityEventConstants.EventProperty.USER_NAME);
         UserStoreManager userStoreManager = (UserStoreManager) eventProperties.get(IdentityEventConstants.EventProperty.USER_STORE_MANAGER);

@@ -27,6 +27,7 @@ import org.wso2.carbon.identity.handler.event.account.lock.constants.IdentityMan
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,40 +39,33 @@ import java.util.Properties;
 public class IdentityManagementConfigImpl implements IdentityConnectorConfig {
 
     private static final String connectorName = "identity-management";
-    private static final String lable = "lable";
-
+    private static final String label = "label";
 
     @Override
     public String getName() {
-
         return connectorName;
     }
 
     public String getFriendlyName() {
-
         return "Identity Management Endpoints";
     }
 
     @Override
     public String getCategory() {
-
         return "DEFAULT";
     }
 
     @Override
     public String getSubCategory() {
-
         return "DEFAULT";
     }
 
     @Override
     public int getOrder() {
-
         return 0;
     }
 
     public Map<String, String> getPropertyNameMapping() {
-
         Map<String, String> nameMapping = new HashMap<>();
         nameMapping.put(IdentityManagementEndpointConstants.RECOVERY_REST_ENDPOINT, "Recovery Rest Endpoint");
         nameMapping.put(IdentityManagementEndpointConstants.SELF_REGISTRATION_ENDPOINT, "Self Registration Endpoint");
@@ -80,13 +74,10 @@ public class IdentityManagementConfigImpl implements IdentityConnectorConfig {
 
     @Override
     public Map<String, String> getPropertyDescriptionMapping() {
-
-        Map<String, String> descriptionMap = new HashMap<>();
-        return descriptionMap;
+        return Collections.emptyMap();
     }
 
     public String[] getPropertyNames() {
-
         List<String> properties = new ArrayList<>();
         properties.add(IdentityManagementEndpointConstants.RECOVERY_REST_ENDPOINT);
         properties.add(IdentityManagementEndpointConstants.SELF_REGISTRATION_ENDPOINT);
@@ -94,7 +85,6 @@ public class IdentityManagementConfigImpl implements IdentityConnectorConfig {
     }
 
     public Properties getDefaultPropertyValues(String tenantDomain) throws IdentityGovernanceException {
-
         String tenantContext = "";
 
         if (!MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equalsIgnoreCase(tenantDomain)) {
@@ -127,15 +117,14 @@ public class IdentityManagementConfigImpl implements IdentityConnectorConfig {
 
     public Map<String, String> getDefaultPropertyValues(String[] propertyNames, String tenantDomain)
             throws IdentityGovernanceException {
-        return null;
+        return Collections.emptyMap();
     }
 
     @Override
     public Map<String, String> getPropertyTypeMapping() {
-
         Map<String, String> typeMap = new HashMap<>();
-        typeMap.put(IdentityManagementEndpointConstants.RECOVERY_REST_ENDPOINT, lable);
-        typeMap.put(IdentityManagementEndpointConstants.SELF_REGISTRATION_ENDPOINT, lable);
+        typeMap.put(IdentityManagementEndpointConstants.RECOVERY_REST_ENDPOINT, label);
+        typeMap.put(IdentityManagementEndpointConstants.SELF_REGISTRATION_ENDPOINT, label);
         return typeMap;
     }
 

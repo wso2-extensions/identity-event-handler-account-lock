@@ -18,7 +18,6 @@
 package org.wso2.carbon.identity.handler.event.account.lock.constants;
 
 public class IdentityManagementEndpointConstants {
-
         public static final String RECOVERY_REST_ENDPOINT = "identity.management.recovery.rest.endpoint";
         public static final String SELF_REGISTRATION_ENDPOINT = "identity.management.self.registration.endpoint";
 

@@ -19,7 +19,6 @@
 package org.wso2.carbon.identity.handler.event.account.lock.constants;
 
 public class XACMLEndpointConstants {
-
     public static final String XACML_PDP_ENDPOINT = "xacml.pdp.endpoint";
     public static final String XACML_DISCOVERY_ENDPOINT = "xacml.discovery.endpoint";
 
