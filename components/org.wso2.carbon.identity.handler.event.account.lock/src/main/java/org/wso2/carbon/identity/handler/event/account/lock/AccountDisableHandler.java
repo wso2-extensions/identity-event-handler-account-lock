@@ -36,7 +36,9 @@ import org.wso2.carbon.identity.handler.event.account.lock.util.AccountUtil;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.user.core.UserCoreConstants;
+import org.wso2.carbon.user.core.UserStoreConfigConstants;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -126,6 +128,14 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                 .USER_STORE_MANAGER);
         String userStoreDomainName = AccountUtil.getUserStoreDomainName(userStoreManager);
         String tenantDomain = (String) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_DOMAIN);
+
+        // If the user store doesn't allow / support claim update  and read, skip this handler.
+        if (!IdentityUtil.isSupportedByUserStore(userStoreManager, UserStoreConfigConstants.claimOperationsSupported)) {
+            if (log.isDebugEnabled()) {
+                log.debug("Claim operations are not supported by the user store. Hence returning");
+            }
+            return;
+        }
 
         String usernameWithDomain = UserCoreUtil.addDomainToName(userName, userStoreDomainName);
         boolean isAccountDisabledEnabled = Boolean.parseBoolean(AccountUtil.getConnectorConfig(AccountConstants

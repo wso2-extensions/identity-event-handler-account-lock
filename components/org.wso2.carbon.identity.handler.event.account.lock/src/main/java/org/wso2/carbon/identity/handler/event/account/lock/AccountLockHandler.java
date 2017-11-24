@@ -37,15 +37,16 @@ import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLock
 import org.wso2.carbon.identity.handler.event.account.lock.internal.AccountServiceDataHolder;
 import org.wso2.carbon.identity.handler.event.account.lock.util.AccountUtil;
 import org.wso2.carbon.user.core.UserCoreConstants;
+import org.wso2.carbon.user.core.UserStoreConfigConstants;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.List;
-import java.util.ArrayList;
 
 public class AccountLockHandler extends AbstractEventHandler implements IdentityConnectorConfig {
 
@@ -118,6 +119,14 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         UserStoreManager userStoreManager = (UserStoreManager) eventProperties.get(IdentityEventConstants.EventProperty.USER_STORE_MANAGER);
         String userStoreDomainName = AccountUtil.getUserStoreDomainName(userStoreManager);
         String tenantDomain = (String) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_DOMAIN);
+
+        // If the user store doesn't allow / support claim update  and read, skip this handler.
+        if (!IdentityUtil.isSupportedByUserStore(userStoreManager, UserStoreConfigConstants.claimOperationsSupported)) {
+            if (log.isDebugEnabled()) {
+                log.debug("Claim operations are not supported by the user store. Hence returning");
+            }
+            return;
+        }
 
         Property[] identityProperties = null;
         Boolean accountLockedEnabled = false;
