@@ -298,17 +298,32 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 //Current falied attempts exceeded maximum allowed attempts. So ther user should be locked.
 
                 newClaims.put(AccountConstants.ACCOUNT_LOCKED_CLAIM, "true");
-                long unlockTimePropertyValue = 1;
                 if (NumberUtils.isNumber(accountLockTime)) {
-                    unlockTimePropertyValue = Integer.parseInt(accountLockTime);
+                    long unlockTimePropertyValue = Integer.parseInt(accountLockTime);
+                    if (unlockTimePropertyValue != 0) {
+
+                        if (log.isDebugEnabled()) {
+                            log.debug("Set account unlock time for user:" + userName + " of tenant domain: " +
+                                    tenantDomain + " userstore domain: " + userStoreDomainName + " adding account " +
+                                    "unlock time out: " + unlockTimePropertyValue + ", account lock timeout increment" +
+                                    " factor: " + unlockTimeRatio + " raised to the power of failed login attempt " +
+                                    "cycles: " + failedLoginLockoutCountValue);
+                        }
+
+                        /**
+                         * If account unlock time out is configured, calculates the account unlock time as below.
+                         * account unlock time =
+                         *      current system time + (account unlock time out configured + account lock time out
+                         *      increment factor raised to the power of failed login attempt cycles)
+                         */
+                        unlockTimePropertyValue = (long) (unlockTimePropertyValue * 1000 * 60 * Math.pow
+                                (unlockTimeRatio, failedLoginLockoutCountValue));
+                        long unlockTime = System.currentTimeMillis() + unlockTimePropertyValue;
+                        newClaims.put(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM, unlockTime + "");
+                    }
                 }
-                unlockTimePropertyValue = (long) (unlockTimePropertyValue * 1000 * 60 * Math.pow(unlockTimeRatio,
-                        failedLoginLockoutCountValue));
+
                 failedLoginLockoutCountValue = failedLoginLockoutCountValue + 1;
-
-                long unlockTime = System.currentTimeMillis() + Long.parseLong(unlockTimePropertyValue + "");
-
-                newClaims.put(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM, unlockTime + "");
                 newClaims.put(AccountConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, failedLoginLockoutCountValue + "");
                 newClaims.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_CLAIM, "0");
 
