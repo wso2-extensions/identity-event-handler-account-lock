@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2018, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import org.wso2.carbon.identity.base.IdentityException;
  * Thrown to indicate a failure of account lock service related operation.
  */
 public class AccountLockServiceException extends IdentityException {
-
 
     public AccountLockServiceException(String message) {
         super(message);
