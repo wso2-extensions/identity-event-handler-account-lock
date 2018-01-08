@@ -19,6 +19,7 @@ package org.wso2.carbon.identity.handler.event.account.lock.internal;
 import org.osgi.framework.BundleContext;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
+import org.wso2.carbon.user.core.service.RealmService;
 
 public class AccountServiceDataHolder {
 
@@ -27,6 +28,7 @@ public class AccountServiceDataHolder {
     private BundleContext bundleContext;
     private IdentityGovernanceService identityGovernanceService;
     private IdentityEventService identityEventService;
+    private RealmService realmService;
 
     private AccountServiceDataHolder(){
 
@@ -59,5 +61,13 @@ public class AccountServiceDataHolder {
 
     public void setIdentityEventService(IdentityEventService identityEventService) {
         this.identityEventService = identityEventService;
+    }
+
+    public RealmService getRealmService() {
+        return realmService;
+    }
+
+    public void setRealmService(RealmService realmService) {
+        this.realmService = realmService;
     }
 }
