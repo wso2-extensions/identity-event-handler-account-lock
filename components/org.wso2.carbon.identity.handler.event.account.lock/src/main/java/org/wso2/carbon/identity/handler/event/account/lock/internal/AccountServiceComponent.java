@@ -24,6 +24,9 @@ import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.handler.event.account.lock.AccountDisableHandler;
 import org.wso2.carbon.identity.handler.event.account.lock.AccountLockHandler;
+import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockService;
+import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockServiceImpl;
+import org.wso2.carbon.user.core.service.RealmService;
 
 /**
  * @scr.component name="handler.event.account.lock"
@@ -34,6 +37,9 @@ import org.wso2.carbon.identity.handler.event.account.lock.AccountLockHandler;
  * @scr.reference name="EventMgtService"
  * interface="org.wso2.carbon.identity.event.services.IdentityEventService" cardinality="1..1"
  * policy="dynamic" bind="setIdentityEventService" unbind="unsetIdentityEventService"
+ * @scr.reference name="RealmService"
+ * interface="org.wso2.carbon.user.core.service.RealmService" cardinality="1..1"
+ * policy="dynamic" bind="setRealmService" unbind="unsetRealmService"
  */
 public class AccountServiceComponent {
 
@@ -51,6 +57,11 @@ public class AccountServiceComponent {
         context.getBundleContext().registerService(AbstractEventHandler.class.getName(), accountDisableHandler, null);
         if (log.isDebugEnabled()) {
             log.debug("AccountDisableHandler is registered");
+        }
+        AccountLockService accountLockService = new AccountLockServiceImpl();
+        context.getBundleContext().registerService(AccountLockService.class.getName(), accountLockService, null);
+        if (log.isDebugEnabled()) {
+            log.debug("AccountLockService is registered");
         }
     }
 
@@ -74,6 +85,14 @@ public class AccountServiceComponent {
 
     protected void setIdentityEventService(IdentityEventService eventService) {
         AccountServiceDataHolder.getInstance().setIdentityEventService(eventService);
+    }
+
+    protected void setRealmService(RealmService realmService) {
+        AccountServiceDataHolder.getInstance().setRealmService(realmService);
+    }
+
+    protected void unsetRealmService(RealmService realmService) {
+        AccountServiceDataHolder.getInstance().setRealmService(null);
     }
 
 }
