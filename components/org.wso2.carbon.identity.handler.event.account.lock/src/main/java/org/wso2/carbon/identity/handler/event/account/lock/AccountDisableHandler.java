@@ -86,7 +86,7 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
     public Map<String, String> getPropertyNameMapping() {
         Map<String, String> nameMapping = new HashMap<>();
         nameMapping.put(AccountConstants.ACCOUNT_DISABLED_PROPERTY, "Enable Account Disabling");
-        nameMapping.put(AccountConstants.ACCOUNT_DISABLED_NOTIFICATION_INTERNALLY_MANAGE, "Enable Notification Internally Management");
+        nameMapping.put(AccountConstants.ACCOUNT_DISABLED_NOTIFICATION_INTERNALLY_MANAGE, "Internal Notification Management");
         return nameMapping;
     }
 
