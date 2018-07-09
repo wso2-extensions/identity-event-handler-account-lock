@@ -65,7 +65,7 @@ public class AccountLockTenantMgtListener extends AbstractIdentityTenantMgtListe
                     getUserStoreManager().addRole(AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, null, null, false);
         } catch (org.wso2.carbon.user.api.UserStoreException e) {
             String errorMsg = String.format("Error in registering lock bypass role on tenant %d", tenantId);
-            log.debug(errorMsg);
+            log.error(errorMsg);
         }
     }
 
