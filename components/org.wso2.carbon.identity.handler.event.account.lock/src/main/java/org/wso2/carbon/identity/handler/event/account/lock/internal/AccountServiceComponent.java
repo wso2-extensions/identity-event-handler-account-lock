@@ -24,8 +24,11 @@ import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.handler.event.account.lock.AccountDisableHandler;
 import org.wso2.carbon.identity.handler.event.account.lock.AccountLockHandler;
+import org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants;
+import org.wso2.carbon.identity.handler.event.account.lock.listener.AccountLockTenantMgtListener;
 import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockService;
 import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockServiceImpl;
+import org.wso2.carbon.stratos.common.listeners.TenantMgtListener;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -63,6 +66,17 @@ public class AccountServiceComponent {
         if (log.isDebugEnabled()) {
             log.debug("AccountLockService is registered");
         }
+        AccountLockTenantMgtListener accountLockTenantMgtListener = new AccountLockTenantMgtListener();
+        context.getBundleContext().registerService(TenantMgtListener.class, accountLockTenantMgtListener, null);
+        if (log.isDebugEnabled()) {
+            log.debug("AccountLockTenantMgtListener is registered");
+        }
+        try {
+            AccountServiceDataHolder.getInstance().getRealmService().getBootstrapRealm().
+                    getUserStoreManager().addRole(AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, null, null, false);
+        } catch (org.wso2.carbon.user.api.UserStoreException e) {
+            log.error("Error in retrieving bootstrap realm");
+        }
     }
 
     protected void deactivate(ComponentContext context) {
@@ -94,5 +108,4 @@ public class AccountServiceComponent {
     protected void unsetRealmService(RealmService realmService) {
         AccountServiceDataHolder.getInstance().setRealmService(null);
     }
-
 }
