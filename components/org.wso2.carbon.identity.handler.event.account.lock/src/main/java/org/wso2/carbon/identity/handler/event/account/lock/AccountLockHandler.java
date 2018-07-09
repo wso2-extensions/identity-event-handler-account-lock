@@ -302,8 +302,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                         currentFailedAttempts, maximumFailedAttempts);
                 IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
                 String msg = String.format("Login attempt failed. Bypassing account locking for user %s", userName);
-                log.error(msg);
-                CarbonConstants.AUDIT_LOG.error(msg);
+                log.debug(msg);
             } else if (currentFailedAttempts >= maximumFailedAttempts) {
                 //Current falied attempts exceeded maximum allowed attempts. So ther user should be locked.
 
@@ -536,10 +535,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     .ACCOUNT_LOCKED_CLAIM + " claim value", e);
         }
         if (isAccountLockBypassRoleExist(userStoreManager, userName)) {
-            String error = String.format("Account lock feature is bypassed as lock bypass role is " +
+            String bypassInfo = String.format("Account lock feature is bypassed as lock bypass role is " +
                     "attached on to the user %s", userName);
-            log.info(error);
-            CarbonConstants.AUDIT_LOG.info(error);
+            log.info(bypassInfo);
+            CarbonConstants.AUDIT_LOG.info(bypassInfo);
             accountLockedClaim = "false";
         }
         return Boolean.parseBoolean(accountLockedClaim);

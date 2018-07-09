@@ -75,7 +75,7 @@ public class AccountServiceComponent {
             AccountServiceDataHolder.getInstance().getRealmService().getBootstrapRealm().
                     getUserStoreManager().addRole(AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, null, null, false);
         } catch (org.wso2.carbon.user.api.UserStoreException e) {
-            log.error(String.format("Error in retrieving bootstrap realm: %s", e.getMessage()));
+            log.debug(String.format("Error in retrieving bootstrap realm: %s", e.getMessage()));
         }
     }
 
