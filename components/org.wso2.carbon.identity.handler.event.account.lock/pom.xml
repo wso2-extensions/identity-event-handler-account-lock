@@ -113,6 +113,11 @@
                             version="${carbon.identity.framework.imp.pkg.version.range}",
 
                             org.wso2.carbon.stratos.common.*; version="${carbon.commons.imp.pkg.version}",
+                            org.wso2.carbon.utils.*; version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon; version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.context; version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.core.util; version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.ui; version="${carbon.kernel.package.import.version.range}",
 
                             org.wso2.carbon.identity.governance;
                             version="${identity.governance.imp.pkg.version.range}",
