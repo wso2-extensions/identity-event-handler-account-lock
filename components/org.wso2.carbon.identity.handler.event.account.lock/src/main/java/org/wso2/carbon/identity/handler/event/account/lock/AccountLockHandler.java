@@ -195,40 +195,41 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
         }
 
-        if (!isAccountLockBypassRoleExist(userStoreManager, userName)) {
-            if (isAccountLock(userName, userStoreManager)) {
-                //User account is locked. If the current time is not exceeded user unlock time, send a error message
-                // saying user is locked, otherwise users can try to authenticate and unlock their account upon a
-                // successful authentication.
-
-                long unlockTime = getUnlockTime(userName, userStoreManager);
-
-                if (System.currentTimeMillis() < unlockTime || unlockTime == 0) {
-
-                    String message;
-                    if (StringUtils.isNotBlank(userStoreDomainName)) {
-                        message = "Account is locked for user " + userName + " in user store "
-                                + userStoreDomainName + " in tenant " + tenantDomain + ". Cannot login until the " +
-                                "account is unlocked.";
-                    } else {
-                        message = "Account is locked for user " + userName + " in tenant " + tenantDomain + ". Cannot" +
-                                " login until the account is unlocked.";
-                    }
-
-                    if (log.isDebugEnabled()) {
-                        log.debug(message);
-                    }
-
-                    IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(UserCoreConstants.ErrorCode.USER_IS_LOCKED);
-                    IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
-                    throw new AccountLockException(UserCoreConstants.ErrorCode.USER_IS_LOCKED, message);
-                }
+        if (isAccountLock(userName, userStoreManager)) {
+            if (isAccountLockBypassRoleExist(userStoreManager, userName)) {
+                String bypassMsg = String.format("Account lock feature is bypassed as lock bypass role is " +
+                        "attached on to the user %s", userName);
+                log.debug(bypassMsg);
+                CarbonConstants.AUDIT_LOG.debug(bypassMsg);
+                return true;
             }
-        } else {
-            String bypassMsg = String.format("Account lock feature is bypassed as lock bypass role is " +
-                    "attached on to the user %s", userName);
-            log.debug(bypassMsg);
-            CarbonConstants.AUDIT_LOG.debug(bypassMsg);
+
+            //User account is locked. If the current time is not exceeded user unlock time, send a error message
+            // saying user is locked, otherwise users can try to authenticate and unlock their account upon a
+            // successful authentication.
+
+            long unlockTime = getUnlockTime(userName, userStoreManager);
+
+            if (System.currentTimeMillis() < unlockTime || unlockTime == 0) {
+
+                String message;
+                if (StringUtils.isNotBlank(userStoreDomainName)) {
+                    message = "Account is locked for user " + userName + " in user store "
+                            + userStoreDomainName + " in tenant " + tenantDomain + ". Cannot login until the " +
+                            "account is unlocked.";
+                } else {
+                    message = "Account is locked for user " + userName + " in tenant " + tenantDomain + ". Cannot" +
+                            " login until the account is unlocked.";
+                }
+
+                if (log.isDebugEnabled()) {
+                    log.debug(message);
+                }
+
+                IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(UserCoreConstants.ErrorCode.USER_IS_LOCKED);
+                IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
+                throw new AccountLockException(UserCoreConstants.ErrorCode.USER_IS_LOCKED, message);
+            }
         }
         return true;
     }
@@ -270,8 +271,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 unlockTime = Long.parseLong(userClaimValue);
             }
             if (unlockTime != 0 && System.currentTimeMillis() >= unlockTime || currentFailedAttempts > 0
-                    || (Boolean.parseBoolean(accountLockClaim)
-                    && isAccountLockBypassRoleExist(userStoreManager, userName))) {
+                    || isBypassRoleAttachedAccountLocked(accountLockClaim, userName, userStoreManager)) {
                 Map<String, String> newClaims = new HashMap<>();
                 newClaims.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_CLAIM, "0");
                 newClaims.put(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM, "0");
@@ -313,6 +313,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
                 String msg = String.format("Login attempt failed. Bypassing account locking for user %s", userName);
                 log.debug(msg);
+                return true;
             } else if (currentFailedAttempts >= maximumFailedAttempts) {
                 //Current falied attempts exceeded maximum allowed attempts. So ther user should be locked.
 
@@ -370,6 +371,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             }
         }
         return true;
+    }
+
+    private boolean isBypassRoleAttachedAccountLocked(String accountLockClaim, String userName,
+                                                    UserStoreManager userStoreManager) throws AccountLockException {
+
+        return (Boolean.parseBoolean(accountLockClaim) && isAccountLockBypassRoleExist(userStoreManager, userName));
     }
 
     protected boolean handlePreSetUserClaimValues(Event event, String userName, UserStoreManager userStoreManager,
