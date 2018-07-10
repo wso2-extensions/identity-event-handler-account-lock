@@ -20,7 +20,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
 import org.wso2.carbon.identity.core.handler.InitConfig;
@@ -41,7 +40,6 @@ import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
-import org.wso2.carbon.user.mgt.listeners.UserMgtAuditLogger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -196,11 +194,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         }
 
         if (isAccountLock(userName, userStoreManager)) {
-            if (isAccountLockBypassRoleExist(userStoreManager, userName)) {
-                String bypassMsg = String.format("Account lock feature is bypassed as lock bypass role is " +
-                        "attached on to the user %s", userName);
-                log.debug(bypassMsg);
-                CarbonConstants.AUDIT_LOG.debug(bypassMsg);
+            if (isAccountLockByPassForUser(userStoreManager, userName)) {
+                if (log.isDebugEnabled()) {
+                    String bypassMsg = String.format("Account locking is bypassed as lock bypass role is " +
+                            "attached on to the user %s", userName);
+                    log.debug(bypassMsg);
+                }
                 return true;
             }
 
@@ -306,13 +305,15 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             Map<String, String> newClaims = new HashMap<>();
             newClaims.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_CLAIM, currentFailedAttempts + "");
 
-            if (isAccountLockBypassRoleExist(userStoreManager, userName)) {
+            if (isAccountLockByPassForUser(userStoreManager, userName)) {
                 IdentityErrorMsgContext customErrorMessageContext =
                         new IdentityErrorMsgContext(UserCoreConstants.ErrorCode.INVALID_CREDENTIAL,
                                 currentFailedAttempts, maximumFailedAttempts);
                 IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
-                String msg = String.format("Login attempt failed. Bypassing account locking for user %s", userName);
-                log.debug(msg);
+                if (log.isDebugEnabled()) {
+                    String msg = String.format("Login attempt failed. Bypassing account locking for user %s", userName);
+                    log.debug(msg);
+                }
                 return true;
             } else if (currentFailedAttempts >= maximumFailedAttempts) {
                 //Current falied attempts exceeded maximum allowed attempts. So ther user should be locked.
@@ -376,7 +377,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     private boolean isBypassRoleAttachedAccountLocked(String accountLockClaim, String userName,
                                                     UserStoreManager userStoreManager) throws AccountLockException {
 
-        return (Boolean.parseBoolean(accountLockClaim) && isAccountLockBypassRoleExist(userStoreManager, userName));
+        return (Boolean.parseBoolean(accountLockClaim) && isAccountLockByPassForUser(userStoreManager, userName));
     }
 
     protected boolean handlePreSetUserClaimValues(Event event, String userName, UserStoreManager userStoreManager,
@@ -572,7 +573,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         return Boolean.parseBoolean(IdentityUtil.getProperty("AuthenticationPolicy.CheckAccountExist"));
     }
 
-    private boolean isAccountLockBypassRoleExist(UserStoreManager userStoreManager, String userName) throws AccountLockException {
+    private boolean isAccountLockByPassForUser(UserStoreManager userStoreManager, String userName) throws AccountLockException {
 
         try {
             String[] roleList = userStoreManager.getRoleListOfUser(userName);

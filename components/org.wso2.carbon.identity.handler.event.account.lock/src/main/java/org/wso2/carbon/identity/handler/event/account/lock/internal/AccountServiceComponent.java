@@ -75,7 +75,7 @@ public class AccountServiceComponent {
             AccountServiceDataHolder.getInstance().getRealmService().getBootstrapRealm().
                     getUserStoreManager().addRole(AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, null, null, false);
         } catch (org.wso2.carbon.user.api.UserStoreException e) {
-            log.error(String.format("Error in saving role in bootstrap realm: %s", e.getMessage()));
+            log.error(String.format("Error while saving role: %s .", AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE), e);
         }
     }
 
