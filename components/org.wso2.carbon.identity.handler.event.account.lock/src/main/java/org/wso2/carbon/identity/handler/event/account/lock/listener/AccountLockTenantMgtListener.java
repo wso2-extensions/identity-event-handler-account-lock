@@ -64,7 +64,7 @@ public class AccountLockTenantMgtListener extends AbstractIdentityTenantMgtListe
             AccountServiceDataHolder.getInstance().getRealmService().getTenantUserRealm(tenantId).
                     getUserStoreManager().addRole(AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, null, null, false);
         } catch (org.wso2.carbon.user.api.UserStoreException e) {
-            log.error(String.format("Error while saving role: %s on Tenant: %d",
+            log.error(String.format("Error while adding role: %s on Tenant: %d",
                     AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, tenantId), e);
         }
     }

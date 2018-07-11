@@ -29,6 +29,7 @@ import org.wso2.carbon.identity.handler.event.account.lock.listener.AccountLockT
 import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockService;
 import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockServiceImpl;
 import org.wso2.carbon.stratos.common.listeners.TenantMgtListener;
+import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -72,10 +73,13 @@ public class AccountServiceComponent {
             log.debug("AccountLockTenantMgtListener is registered");
         }
         try {
-            AccountServiceDataHolder.getInstance().getRealmService().getBootstrapRealm().
-                    getUserStoreManager().addRole(AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, null, null, false);
+            UserStoreManager userStoreManager = AccountServiceDataHolder.getInstance().getRealmService().getBootstrapRealm().
+                    getUserStoreManager();
+            if (!userStoreManager.isExistingRole(AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE)) {
+                userStoreManager.addRole(AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, null, null, false);
+            }
         } catch (org.wso2.carbon.user.api.UserStoreException e) {
-            log.error(String.format("Error while saving role: %s .", AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE), e);
+            log.error(String.format("Error while adding role: %s .", AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE), e);
         }
     }
 

@@ -196,8 +196,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         if (isAccountLock(userName, userStoreManager)) {
             if (isAccountLockByPassForUser(userStoreManager, userName)) {
                 if (log.isDebugEnabled()) {
-                    String bypassMsg = String.format("Account locking is bypassed as lock bypass role is " +
-                            "attached on to the user %s", userName);
+                    String bypassMsg = String.format("Account locking is bypassed as lock bypass role: %s is " +
+                            "assigned to the user %s", AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, userName);
                     log.debug(bypassMsg);
                 }
                 return true;
@@ -269,8 +269,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             if (NumberUtils.isNumber(userClaimValue)) {
                 unlockTime = Long.parseLong(userClaimValue);
             }
-            if (unlockTime != 0 && System.currentTimeMillis() >= unlockTime || currentFailedAttempts > 0
-                    || isBypassRoleAttachedAccountLocked(accountLockClaim, userName, userStoreManager)) {
+            if (isUserUnlock(userName, userStoreManager, currentFailedAttempts, unlockTime, accountLockClaim)) {
                 Map<String, String> newClaims = new HashMap<>();
                 newClaims.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_CLAIM, "0");
                 newClaims.put(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM, "0");
@@ -281,8 +280,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     userStoreManager.setUserClaimValues(userName, newClaims, null);
 
                     if (log.isDebugEnabled()) {
-                        log.debug(String.format("User %s is unlocked after exceeding the account locked time",
-                                userName));
+                        log.debug(String.format("User %s is unlocked after exceeding the account locked time or " +
+                                        "account lock bypassing is enabled", userName));
                     }
                 } catch (UserStoreException e) {
                     throw new AccountLockException("Error occurred while storing "
@@ -316,7 +315,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 }
                 return true;
             } else if (currentFailedAttempts >= maximumFailedAttempts) {
-                //Current falied attempts exceeded maximum allowed attempts. So ther user should be locked.
+                //Current failed attempts exceeded maximum allowed attempts. So their user should be locked.
 
                 newClaims.put(AccountConstants.ACCOUNT_LOCKED_CLAIM, "true");
                 if (NumberUtils.isNumber(accountLockTime)) {
@@ -374,10 +373,22 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         return true;
     }
 
-    private boolean isBypassRoleAttachedAccountLocked(String accountLockClaim, String userName,
-                                                    UserStoreManager userStoreManager) throws AccountLockException {
+    /**
+     *
+     * @param userName name of the logged in user
+     * @param userStoreManager user store
+     * @param currentFailedAttempts number of fail attempts
+     * @param unlockTime time which account can be unlocked
+     * @param accountLockClaim current lock claim value
+     * @return whether the account can be unlocked
+     * @throws AccountLockException
+     */
+    private boolean isUserUnlock(String userName, UserStoreManager userStoreManager, int currentFailedAttempts,
+                                 long unlockTime, String accountLockClaim) throws AccountLockException {
 
-        return (Boolean.parseBoolean(accountLockClaim) && isAccountLockByPassForUser(userStoreManager, userName));
+        return (unlockTime != 0 && System.currentTimeMillis() >= unlockTime)
+                || currentFailedAttempts > 0
+                || ((Boolean.parseBoolean(accountLockClaim) && isAccountLockByPassForUser(userStoreManager, userName)));
     }
 
     protected boolean handlePreSetUserClaimValues(Event event, String userName, UserStoreManager userStoreManager,
