@@ -34,26 +34,6 @@ public class AccountLockTenantMgtListener extends AbstractIdentityTenantMgtListe
     private static Log log = LogFactory.getLog(AccountLockTenantMgtListener.class);
 
     @Override
-    public void onTenantCreate(TenantInfoBean tenantInfo) throws StratosException {
-
-    }
-
-    @Override
-    public void onTenantUpdate(TenantInfoBean tenantInfo) throws StratosException {
-
-    }
-
-    @Override
-    public void onTenantDelete(int tenantId) {
-
-    }
-
-    @Override
-    public void onTenantRename(int tenantId, String oldDomainName, String newDomainName) throws StratosException {
-
-    }
-
-    @Override
     public void onTenantInitialActivation(int tenantId) throws StratosException {
 
         if (log.isDebugEnabled()) {
@@ -70,28 +50,8 @@ public class AccountLockTenantMgtListener extends AbstractIdentityTenantMgtListe
     }
 
     @Override
-    public void onTenantActivation(int tenantId) throws StratosException {
-
-    }
-
-    @Override
-    public void onTenantDeactivation(int tenantId) throws StratosException {
-
-    }
-
-    @Override
-    public void onSubscriptionPlanChange(int tenentId, String oldPlan, String newPlan) throws StratosException {
-
-    }
-
-    @Override
     public int getListenerOrder() {
 
         return 0;
-    }
-
-    @Override
-    public void onPreDelete(int tenantId) throws StratosException {
-
     }
 }
