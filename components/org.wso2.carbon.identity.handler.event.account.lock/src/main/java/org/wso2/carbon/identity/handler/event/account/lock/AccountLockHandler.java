@@ -589,7 +589,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
         try {
             String[] roleList = userStoreManager.getRoleListOfUser(userName);
-            if (roleList != null) {
+            if (!ArrayUtils.isEmpty(roleList)) {
                 return ArrayUtils.contains(roleList, AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE);
             }
         } catch (UserStoreException e) {
