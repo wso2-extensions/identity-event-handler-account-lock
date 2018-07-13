@@ -99,13 +99,7 @@
                             version="${carbon.identity.framework.imp.pkg.version.range}",
                             org.wso2.carbon.identity.base;
                             version="${carbon.identity.framework.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.core.bean.context;
-                            version="${carbon.identity.framework.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.core.handler;
-                            version="${carbon.identity.framework.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.core.util;
-                            version="${carbon.identity.framework.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.core.model;
+                            org.wso2.carbon.identity.core.*;
                             version="${carbon.identity.framework.imp.pkg.version.range}",
                             org.wso2.carbon.identity.event;
                             version="${carbon.identity.framework.imp.pkg.version.range}",
@@ -117,6 +111,12 @@
                             version="${carbon.identity.framework.imp.pkg.version.range}",
                             org.wso2.carbon.identity.event.services;
                             version="${carbon.identity.framework.imp.pkg.version.range}",
+
+                            org.wso2.carbon.stratos.common.*; version="${carbon.commons.imp.pkg.version}",
+                            org.wso2.carbon.utils.*; version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.context; version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.core.util; version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.ui; version="${carbon.kernel.package.import.version.range}",
 
                             org.wso2.carbon.identity.governance;
                             version="${identity.governance.imp.pkg.version.range}",

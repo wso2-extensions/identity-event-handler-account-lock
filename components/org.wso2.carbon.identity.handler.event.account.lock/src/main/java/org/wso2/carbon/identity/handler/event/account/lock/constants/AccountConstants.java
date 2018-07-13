@@ -41,5 +41,5 @@ public class AccountConstants {
     public static final String EMAIL_TEMPLATE_TYPE_ACC_DISABLED = "accountdisable";
     public static final String EMAIL_TEMPLATE_TYPE_ACC_ENABLED = "accountenable";
 
-
+    public static final String ACCOUNT_LOCK_BYPASS_ROLE = "Internal/system";
 }
