@@ -16,6 +16,7 @@
 
 package org.wso2.carbon.identity.handler.event.account.lock;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.logging.Log;
@@ -589,11 +590,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         try {
             String[] roleList = userStoreManager.getRoleListOfUser(userName);
             if (roleList != null) {
-                for (String roleName : roleList) {
-                    if (roleName.equals(AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE)) {
-                        return true;
-                    }
-                }
+                return ArrayUtils.contains(roleList, AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE);
             }
         } catch (UserStoreException e) {
             throw new AccountLockException("Error occurred while listing user role: " + userName, e);
