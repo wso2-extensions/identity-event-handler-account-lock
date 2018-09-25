@@ -92,7 +92,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         nameMapping.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY, "Maximum Failed Login Attempts");
         nameMapping.put(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY, "Account Unlock Time");
         nameMapping.put(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY, "Lock Timeout Increment Factor");
-        nameMapping.put(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE, "Enable Notification Internally Management");
+        nameMapping.put(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE, "Internal Notification Management");
         return nameMapping;
     }
 
