@@ -25,6 +25,8 @@ public class AccountConstants {
             "http://wso2.org/claims/identity/failedLoginAttempts";
     public static final String FAILED_LOGIN_LOCKOUT_COUNT_CLAIM =
             "http://wso2.org/claims/identity/failedLoginLockoutCount";
+    public static final String FAILED_LOGIN_ATTEMPTS_BEFORE_SUCCESS_CLAIM =
+            "http://wso2.org/claims/identity/failedLoginAttemptsBeforeSuccess";
 
     public static final String ACCOUNT_LOCKED_PROPERTY = "account.lock.handler.enable";
     public static final String ACCOUNT_DISABLED_PROPERTY = "account.disable.handler.enable";
