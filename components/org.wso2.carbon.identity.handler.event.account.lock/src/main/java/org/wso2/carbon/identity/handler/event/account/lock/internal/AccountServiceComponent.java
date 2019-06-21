@@ -13,12 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations und
  */
-
 package org.wso2.carbon.identity.handler.event.account.lock.internal;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
@@ -32,23 +37,14 @@ import org.wso2.carbon.stratos.common.listeners.TenantMgtListener;
 import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
-/**
- * @scr.component name="handler.event.account.lock"
- * immediate="true"
- * @scr.reference name="IdentityGovernanceService"
- * interface="org.wso2.carbon.identity.governance.IdentityGovernanceService" cardinality="1..1"
- * policy="dynamic" bind="setIdentityGovernanceService" unbind="unsetIdentityGovernanceService"
- * @scr.reference name="EventMgtService"
- * interface="org.wso2.carbon.identity.event.services.IdentityEventService" cardinality="1..1"
- * policy="dynamic" bind="setIdentityEventService" unbind="unsetIdentityEventService"
- * @scr.reference name="RealmService"
- * interface="org.wso2.carbon.user.core.service.RealmService" cardinality="1..1"
- * policy="dynamic" bind="setRealmService" unbind="unsetRealmService"
- */
+@Component(
+        name = "handler.event.account.lock",
+        immediate = true)
 public class AccountServiceComponent {
 
     private static Log log = LogFactory.getLog(AccountServiceComponent.class);
 
+    @Activate
     protected void activate(ComponentContext context) {
 
         AccountServiceDataHolder.getInstance().setBundleContext(context.getBundleContext());
@@ -73,8 +69,8 @@ public class AccountServiceComponent {
             log.debug("AccountLockTenantMgtListener is registered");
         }
         try {
-            UserStoreManager userStoreManager = AccountServiceDataHolder.getInstance().getRealmService().getBootstrapRealm().
-                    getUserStoreManager();
+            UserStoreManager userStoreManager = AccountServiceDataHolder.getInstance().getRealmService()
+                    .getBootstrapRealm().getUserStoreManager();
             if (!userStoreManager.isExistingRole(AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE)) {
                 userStoreManager.addRole(AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, null, null, false);
             }
@@ -83,33 +79,59 @@ public class AccountServiceComponent {
         }
     }
 
+    @Deactivate
     protected void deactivate(ComponentContext context) {
+
         if (log.isDebugEnabled()) {
             log.debug("AccountLock bundle is de-activated");
         }
     }
 
     protected void unsetIdentityGovernanceService(IdentityGovernanceService identityGovernanceService) {
+
         AccountServiceDataHolder.getInstance().setIdentityGovernanceService(null);
     }
 
+    @Reference(
+            name = "IdentityGovernanceService",
+            service = org.wso2.carbon.identity.governance.IdentityGovernanceService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetIdentityGovernanceService")
     protected void setIdentityGovernanceService(IdentityGovernanceService identityGovernanceService) {
+
         AccountServiceDataHolder.getInstance().setIdentityGovernanceService(identityGovernanceService);
     }
 
     protected void unsetIdentityEventService(IdentityEventService eventService) {
+
         AccountServiceDataHolder.getInstance().setIdentityEventService(null);
     }
 
+    @Reference(
+            name = "EventMgtService",
+            service = org.wso2.carbon.identity.event.services.IdentityEventService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetIdentityEventService")
     protected void setIdentityEventService(IdentityEventService eventService) {
+
         AccountServiceDataHolder.getInstance().setIdentityEventService(eventService);
     }
 
+    @Reference(
+            name = "RealmService",
+            service = org.wso2.carbon.user.core.service.RealmService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetRealmService")
     protected void setRealmService(RealmService realmService) {
+
         AccountServiceDataHolder.getInstance().setRealmService(realmService);
     }
 
     protected void unsetRealmService(RealmService realmService) {
+
         AccountServiceDataHolder.getInstance().setRealmService(null);
     }
 }
