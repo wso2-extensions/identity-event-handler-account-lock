@@ -17,19 +17,29 @@
 package org.wso2.carbon.identity.handler.event.account.lock.util;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.governance.IdentityGovernanceException;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
+import org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants;
+import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockException;
 import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockRuntimeException;
 import org.wso2.carbon.identity.handler.event.account.lock.internal.AccountServiceDataHolder;
+import org.wso2.carbon.user.api.Claim;
+import org.wso2.carbon.user.api.ClaimManager;
+import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.user.core.UserCoreConstants;
+import org.wso2.carbon.user.core.service.RealmService;
 
 public class AccountUtil {
+
+    private static final Log log = LogFactory.getLog(AccountUtil.class);
 
     public static String getUserStoreDomainName(UserStoreManager userStoreManager) {
         String domainNameProperty = null;
@@ -69,4 +79,49 @@ public class AccountUtil {
         }
     }
 
+    public static boolean isAccountStateClaimExisting(String tenantDomain) throws AccountLockException {
+
+        UserRealm userRealm = null;
+        ClaimManager claimManager = null;
+
+        RealmService realmService = AccountServiceDataHolder.getInstance().getRealmService();
+        if (realmService != null) {
+            //get tenant's user realm
+            try {
+                int tenantId = realmService.getTenantManager().getTenantId(tenantDomain);
+                userRealm = realmService.getTenantUserRealm(tenantId);
+
+            } catch (UserStoreException e) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Error while retriving user realm in AccountUtil", e);
+                }
+                throw new AccountLockException("Error while retriving user realm in AccountUtil");
+            }
+        }
+        if (userRealm != null) {
+            //get claim manager for manipulating attributes
+            try {
+                claimManager = (ClaimManager) userRealm.getClaimManager();
+            } catch (UserStoreException e) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Error while retriving claim manager in AccountUtil", e);
+                }
+                throw new AccountLockException("Error while retriving claim manager in AccountUtil");
+            }
+        }
+
+        boolean isExist = false;
+        try {
+            Claim claim = claimManager.getClaim(AccountConstants.ACCOUNT_STATE_CLAIM_URI);
+            if (claim != null) {
+                isExist = true;
+            }
+        } catch (UserStoreException e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Error while checking accountState claim  from ClaimManager in AccountUtil", e);
+            }
+            throw new AccountLockException("Error while checking accountState claim  from ClaimManager");
+        }
+        return isExist;
+    }
 }

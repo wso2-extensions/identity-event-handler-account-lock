@@ -252,6 +252,7 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                                                    String userStoreDomainName,
                                                    String tenantDomain) throws AccountLockException {
 
+        String newAccountState = null;
         try {
 
             boolean notificationInternallyManage = true;
@@ -275,6 +276,8 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                 if (notificationInternallyManage) {
                     triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
                             AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_ENABLED);
+                    newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_ENABLED,
+                            userStoreManager, tenantDomain, userName);
                 }
             } else if (disabledStates.DISABLED_MODIFIED.toString().equals(disabledState.get())) {
 
@@ -285,10 +288,15 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                 if (notificationInternallyManage) {
                     triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
                             AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_DISABLED);
+                    newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_DISABLED, userStoreManager,
+                            tenantDomain, userName);
                 }
             }
         } finally {
             disabledState.remove();
+        }
+        if (StringUtils.isNotEmpty(newAccountState)) {
+            setUserClaim(AccountConstants.ACCOUNT_STATE_CLAIM_URI, newAccountState, userStoreManager, userName);
         }
         return true;
     }
@@ -315,6 +323,61 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
             if (log.isDebugEnabled()) {
                 log.debug(errorMsg, e);
             }
+        }
+    }
+
+    private String buildAccountState(String state, UserStoreManager userStoreManager, String tenantDomain,
+                                     String userName) {
+
+        String accountState = null;
+        try {
+            boolean isAccountStateClaimExist = AccountUtil.isAccountStateClaimExisting(tenantDomain);
+            if (isAccountStateClaimExist) {
+                boolean accountLocked = isAccountLocked(userStoreManager, userName);
+                if (state.equals(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_DISABLED)) {
+                    accountState = AccountConstants.DISABLED;
+                } else if (state.equals(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_ENABLED)) {
+                    if (!accountLocked) {
+                        accountState = AccountConstants.UNLOCKED;
+                    } else {
+                        accountState = AccountConstants.LOCKED;
+                    }
+                }
+            }
+        } catch (AccountLockException e) {
+            log.warn("Error while setting account state claim as locked in account lock handler");
+            if (log.isDebugEnabled()) {
+                log.debug("Error while setting account state claim as locked in account lock " +
+                        "handler", e);
+            }
+        }
+        return accountState;
+    }
+
+    private boolean isAccountLocked(UserStoreManager userStoreManager, String userName) throws AccountLockException {
+
+        boolean accountLocked = false;
+        try {
+            Map<String, String> claimValues = userStoreManager.getUserClaimValues(userName, new String[]{
+                    AccountConstants.ACCOUNT_LOCKED_CLAIM}, UserCoreConstants.DEFAULT_PROFILE);
+            accountLocked = Boolean.parseBoolean(claimValues.get(AccountConstants
+                    .ACCOUNT_LOCKED_CLAIM));
+        } catch (UserStoreException e) {
+            throw new AccountLockException("Error occurred while retrieving " + AccountConstants
+                    .ACCOUNT_LOCKED_CLAIM + " claim value", e);
+        }
+        return accountLocked;
+    }
+
+    private void setUserClaim(String claimName, String claimValue, UserStoreManager userStoreManager,
+                              String username) throws AccountLockException{
+
+        HashMap<String, String> userClaims = new HashMap<>();
+        userClaims.put(claimName, claimValue);
+        try {
+            userStoreManager.setUserClaimValues(username, userClaims, null);
+        } catch (UserStoreException e) {
+            throw new AccountLockException("Error while setting user claim value :" + username, e);
         }
     }
 }
