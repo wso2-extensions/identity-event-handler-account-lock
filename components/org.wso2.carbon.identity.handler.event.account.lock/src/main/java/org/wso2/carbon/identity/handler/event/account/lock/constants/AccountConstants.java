@@ -44,4 +44,12 @@ public class AccountConstants {
     public static final String EMAIL_TEMPLATE_TYPE_ACC_ENABLED = "accountenable";
 
     public static final String ACCOUNT_LOCK_BYPASS_ROLE = "Internal/system";
+
+    public static final String ACCOUNT_STATE_CLAIM_URI = "http://wso2.org/claims/identity/accountState";
+    public static final String PENDING_SELF_REGISTRATION = "PENDING_SR";
+    public static final String PENDING_EMAIL_VERIFICATION = "PENDING_EV";
+    public static final String LOCKED = "LOCKED";
+    public static final String UNLOCKED = "UNLOCKED";
+    public static final String DISABLED = "DISABLED";
+
 }

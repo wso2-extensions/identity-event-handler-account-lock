@@ -457,9 +457,11 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                                                    String accountLockTime, double unlockTimeRatio)
             throws AccountLockException {
 
+        String newAccountState = null;
         try {
             boolean notificationInternallyManage = true;
 
+            String existingAccountStateClaimValue = getAccountState(userStoreManager, tenantDomain, userName);
             try {
                 notificationInternallyManage = Boolean.parseBoolean(AccountUtil.getConnectorConfig(AccountConstants
                         .NOTIFICATION_INTERNALLY_MANAGE, tenantDomain));
@@ -479,20 +481,36 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 if (notificationInternallyManage) {
                     triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
                             AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED);
+                    newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED,
+                            tenantDomain, userStoreManager, userName);
                 }
             } else if (lockedStates.LOCKED_MODIFIED.toString().equals(lockedState.get())) {
 
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("User %s is locked", userName));
                 }
-
                 if (notificationInternallyManage) {
-                    triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
-                            AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED);
+                    if (StringUtils.isNotEmpty(existingAccountStateClaimValue)) {
+                        // Send locked email only if the accountState claim value is PENDIG_SR or PENDING_EV.
+                        if (!existingAccountStateClaimValue.equals(AccountConstants.PENDING_SELF_REGISTRATION) && !existingAccountStateClaimValue.equals(AccountConstants.PENDING_EMAIL_VERIFICATION)) {
+                            triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
+                                    AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED);
+                            newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED,
+                                    tenantDomain, userStoreManager, userName);
+                        }
+                    } else {
+                        // If accountState claim is empty, send the email notification for account locking
+                        triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
+                                AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED);
+                    }
                 }
             }
         } finally {
             lockedState.remove();
+        }
+        if (StringUtils.isNotEmpty(newAccountState)) {
+            setUserClaim(AccountConstants.ACCOUNT_STATE_CLAIM_URI, newAccountState,
+                    userStoreManager, userName);
         }
         return true;
     }
@@ -612,5 +630,70 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             throw new AccountLockException("Error occurred while listing user role: " + userName, e);
         }
         return false;
+    }
+
+    private String buildAccountState(String state, String tenantDomain, UserStoreManager userStoreManager,
+                                     String userName) throws AccountLockException {
+
+        boolean isAccountStateClaimExist = AccountUtil.isAccountStateClaimExisting(tenantDomain);
+        String newAccountstate = null;
+        if (isAccountStateClaimExist) {
+            if (isAccountDisabled(userStoreManager, userName)) {
+                // If accountDisabled claim is true, then set accountState=DISABLED
+                newAccountstate = AccountConstants.DISABLED;
+            } else if (state.equals(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED)) {
+                // If accountDisabled claim is false and accountLocked claim is false, then set
+                // accountState=UNLOCKED
+                newAccountstate = AccountConstants.UNLOCKED;
+            } else if (state.equals(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED)) {
+                // If accountDisabled claim is false and accountLocked claim is true, then set
+                // accountState=LOCKED
+                newAccountstate = AccountConstants.LOCKED;
+            }
+        }
+        return newAccountstate;
+    }
+
+    private String getAccountState(UserStoreManager userStoreManager, String tenantDomain, String userName) throws AccountLockException {
+
+        String accountStateClaimValue = null;
+        try {
+            boolean isAccountStateClaimExist = AccountUtil.isAccountStateClaimExisting(tenantDomain);
+            if (isAccountStateClaimExist) {
+                Map<String, String> claimValues = userStoreManager.getUserClaimValues(userName, new String[]{
+                        AccountConstants.ACCOUNT_STATE_CLAIM_URI}, UserCoreConstants.DEFAULT_PROFILE);
+                accountStateClaimValue = claimValues.get(AccountConstants.ACCOUNT_STATE_CLAIM_URI);
+            }
+        } catch (UserStoreException e) {
+            throw new AccountLockException("Error occurred while retrieving account state claim value", e);
+        }
+        return accountStateClaimValue;
+    }
+
+    private boolean isAccountDisabled(UserStoreManager userStoreManager, String userName) throws AccountLockException {
+
+        boolean accountDisabled = false;
+        try {
+            Map<String, String> claimValues = userStoreManager.getUserClaimValues(userName, new String[]{
+                    AccountConstants.ACCOUNT_DISABLED_CLAIM}, UserCoreConstants.DEFAULT_PROFILE);
+            accountDisabled = Boolean.parseBoolean(claimValues.get(AccountConstants
+                    .ACCOUNT_DISABLED_CLAIM));
+        } catch (org.wso2.carbon.user.api.UserStoreException e) {
+            throw new AccountLockException("Error occurred while retrieving " + AccountConstants
+                    .ACCOUNT_DISABLED_CLAIM + " claim value", e);
+        }
+        return accountDisabled;
+    }
+
+    private void setUserClaim(String claimName, String claimValue, UserStoreManager userStoreManager,
+                              String username) throws AccountLockException {
+
+        HashMap<String, String> userClaims = new HashMap<>();
+        userClaims.put(claimName, claimValue);
+        try {
+            userStoreManager.setUserClaimValues(username, userClaims, null);
+        } catch (UserStoreException e) {
+            throw new AccountLockException("Error while setting user claim value :" + username, e);
+        }
     }
 }
