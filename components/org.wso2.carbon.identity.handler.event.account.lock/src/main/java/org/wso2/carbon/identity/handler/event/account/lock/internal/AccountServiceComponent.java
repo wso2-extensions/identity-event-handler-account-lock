@@ -42,7 +42,7 @@ import org.wso2.carbon.user.core.service.RealmService;
         immediate = true)
 public class AccountServiceComponent {
 
-    private static Log log = LogFactory.getLog(AccountServiceComponent.class);
+    private static final Log log = LogFactory.getLog(AccountServiceComponent.class);
 
     @Activate
     protected void activate(ComponentContext context) {

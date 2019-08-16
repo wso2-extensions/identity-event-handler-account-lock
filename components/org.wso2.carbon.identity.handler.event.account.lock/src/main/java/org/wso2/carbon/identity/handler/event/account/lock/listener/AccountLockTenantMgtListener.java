@@ -31,7 +31,7 @@ import org.wso2.carbon.stratos.common.exception.StratosException;
  */
 public class AccountLockTenantMgtListener extends AbstractIdentityTenantMgtListener {
 
-    private static Log log = LogFactory.getLog(AccountLockTenantMgtListener.class);
+    private static final Log log = LogFactory.getLog(AccountLockTenantMgtListener.class);
 
     @Override
     public void onTenantInitialActivation(int tenantId) throws StratosException {
