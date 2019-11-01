@@ -492,9 +492,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 if (notificationInternallyManage) {
                     if (StringUtils.isNotEmpty(existingAccountStateClaimValue)) {
                         // Send locked email only if the accountState claim value is PENDIG_SR or PENDING_EV.
-                        if (!existingAccountStateClaimValue.equals(AccountConstants.PENDING_SELF_REGISTRATION) && !existingAccountStateClaimValue.equals(AccountConstants.PENDING_EMAIL_VERIFICATION)) {
-                            triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
-                                    AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED);
+                        if (!existingAccountStateClaimValue.equals(AccountConstants.PENDING_SELF_REGISTRATION) &&
+                                !existingAccountStateClaimValue.equals(AccountConstants.PENDING_EMAIL_VERIFICATION)) {
+                            triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                                    identityProperties, AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED);
                             newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED,
                                     tenantDomain, userStoreManager, userName);
                         }
@@ -654,7 +655,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         return newAccountstate;
     }
 
-    private String getAccountState(UserStoreManager userStoreManager, String tenantDomain, String userName) throws AccountLockException {
+    private String getAccountState(UserStoreManager userStoreManager, String tenantDomain, String userName)
+            throws AccountLockException {
 
         String accountStateClaimValue = null;
         try {

@@ -334,9 +334,9 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
             boolean isAccountStateClaimExist = AccountUtil.isAccountStateClaimExisting(tenantDomain);
             if (isAccountStateClaimExist) {
                 boolean accountLocked = isAccountLocked(userStoreManager, userName);
-                if (state.equals(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_DISABLED)) {
+                if (AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_DISABLED.equals(state)) {
                     accountState = AccountConstants.DISABLED;
-                } else if (state.equals(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_ENABLED)) {
+                } else if (AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_ENABLED.equals(state)) {
                     if (!accountLocked) {
                         accountState = AccountConstants.UNLOCKED;
                     } else {

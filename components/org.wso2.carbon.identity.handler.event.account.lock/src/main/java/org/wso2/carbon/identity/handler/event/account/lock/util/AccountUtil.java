@@ -83,44 +83,27 @@ public class AccountUtil {
 
         UserRealm userRealm = null;
         ClaimManager claimManager = null;
+        boolean isExist = false;
 
         RealmService realmService = AccountServiceDataHolder.getInstance().getRealmService();
         if (realmService != null) {
-            //get tenant's user realm
             try {
                 int tenantId = realmService.getTenantManager().getTenantId(tenantDomain);
+                // Get tenant's user realm.
                 userRealm = realmService.getTenantUserRealm(tenantId);
-
-            } catch (UserStoreException e) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Error while retriving user realm in AccountUtil", e);
+                if (userRealm != null) {
+                    // Get claim manager for manipulating attributes.
+                    claimManager = (ClaimManager) userRealm.getClaimManager();
+                    if (claimManager != null) {
+                        Claim claim = claimManager.getClaim(AccountConstants.ACCOUNT_STATE_CLAIM_URI);
+                        if (claim != null) {
+                            isExist = true;
+                        }
+                    }
                 }
-                throw new AccountLockException("Error while retriving user realm in AccountUtil");
-            }
-        }
-        if (userRealm != null) {
-            //get claim manager for manipulating attributes
-            try {
-                claimManager = (ClaimManager) userRealm.getClaimManager();
             } catch (UserStoreException e) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Error while retriving claim manager in AccountUtil", e);
-                }
-                throw new AccountLockException("Error while retriving claim manager in AccountUtil");
+                throw new AccountLockException("Error while retrieving accountState claim from ClaimManager.", e);
             }
-        }
-
-        boolean isExist = false;
-        try {
-            Claim claim = claimManager.getClaim(AccountConstants.ACCOUNT_STATE_CLAIM_URI);
-            if (claim != null) {
-                isExist = true;
-            }
-        } catch (UserStoreException e) {
-            if (log.isDebugEnabled()) {
-                log.debug("Error while checking accountState claim  from ClaimManager in AccountUtil", e);
-            }
-            throw new AccountLockException("Error while checking accountState claim  from ClaimManager");
         }
         return isExist;
     }
