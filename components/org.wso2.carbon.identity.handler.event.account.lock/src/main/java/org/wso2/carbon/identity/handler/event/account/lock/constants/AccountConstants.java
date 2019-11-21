@@ -37,8 +37,8 @@ public class AccountConstants {
     public static final String LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY = "account.lock.handler.login.fail.timeout.ratio";
     public static final String NOTIFICATION_INTERNALLY_MANAGE = "account.lock.handler.notification.manageInternally";
 
-    public static final String EMAIL_TEMPLATE_TYPE_ACC_LOCKED = "accountlock";
-    public static final String EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED = "accountunlock";
+    public static final String ACC_LOCKED = "accountlock";
+    public static final String ACC_UNLOCKED = "accountunlock";
 
     public static final String EMAIL_TEMPLATE_TYPE_ACC_DISABLED = "accountdisable";
     public static final String EMAIL_TEMPLATE_TYPE_ACC_ENABLED = "accountenable";

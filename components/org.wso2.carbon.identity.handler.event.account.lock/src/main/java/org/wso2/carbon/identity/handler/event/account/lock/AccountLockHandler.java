@@ -473,12 +473,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     log.debug("Error while reading Notification internally manage property in account lock handler", e);
                 }
             }
-            boolean isAdminInitiated;
+            boolean isAdminInitiated = true;
             if (IdentityUtil.threadLocalProperties.get().get(AccountConstants.ADMIN_INITIATED) != null) {
                 isAdminInitiated = (boolean) IdentityUtil.threadLocalProperties.get()
                         .get(AccountConstants.ADMIN_INITIATED);
-            } else {
-                isAdminInitiated = true;
             }
 
             if (lockedStates.UNLOCKED_MODIFIED.toString().equals(lockedState.get())) {
@@ -495,7 +493,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                         triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
                                 identityProperties, AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_TIME_BASED);
                     }
-                    newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED,
+                    newAccountState = buildAccountState(AccountConstants.ACC_UNLOCKED,
                             tenantDomain, userStoreManager, userName);
                 }
             } else if (lockedStates.LOCKED_MODIFIED.toString().equals(lockedState.get())) {
@@ -514,10 +512,9 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
                                     identityProperties, AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT);
                         }
-                        if (!existingAccountStateClaimValue.equals(AccountConstants.PENDING_SELF_REGISTRATION)
-                                && !existingAccountStateClaimValue
-                                .equals(AccountConstants.PENDING_EMAIL_VERIFICATION)) {
-                            newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED,
+                        if (!AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue)
+                                && !AccountConstants.PENDING_EMAIL_VERIFICATION.equals(existingAccountStateClaimValue)) {
+                            newAccountState = buildAccountState(AccountConstants.ACC_LOCKED,
                                     tenantDomain, userStoreManager, userName);
                         }
                     }
@@ -659,11 +656,11 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             if (isAccountDisabled(userStoreManager, userName)) {
                 // If accountDisabled claim is true, then set accountState=DISABLED
                 newAccountstate = AccountConstants.DISABLED;
-            } else if (state.equals(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED)) {
+            } else if (state.equals(AccountConstants.ACC_UNLOCKED)) {
                 // If accountDisabled claim is false and accountLocked claim is false, then set
                 // accountState=UNLOCKED
                 newAccountstate = AccountConstants.UNLOCKED;
-            } else if (state.equals(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED)) {
+            } else if (state.equals(AccountConstants.ACC_LOCKED)) {
                 // If accountDisabled claim is false and accountLocked claim is true, then set
                 // accountState=LOCKED
                 newAccountstate = AccountConstants.LOCKED;
