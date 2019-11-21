@@ -284,6 +284,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 newClaims.put(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM, "0");
                 newClaims.put(AccountConstants.ACCOUNT_LOCKED_CLAIM, Boolean.FALSE.toString());
                 newClaims.put(AccountConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, "0");
+                IdentityUtil.threadLocalProperties.get().put(AccountConstants.ADMIN_INITIATED, false);
             }
             try {
                 userStoreManager.setUserClaimValues(userName, newClaims, null);
@@ -365,6 +366,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("User %s is locked since he/she exceeded the maximum allowed failed attempts", userName));
                 }
+                IdentityUtil.threadLocalProperties.get().put(AccountConstants.ADMIN_INITIATED, false);
 
             } else {
                 IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(UserCoreConstants.ErrorCode.INVALID_CREDENTIAL,
@@ -471,6 +473,13 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     log.debug("Error while reading Notification internally manage property in account lock handler", e);
                 }
             }
+            boolean isAdminInitiated;
+            if (IdentityUtil.threadLocalProperties.get().get(AccountConstants.ADMIN_INITIATED) != null) {
+                isAdminInitiated = (boolean) IdentityUtil.threadLocalProperties.get()
+                        .get(AccountConstants.ADMIN_INITIATED);
+            } else {
+                isAdminInitiated = true;
+            }
 
             if (lockedStates.UNLOCKED_MODIFIED.toString().equals(lockedState.get())) {
 
@@ -479,8 +488,13 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 }
 
                 if (notificationInternallyManage) {
-                    triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
-                            AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED);
+                    if (isAdminInitiated) {
+                        triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                                identityProperties, AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_ADMIN_TRIGGERED);
+                    } else {
+                        triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                                identityProperties, AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_TIME_BASED);
+                    }
                     newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED,
                             tenantDomain, userStoreManager, userName);
                 }
@@ -492,16 +506,20 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 if (notificationInternallyManage) {
                     if (StringUtils.isNotEmpty(existingAccountStateClaimValue)) {
                         // Send locked email only if the accountState claim value is PENDIG_SR or PENDING_EV.
-                        if (!existingAccountStateClaimValue.equals(AccountConstants.PENDING_SELF_REGISTRATION) && !existingAccountStateClaimValue.equals(AccountConstants.PENDING_EMAIL_VERIFICATION)) {
-                            triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
-                                    AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED);
+                        if (isAdminInitiated) {
+                            triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                                    identityProperties,
+                                    AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_ADMIN_TRIGGERED);
+                        } else {
+                            triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                                    identityProperties, AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT);
+                        }
+                        if (!existingAccountStateClaimValue.equals(AccountConstants.PENDING_SELF_REGISTRATION)
+                                && !existingAccountStateClaimValue
+                                .equals(AccountConstants.PENDING_EMAIL_VERIFICATION)) {
                             newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED,
                                     tenantDomain, userStoreManager, userName);
                         }
-                    } else {
-                        // If accountState claim is empty, send the email notification for account locking
-                        triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
-                                AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED);
                     }
                 }
             }
