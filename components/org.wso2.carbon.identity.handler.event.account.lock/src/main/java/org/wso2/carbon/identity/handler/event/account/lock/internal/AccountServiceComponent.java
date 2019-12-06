@@ -36,6 +36,7 @@ import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockSe
 import org.wso2.carbon.stratos.common.listeners.TenantMgtListener;
 import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.email.mgt.EmailTemplateManager;
 
 @Component(
         name = "handler.event.account.lock",
@@ -133,5 +134,26 @@ public class AccountServiceComponent {
     protected void unsetRealmService(RealmService realmService) {
 
         AccountServiceDataHolder.getInstance().setRealmService(null);
+    }
+
+    @Reference(name = "emailTemplateManager.service",
+               service = org.wso2.carbon.email.mgt.EmailTemplateManager.class,
+               cardinality = ReferenceCardinality.MANDATORY,
+               policy = ReferencePolicy.DYNAMIC,
+               unbind = "unsetEmailTemplateManager")
+    protected void setEmailTemplateManager(EmailTemplateManager emailTemplateManager) {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Email Template Manager is registered in Account service.");
+        }
+        AccountServiceDataHolder.getInstance().setEmailTemplateManager(emailTemplateManager);
+    }
+
+    protected void unsetEmailTemplateManager(EmailTemplateManager emailTemplateManager) {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Email Template Manager is unregistered in Account service.");
+        }
+        AccountServiceDataHolder.getInstance().setEmailTemplateManager(null);
     }
 }
