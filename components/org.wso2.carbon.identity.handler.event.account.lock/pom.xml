@@ -60,6 +60,10 @@
             <artifactId>org.wso2.carbon.identity.governance</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.wso2.carbon.identity.event.handler.notification</groupId>
+            <artifactId>org.wso2.carbon.email.mgt</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.scr.ds-annotations</artifactId>
             <scope>provided</scope>
@@ -122,7 +126,11 @@
                             org.wso2.carbon.identity.governance;
                             version="${identity.governance.imp.pkg.version.range}",
                             org.wso2.carbon.identity.governance.common;
-                            version="${identity.governance.imp.pkg.version.range}"
+                            version="${identity.governance.imp.pkg.version.range}",
+                            org.wso2.carbon.email.mgt;
+                            version="${identity.event.handler.notification.version.range}",
+                            org.wso2.carbon.email.mgt.exceptions;
+                            version="${identity.event.handler.notification.version.range}",
                         </Import-Package>
                     </instructions>
                 </configuration>

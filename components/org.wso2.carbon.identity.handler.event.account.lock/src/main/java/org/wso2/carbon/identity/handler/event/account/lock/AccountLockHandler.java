@@ -484,37 +484,54 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("User %s is unlocked", userName));
                 }
-
+                String emailTemplateTypeAccUnlocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED;
                 if (notificationInternallyManage) {
                     if (isAdminInitiated) {
-                        triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
-                                identityProperties, AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_ADMIN_TRIGGERED);
+                        if (AccountUtil
+                                .isTemplateExists(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_ADMIN_TRIGGERED,
+                                        tenantDomain)) {
+                            emailTemplateTypeAccUnlocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_ADMIN_TRIGGERED;
+                        }
                     } else {
-                        triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
-                                identityProperties, AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_TIME_BASED);
+                        if (AccountUtil.isTemplateExists(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_TIME_BASED,
+                                tenantDomain)) {
+                            emailTemplateTypeAccUnlocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_TIME_BASED;
+                        }
                     }
-                    newAccountState = buildAccountState(AccountConstants.ACC_UNLOCKED,
-                            tenantDomain, userStoreManager, userName);
+                    triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                            identityProperties, emailTemplateTypeAccUnlocked);
+                    newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED, tenantDomain,
+                            userStoreManager, userName);
                 }
             } else if (lockedStates.LOCKED_MODIFIED.toString().equals(lockedState.get())) {
 
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("User %s is locked", userName));
                 }
+                String emailTemplateTypeAccLocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED;
                 if (notificationInternallyManage) {
                     if (StringUtils.isNotEmpty(existingAccountStateClaimValue)) {
                         // Send locked email only if the accountState claim value is PENDIG_SR or PENDING_EV.
                         if (isAdminInitiated) {
-                            triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
-                                    identityProperties,
-                                    AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_ADMIN_TRIGGERED);
+                            if (AccountUtil
+                                    .isTemplateExists(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_ADMIN_TRIGGERED,
+                                            tenantDomain)) {
+                                emailTemplateTypeAccLocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_ADMIN_TRIGGERED;
+                            }
                         } else {
-                            triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
-                                    identityProperties, AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT);
+                            if (AccountUtil
+                                    .isTemplateExists(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT,
+                                            tenantDomain)) {
+                                emailTemplateTypeAccLocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT;
+                            }
                         }
+                        triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                                identityProperties, emailTemplateTypeAccLocked);
+
                         if (!AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue)
-                                && !AccountConstants.PENDING_EMAIL_VERIFICATION.equals(existingAccountStateClaimValue)) {
-                            newAccountState = buildAccountState(AccountConstants.ACC_LOCKED,
+                                && !AccountConstants.PENDING_EMAIL_VERIFICATION
+                                .equals(existingAccountStateClaimValue)) {
+                            newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED,
                                     tenantDomain, userStoreManager, userName);
                         }
                     }
@@ -656,11 +673,11 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             if (isAccountDisabled(userStoreManager, userName)) {
                 // If accountDisabled claim is true, then set accountState=DISABLED
                 newAccountstate = AccountConstants.DISABLED;
-            } else if (state.equals(AccountConstants.ACC_UNLOCKED)) {
+            } else if (state.equals(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED)) {
                 // If accountDisabled claim is false and accountLocked claim is false, then set
                 // accountState=UNLOCKED
                 newAccountstate = AccountConstants.UNLOCKED;
-            } else if (state.equals(AccountConstants.ACC_LOCKED)) {
+            } else if (state.equals(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED)) {
                 // If accountDisabled claim is false and accountLocked claim is true, then set
                 // accountState=LOCKED
                 newAccountstate = AccountConstants.LOCKED;

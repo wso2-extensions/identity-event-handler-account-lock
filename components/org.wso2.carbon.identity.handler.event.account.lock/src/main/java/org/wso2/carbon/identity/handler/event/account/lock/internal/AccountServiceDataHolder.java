@@ -20,6 +20,7 @@ import org.osgi.framework.BundleContext;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.email.mgt.EmailTemplateManager;
 
 public class AccountServiceDataHolder {
 
@@ -29,6 +30,7 @@ public class AccountServiceDataHolder {
     private IdentityGovernanceService identityGovernanceService;
     private IdentityEventService identityEventService;
     private RealmService realmService;
+    private EmailTemplateManager emailTemplateManager;
 
     private AccountServiceDataHolder(){
 
@@ -69,5 +71,15 @@ public class AccountServiceDataHolder {
 
     public void setRealmService(RealmService realmService) {
         this.realmService = realmService;
+    }
+
+    public void setEmailTemplateManager(EmailTemplateManager emailTemplateManager) {
+
+        this.emailTemplateManager = emailTemplateManager;
+    }
+
+    public EmailTemplateManager getEmailTemplateManager() {
+
+        return emailTemplateManager;
     }
 }

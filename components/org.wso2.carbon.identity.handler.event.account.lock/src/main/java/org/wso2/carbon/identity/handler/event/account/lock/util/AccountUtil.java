@@ -36,6 +36,7 @@ import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.email.mgt.exceptions.I18nEmailMgtException;
 
 public class AccountUtil {
 
@@ -123,5 +124,25 @@ public class AccountUtil {
             throw new AccountLockException("Error while checking accountState claim  from ClaimManager");
         }
         return isExist;
+    }
+
+    /**
+     * This is used to check the existence of a email template.
+     *
+     * @param templateType Template type display name.
+     * @param tenantDomain Tenant domain.
+     * @return Returns true if email template exists.
+     * @throws AccountLockException Account Lock Exception.
+     */
+    public static boolean isTemplateExists(String templateType, String tenantDomain) throws AccountLockException {
+
+        try {
+            return AccountServiceDataHolder.getInstance().getEmailTemplateManager()
+                    .isEmailTemplateTypeExists(templateType, tenantDomain);
+        } catch (I18nEmailMgtException e) {
+            throw new AccountLockException(
+                    "Error occurred while checking email template type: " + templateType + " existence in the "
+                            + "tenantDomain: " + tenantDomain, e);
+        }
     }
 }
