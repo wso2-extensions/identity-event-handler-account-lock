@@ -24,6 +24,7 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
+import org.wso2.carbon.email.mgt.EmailTemplateManager;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
@@ -36,7 +37,6 @@ import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockSe
 import org.wso2.carbon.stratos.common.listeners.TenantMgtListener;
 import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
-import org.wso2.carbon.email.mgt.EmailTemplateManager;
 
 @Component(
         name = "handler.event.account.lock",
@@ -48,35 +48,39 @@ public class AccountServiceComponent {
     @Activate
     protected void activate(ComponentContext context) {
 
-        AccountServiceDataHolder.getInstance().setBundleContext(context.getBundleContext());
-        AccountLockHandler accountLockHandler = new AccountLockHandler();
-        context.getBundleContext().registerService(AbstractEventHandler.class.getName(), accountLockHandler, null);
-        if (log.isDebugEnabled()) {
-            log.debug("AccountLockHandler is registered");
-        }
-        AccountDisableHandler accountDisableHandler = new AccountDisableHandler();
-        context.getBundleContext().registerService(AbstractEventHandler.class.getName(), accountDisableHandler, null);
-        if (log.isDebugEnabled()) {
-            log.debug("AccountDisableHandler is registered");
-        }
-        AccountLockService accountLockService = new AccountLockServiceImpl();
-        context.getBundleContext().registerService(AccountLockService.class.getName(), accountLockService, null);
-        if (log.isDebugEnabled()) {
-            log.debug("AccountLockService is registered");
-        }
-        AccountLockTenantMgtListener accountLockTenantMgtListener = new AccountLockTenantMgtListener();
-        context.getBundleContext().registerService(TenantMgtListener.class, accountLockTenantMgtListener, null);
-        if (log.isDebugEnabled()) {
-            log.debug("AccountLockTenantMgtListener is registered");
-        }
         try {
-            UserStoreManager userStoreManager = AccountServiceDataHolder.getInstance().getRealmService()
-                    .getBootstrapRealm().getUserStoreManager();
-            if (!userStoreManager.isExistingRole(AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE)) {
-                userStoreManager.addRole(AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, null, null, false);
+            AccountServiceDataHolder.getInstance().setBundleContext(context.getBundleContext());
+            AccountLockHandler accountLockHandler = new AccountLockHandler();
+            context.getBundleContext().registerService(AbstractEventHandler.class.getName(), accountLockHandler, null);
+            if (log.isDebugEnabled()) {
+                log.debug("AccountLockHandler is registered");
             }
-        } catch (org.wso2.carbon.user.api.UserStoreException e) {
-            log.error(String.format("Error while adding role: %s .", AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE), e);
+            AccountDisableHandler accountDisableHandler = new AccountDisableHandler();
+            context.getBundleContext().registerService(AbstractEventHandler.class.getName(), accountDisableHandler, null);
+            if (log.isDebugEnabled()) {
+                log.debug("AccountDisableHandler is registered");
+            }
+            AccountLockService accountLockService = new AccountLockServiceImpl();
+            context.getBundleContext().registerService(AccountLockService.class.getName(), accountLockService, null);
+            if (log.isDebugEnabled()) {
+                log.debug("AccountLockService is registered");
+            }
+            AccountLockTenantMgtListener accountLockTenantMgtListener = new AccountLockTenantMgtListener();
+            context.getBundleContext().registerService(TenantMgtListener.class, accountLockTenantMgtListener, null);
+            if (log.isDebugEnabled()) {
+                log.debug("AccountLockTenantMgtListener is registered");
+            }
+            try {
+                UserStoreManager userStoreManager = AccountServiceDataHolder.getInstance().getRealmService()
+                        .getBootstrapRealm().getUserStoreManager();
+                if (!userStoreManager.isExistingRole(AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE)) {
+                    userStoreManager.addRole(AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, null, null, false);
+                }
+            } catch (org.wso2.carbon.user.api.UserStoreException e) {
+                log.error(String.format("Error while adding role: %s .", AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE), e);
+            }
+        } catch (Exception e) {
+            log.error("Error while activating account lock handler bundle.", e);
         }
     }
 
@@ -137,10 +141,10 @@ public class AccountServiceComponent {
     }
 
     @Reference(name = "emailTemplateManager.service",
-               service = org.wso2.carbon.email.mgt.EmailTemplateManager.class,
-               cardinality = ReferenceCardinality.MANDATORY,
-               policy = ReferencePolicy.DYNAMIC,
-               unbind = "unsetEmailTemplateManager")
+            service = org.wso2.carbon.email.mgt.EmailTemplateManager.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetEmailTemplateManager")
     protected void setEmailTemplateManager(EmailTemplateManager emailTemplateManager) {
 
         if (log.isDebugEnabled()) {
