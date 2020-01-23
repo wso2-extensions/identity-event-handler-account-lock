@@ -539,6 +539,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             }
         } finally {
             lockedState.remove();
+            IdentityUtil.threadLocalProperties.get().remove(AccountConstants.ADMIN_INITIATED);
         }
         if (StringUtils.isNotEmpty(newAccountState)) {
             setUserClaim(AccountConstants.ACCOUNT_STATE_CLAIM_URI, newAccountState,
