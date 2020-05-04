@@ -194,6 +194,15 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
         }
 
+        return true;
+    }
+
+    protected boolean handlePostAuthentication(Event event, String userName, UserStoreManager userStoreManager,
+                                               String userStoreDomainName, String tenantDomain,
+                                               Property[] identityProperties, int maximumFailedAttempts,
+                                               String accountLockTime, double unlockTimeRatio)
+            throws AccountLockException {
+
         if (isAccountLock(userName, userStoreManager)) {
             if (isAccountLockByPassForUser(userStoreManager, userName)) {
                 if (log.isDebugEnabled()) {
@@ -204,7 +213,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 return true;
             }
 
-            //User account is locked. If the current time is not exceeded user unlock time, send a error message
+            // User account is locked. If the current time is not exceeded user unlock time, send a error message
             // saying user is locked, otherwise users can try to authenticate and unlock their account upon a
             // successful authentication.
 
@@ -226,19 +235,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     log.debug(message);
                 }
 
-                IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(UserCoreConstants.ErrorCode.USER_IS_LOCKED);
+                IdentityErrorMsgContext customErrorMessageContext =
+                        new IdentityErrorMsgContext(UserCoreConstants.ErrorCode.USER_IS_LOCKED);
                 IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
                 throw new AccountLockException(UserCoreConstants.ErrorCode.USER_IS_LOCKED, message);
             }
         }
-        return true;
-    }
-
-    protected boolean handlePostAuthentication(Event event, String userName, UserStoreManager userStoreManager,
-                                               String userStoreDomainName, String tenantDomain,
-                                               Property[] identityProperties, int maximumFailedAttempts,
-                                               String accountLockTime, double unlockTimeRatio)
-            throws AccountLockException {
 
         Map<String, String> claimValues = null;
         int currentFailedAttempts = 0;
@@ -340,7 +342,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                                     "cycles: " + failedLoginLockoutCountValue);
                         }
 
-                        /**
+                        /*
                          * If account unlock time out is configured, calculates the account unlock time as below.
                          * account unlock time =
                          *      current system time + (account unlock time out configured + account lock time out
