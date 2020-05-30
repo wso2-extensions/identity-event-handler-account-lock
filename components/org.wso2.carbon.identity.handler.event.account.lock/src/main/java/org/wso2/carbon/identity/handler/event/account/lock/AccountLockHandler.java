@@ -512,30 +512,27 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 }
                 String emailTemplateTypeAccLocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED;
                 if (notificationInternallyManage) {
-                    if (StringUtils.isNotEmpty(existingAccountStateClaimValue)) {
-                        // Send locked email only if the accountState claim value is PENDIG_SR or PENDING_EV.
-                        if (isAdminInitiated) {
-                            if (AccountUtil
-                                    .isTemplateExists(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_ADMIN_TRIGGERED,
-                                            tenantDomain)) {
-                                emailTemplateTypeAccLocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_ADMIN_TRIGGERED;
-                            }
-                        } else {
-                            if (AccountUtil
-                                    .isTemplateExists(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT,
-                                            tenantDomain)) {
-                                emailTemplateTypeAccLocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT;
-                            }
+                    if (isAdminInitiated) {
+                        if (AccountUtil.isTemplateExists(
+                                AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_ADMIN_TRIGGERED, tenantDomain)) {
+                            emailTemplateTypeAccLocked =
+                                    AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_ADMIN_TRIGGERED;
                         }
+                    } else {
+                        if (AccountUtil.isTemplateExists(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT,
+                                        tenantDomain)) {
+                            emailTemplateTypeAccLocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT;
+                        }
+                    }
+
+                    // Send locked email only if the accountState claim value neither PENDING_SR or PENDING_EV.
+                    if (!AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue)
+                            && !AccountConstants.PENDING_EMAIL_VERIFICATION
+                            .equals(existingAccountStateClaimValue)) {
+                        newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED,
+                                tenantDomain, userStoreManager, userName);
                         triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
                                 identityProperties, emailTemplateTypeAccLocked);
-
-                        if (!AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue)
-                                && !AccountConstants.PENDING_EMAIL_VERIFICATION
-                                .equals(existingAccountStateClaimValue)) {
-                            newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED,
-                                    tenantDomain, userStoreManager, userName);
-                        }
                     }
                 }
             }
