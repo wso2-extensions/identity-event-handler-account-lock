@@ -37,6 +37,7 @@ import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,7 +48,7 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
 
     private static final Log log = LogFactory.getLog(AccountDisableHandler.class);
 
-    private static ThreadLocal<String> disabledState = new ThreadLocal<>();
+    private static final ThreadLocal<String> disabledState = new ThreadLocal<>();
 
     private enum disabledStates {DISABLED_UNMODIFIED, DISABLED_MODIFIED, ENABLED_UNMODIFIED, ENABLED_MODIFIED}
 
@@ -57,12 +58,12 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
 
     @Override
     public String getFriendlyName() {
-        return "Account Disabling";
+        return "Account Disable";
     }
 
     @Override
     public String getCategory() {
-        return "Login Policies";
+        return "Account Management";
     }
 
     @Override
@@ -85,16 +86,19 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
     @Override
     public Map<String, String> getPropertyNameMapping() {
         Map<String, String> nameMapping = new HashMap<>();
-        nameMapping.put(AccountConstants.ACCOUNT_DISABLED_PROPERTY, "Enable Account Disabling");
-        nameMapping.put(AccountConstants.ACCOUNT_DISABLED_NOTIFICATION_INTERNALLY_MANAGE, "Internal Notification Management");
+        nameMapping.put(AccountConstants.ACCOUNT_DISABLED_PROPERTY, "Enable account disabling");
+        nameMapping.put(AccountConstants.ACCOUNT_DISABLED_NOTIFICATION_INTERNALLY_MANAGE,
+                "Manage notification sending internally");
         return nameMapping;
     }
 
     @Override
     public Map<String, String> getPropertyDescriptionMapping() {
         Map<String, String> descriptionMapping = new HashMap<>();
-        descriptionMapping.put(AccountConstants.ACCOUNT_DISABLED_PROPERTY, "Enable account disable Feature");
-        descriptionMapping.put(AccountConstants.ACCOUNT_DISABLED_NOTIFICATION_INTERNALLY_MANAGE, "Set false if the client application handles notification sending");
+        descriptionMapping.put(AccountConstants.ACCOUNT_DISABLED_PROPERTY, "Allow an administrative user to disable " +
+                "user accounts");
+        descriptionMapping.put(AccountConstants.ACCOUNT_DISABLED_NOTIFICATION_INTERNALLY_MANAGE,
+                "Disable, if the client application handles notification sending");
         return descriptionMapping;
     }
 
@@ -104,7 +108,7 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
         properties.add(AccountConstants.ACCOUNT_DISABLED_PROPERTY);
         properties.add(AccountConstants.ACCOUNT_DISABLED_NOTIFICATION_INTERNALLY_MANAGE);
 
-        return properties.toArray(new String[properties.size()]);
+        return properties.toArray(new String[0]);
     }
 
     @Override
@@ -196,8 +200,8 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
     }
 
     protected boolean handlePreSetUserClaimValues(Event event, String userName, UserStoreManager userStoreManager,
-                                                  String userStoreDomainName,
-                                                  String tenantDomain) throws AccountLockException {
+                                                  String userStoreDomainName, String tenantDomain)
+            throws AccountLockException {
 
 
         if (disabledState.get() != null) {
@@ -217,7 +221,7 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
         String newAccountDisableString = ((Map<String, String>) event.getEventProperties().get("USER_CLAIMS")).get
                 (AccountConstants.ACCOUNT_DISABLED_CLAIM);
         if (StringUtils.isNotBlank(newAccountDisableString)) {
-            Boolean newAccountDisabledValue = Boolean.parseBoolean(
+            boolean newAccountDisabledValue = Boolean.parseBoolean(
                     ((Map<String, String>) event.getEventProperties().get("USER_CLAIMS"))
                             .get(AccountConstants.ACCOUNT_DISABLED_CLAIM));
             if (existingAccountDisabledValue != newAccountDisabledValue) {

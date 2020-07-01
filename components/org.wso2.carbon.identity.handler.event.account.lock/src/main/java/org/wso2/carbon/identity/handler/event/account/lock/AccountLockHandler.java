@@ -61,12 +61,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     }
 
     public String getFriendlyName() {
-        return "Account Locking";
+        return "Account Lock";
     }
 
     @Override
     public String getCategory() {
-        return "Login Policies";
+        return "Login Attempts Security";
     }
 
     @Override
@@ -88,21 +88,26 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
     public Map<String, String> getPropertyNameMapping() {
         Map<String, String> nameMapping = new HashMap<>();
-        nameMapping.put(AccountConstants.ACCOUNT_LOCKED_PROPERTY, "Account Lock Enabled");
-        nameMapping.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY, "Maximum Failed Login Attempts");
-        nameMapping.put(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY, "Account Unlock Time");
-        nameMapping.put(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY, "Lock Timeout Increment Factor");
-        nameMapping.put(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE, "Internal Notification Management");
+        nameMapping.put(AccountConstants.ACCOUNT_LOCKED_PROPERTY, "Lock user accounts");
+        nameMapping.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY, "Maximum failed login attempts");
+        nameMapping.put(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY, "Initial account lock duration");
+        nameMapping.put(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY, "Account lock duration increment factor");
+        nameMapping.put(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE, "Manage notification sending internally");
         return nameMapping;
     }
 
     @Override
     public Map<String, String> getPropertyDescriptionMapping() {
         Map<String, String> descriptionMapping = new HashMap<>();
-        descriptionMapping.put(AccountConstants.ACCOUNT_LOCKED_PROPERTY, "Enable account locking for failed logins");
-        descriptionMapping.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY, "Number of failed attempts allows without locking the account");
-        descriptionMapping.put(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY, "Account locked time span in minutes");
-        descriptionMapping.put(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE, "Set false if the client application handles notification sending");
+        descriptionMapping.put(AccountConstants.ACCOUNT_LOCKED_PROPERTY, "Lock user accounts on failed login attempts");
+        descriptionMapping.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY, "Number of failed login attempts " +
+                "allowed until account lock.");
+        descriptionMapping.put(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY, "Initial account lock time period in " +
+                "minutes. Account will be automatically unlocked after this time period.");
+        descriptionMapping.put(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY, "Account lock duration will be " +
+                "increased by this factor. Ex: Initial duration: 5m; Increment factor: 2; Next lock duration: 5 x 2 = 10m");
+        descriptionMapping.put(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE, "Disable if the client application " +
+                "handles notification sending");
         return descriptionMapping;
     }
 
