@@ -21,6 +21,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
 import org.wso2.carbon.identity.core.handler.InitConfig;
@@ -177,8 +178,14 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             handlePreSetUserClaimValues(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
                     identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio);
         } else if (IdentityEventConstants.Event.POST_SET_USER_CLAIMS.equals(event.getEventName())) {
-            handlePostSetUserClaimValues(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
-                    identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio);
+            PrivilegedCarbonContext.startTenantFlow();
+            try {
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
+                handlePostSetUserClaimValues(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                        identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio);
+            } finally {
+                PrivilegedCarbonContext.endTenantFlow();
+            }
         }
     }
 
