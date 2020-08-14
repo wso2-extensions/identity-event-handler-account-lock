@@ -215,6 +215,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                                                String accountLockTime, double unlockTimeRatio)
             throws AccountLockException {
 
+        long unlockTime = getUnlockTime(userName, userStoreManager);
+
         if (isAccountLock(userName, userStoreManager)) {
             if (isAccountLockByPassForUser(userStoreManager, userName)) {
                 if (log.isDebugEnabled()) {
@@ -228,8 +230,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             // User account is locked. If the current time is not exceeded user unlock time, send a error message
             // saying user is locked, otherwise users can try to authenticate and unlock their account upon a
             // successful authentication.
-
-            long unlockTime = getUnlockTime(userName, userStoreManager);
 
             if (System.currentTimeMillis() < unlockTime || unlockTime == 0) {
 
@@ -261,7 +261,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             claimValues = userStoreManager.getUserClaimValues(userName, new String[]{
                             AccountConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM,
                             AccountConstants.FAILED_LOGIN_ATTEMPTS_CLAIM,
-                            AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM,
                             AccountConstants.ACCOUNT_LOCKED_CLAIM}
                     , UserCoreConstants.DEFAULT_PROFILE);
 
@@ -281,19 +280,21 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     + AccountConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, e);
         }
 
+        Map<String, String> newClaims = new HashMap<>();
         if ((Boolean) event.getEventProperties().get(IdentityEventConstants.EventProperty.OPERATION_STATUS)) {
-            //User is authenticated, Need to check the unlock time to verify whether the user is previously locked.
+            // User is authenticated, Need to check the unlock time to verify whether the user is previously locked.
 
-            long unlockTime = 0;
-            String userClaimValue = claimValues.get(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM);
             String accountLockClaim = claimValues.get(AccountConstants.ACCOUNT_LOCKED_CLAIM);
-            if (NumberUtils.isNumber(userClaimValue)) {
-                unlockTime = Long.parseLong(userClaimValue);
+
+            // Return if user authentication is successful on the first try
+            if (!Boolean.parseBoolean(accountLockClaim) && currentFailedAttempts == 0 &&
+                    currentFailedLoginLockouts == 0 && unlockTime == 0) {
+                return true;
             }
-            Map<String, String> newClaims = new HashMap<>();
+
             newClaims.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_BEFORE_SUCCESS_CLAIM,
                     String.valueOf(currentFailedAttempts + (currentFailedLoginLockouts * maximumFailedAttempts)));
-            if (isUserUnlock(userName, userStoreManager, currentFailedAttempts, unlockTime, accountLockClaim)) {
+            if (isUserUnlockable(userName, userStoreManager, currentFailedAttempts, unlockTime, accountLockClaim)) {
                 newClaims.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_CLAIM, "0");
                 newClaims.put(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM, "0");
                 newClaims.put(AccountConstants.ACCOUNT_LOCKED_CLAIM, Boolean.FALSE.toString());
@@ -317,14 +318,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         } else {
             // user authentication failed
 
-            int failedLoginLockoutCountValue = 0;
-            String loginAttemptCycles = claimValues.get(AccountConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM);
-            if (NumberUtils.isNumber(loginAttemptCycles)) {
-                failedLoginLockoutCountValue = Integer.parseInt(loginAttemptCycles);
-            }
-
             currentFailedAttempts += 1;
-            Map<String, String> newClaims = new HashMap<>();
             newClaims.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_CLAIM, currentFailedAttempts + "");
             newClaims.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_BEFORE_SUCCESS_CLAIM, "0");
 
@@ -351,7 +345,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                                     tenantDomain + " userstore domain: " + userStoreDomainName + " adding account " +
                                     "unlock time out: " + unlockTimePropertyValue + ", account lock timeout increment" +
                                     " factor: " + unlockTimeRatio + " raised to the power of failed login attempt " +
-                                    "cycles: " + failedLoginLockoutCountValue);
+                                    "cycles: " + currentFailedLoginLockouts);
                         }
 
                         /*
@@ -361,14 +355,14 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                          *      increment factor raised to the power of failed login attempt cycles)
                          */
                         unlockTimePropertyValue = (long) (unlockTimePropertyValue * 1000 * 60 * Math.pow
-                                (unlockTimeRatio, failedLoginLockoutCountValue));
-                        long unlockTime = System.currentTimeMillis() + unlockTimePropertyValue;
+                                (unlockTimeRatio, currentFailedLoginLockouts));
+                        unlockTime = System.currentTimeMillis() + unlockTimePropertyValue;
                         newClaims.put(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM, unlockTime + "");
                     }
                 }
 
-                failedLoginLockoutCountValue = failedLoginLockoutCountValue + 1;
-                newClaims.put(AccountConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, failedLoginLockoutCountValue + "");
+                currentFailedLoginLockouts += 1;
+                newClaims.put(AccountConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, currentFailedLoginLockouts + "");
                 newClaims.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_CLAIM, "0");
 
                 IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(UserCoreConstants
@@ -410,8 +404,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
      * @return whether the account can be unlocked
      * @throws AccountLockException
      */
-    private boolean isUserUnlock(String userName, UserStoreManager userStoreManager, int currentFailedAttempts,
-                                 long unlockTime, String accountLockClaim) throws AccountLockException {
+    private boolean isUserUnlockable(String userName, UserStoreManager userStoreManager, int currentFailedAttempts,
+                                     long unlockTime, String accountLockClaim) throws AccountLockException {
 
         return (unlockTime != 0 && System.currentTimeMillis() >= unlockTime)
                 || currentFailedAttempts > 0
