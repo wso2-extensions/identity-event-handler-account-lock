@@ -394,14 +394,14 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
     /**
      * Check whether the account can be unlocked by checking whether account unlock time is exceeded or account bypass
-     * role is attached
+     * role is attached.
      *
-     * @param userName              name of the logged in user
-     * @param userStoreManager      user store
-     * @param currentFailedAttempts number of fail attempts
-     * @param unlockTime            time which account can be unlocked
-     * @param accountLockClaim      current lock claim value
-     * @return whether the account can be unlocked
+     * @param userName              Name of the logged in user.
+     * @param userStoreManager      User store.
+     * @param currentFailedAttempts Number of fail attempts.
+     * @param unlockTime            Time which account can be unlocked.
+     * @param accountLockClaim      Current lock claim value.
+     * @return Whether the account can be unlocked.
      * @throws AccountLockException
      */
     private boolean isUserUnlockable(String userName, UserStoreManager userStoreManager, int currentFailedAttempts,
@@ -619,10 +619,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     }
 
     /**
-     * @param userName         Current username
-     * @param userStoreManager User store
-     * @return State whether current user is a privileged user
-     * @throws AccountLockException
+     * @param userName         Current username.
+     * @param userStoreManager User store.
+     * @return State whether current user is a privileged user.
+     * @throws AccountLockException If an error occurred while retrieving account locked claim value.
      */
     protected boolean isAccountLock(String userName, UserStoreManager userStoreManager) throws AccountLockException {
 
