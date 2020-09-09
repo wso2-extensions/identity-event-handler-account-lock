@@ -21,6 +21,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONObject;
+import org.slf4j.MDC;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
@@ -51,6 +53,7 @@ import java.util.ArrayList;
 
 public class AccountLockHandler extends AbstractEventHandler implements IdentityConnectorConfig {
 
+    public static final Log AUDIT_LOG = LogFactory.getLog("AUDIT_LOG");
     private static final Log log = LogFactory.getLog(AccountLockHandler.class);
 
     private static ThreadLocal<String> lockedState = new ThreadLocal<>();
@@ -510,6 +513,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             identityProperties, emailTemplateTypeAccUnlocked);
                     newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED, tenantDomain,
                             userStoreManager, userName);
+                    auditAccountLock(AuditConstants.ACCOUNT_UNLOCKED, userName, userStoreDomainName, isAdminInitiated,
+                            null, AuditConstants.AUDIT_SUCCESS);
                 }
             } else if (lockedStates.LOCKED_MODIFIED.toString().equals(lockedState.get())) {
 
@@ -541,6 +546,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                                 identityProperties, emailTemplateTypeAccLocked);
                     }
                 }
+                auditAccountLock(AuditConstants.ACCOUNT_LOCKED, userName, userStoreDomainName, isAdminInitiated,
+                        null, AuditConstants.AUDIT_SUCCESS);
             }
         } finally {
             lockedState.remove();
@@ -733,5 +740,41 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         } catch (UserStoreException e) {
             throw new AccountLockException("Error while setting user claim value :" + username, e);
         }
+    }
+
+
+    /**
+     * To create an audit message based on provided parameters.
+     *
+     * @param action     Activity
+     * @param target     Target affected by this activity.
+     * @param dataObject Information passed along with the request.
+     * @param result     Result value.
+     */
+    private static void createAuditMessage(String action, String target, JSONObject dataObject, String result) {
+
+        String loggedInUser = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+        if (StringUtils.isBlank(loggedInUser)) {
+            loggedInUser = AuditConstants.REGISTRY_SYSTEM_USERNAME;
+        }
+        String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+        loggedInUser = UserCoreUtil.addTenantDomainToEntry(loggedInUser, tenantDomain);
+        AUDIT_LOG.info(String.format(AuditConstants.AUDIT_MESSAGE, loggedInUser, action, target, dataObject, result));
+    }
+
+    private void auditAccountLock(String action, String target, String userStoreDomainName, boolean isAdminInitiated,
+                                  String errorMsg, String result) {
+
+        JSONObject dataObject = new JSONObject();
+        dataObject.put(AuditConstants.REMOTE_ADDRESS_KEY, MDC.get(AuditConstants.REMOTE_ADDRESS_QUERY_KEY));
+        dataObject.put(AuditConstants.USER_AGENT_KEY, MDC.get(AuditConstants.USER_AGENT_QUERY_KEY));
+        dataObject.put(AuditConstants.SERVICE_PROVIDER_KEY, MDC.get(AuditConstants.SERVICE_PROVIDER_QUERY_KEY));
+        dataObject.put(AccountConstants.ADMIN_INITIATED, isAdminInitiated);
+        dataObject.put(AuditConstants.USER_STORE_DOMAIN, userStoreDomainName);
+
+        if (AuditConstants.AUDIT_FAILED.equals(result)) {
+            dataObject.put(AuditConstants.ERROR_MESSAGE_KEY, errorMsg);
+        }
+        createAuditMessage(action, target, dataObject, result);
     }
 }
