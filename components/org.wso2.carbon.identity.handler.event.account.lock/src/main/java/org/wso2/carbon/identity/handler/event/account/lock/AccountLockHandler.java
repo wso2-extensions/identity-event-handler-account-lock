@@ -509,8 +509,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             emailTemplateTypeAccUnlocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_TIME_BASED;
                         }
                     }
-                    triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
-                            identityProperties, emailTemplateTypeAccUnlocked);
+                    boolean isPendingSelfRegistration =
+                            AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue);
+                    if (!isPendingSelfRegistration) {
+                        triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                                identityProperties, emailTemplateTypeAccUnlocked);
+                    }
                     newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED, tenantDomain,
                             userStoreManager, userName);
                     auditAccountLock(AuditConstants.ACCOUNT_UNLOCKED, userName, userStoreDomainName, isAdminInitiated,
