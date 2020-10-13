@@ -45,11 +45,11 @@ import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.List;
-import java.util.ArrayList;
 
 public class AccountLockHandler extends AbstractEventHandler implements IdentityConnectorConfig {
 
@@ -746,7 +746,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         }
     }
 
-
     /**
      * To create an audit message based on provided parameters.
      *
@@ -766,6 +765,16 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         AUDIT_LOG.info(String.format(AuditConstants.AUDIT_MESSAGE, loggedInUser, action, target, dataObject, result));
     }
 
+    /**
+     * Audit account lock event.
+     *
+     * @param action              activity
+     * @param target              target affected by this activity
+     * @param userStoreDomainName Domain name of the userstore
+     * @param isAdminInitiated    whether Account lock admin initiated
+     * @param errorMsg            if error occurs
+     * @param result              Result value
+     */
     private void auditAccountLock(String action, String target, String userStoreDomainName, boolean isAdminInitiated,
                                   String errorMsg, String result) {
 
