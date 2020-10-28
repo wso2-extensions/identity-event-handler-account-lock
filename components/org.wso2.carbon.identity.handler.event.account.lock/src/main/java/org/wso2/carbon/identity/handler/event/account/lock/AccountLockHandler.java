@@ -35,6 +35,7 @@ import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.governance.IdentityGovernanceException;
+import org.wso2.carbon.identity.governance.IdentityMgtConstants;
 import org.wso2.carbon.identity.governance.common.IdentityConnectorConfig;
 import org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants;
 import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockException;
@@ -134,6 +135,16 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         String accountLockTime = "0";
         int maximumFailedAttempts = 0;
         double unlockTimeRatio = 1;
+        String adminPasswordResetAccountLockNotificationProperty = IdentityUtil.getProperty(
+                AccountConstants.ADMIN_FORCE_PASSWORD_RESET_ACCOUNT_LOCK_NOTIFICATION_ENABLE_PROPERTY);
+        boolean adminForcePasswordResetLockNotificationEnabled =
+                !(adminPasswordResetAccountLockNotificationProperty == null) ||
+                        Boolean.parseBoolean(adminPasswordResetAccountLockNotificationProperty);
+        String adminPasswordResetAccountUnlockNotificationProperty = IdentityUtil.getProperty(
+                AccountConstants.ADMIN_FORCE_PASSWORD_RESET_ACCOUNT_UNLOCK_NOTIFICATION_ENABLE_PROPERTY);
+        boolean adminForcePasswordResetUnlockNotificationEnabled =
+                !(adminPasswordResetAccountUnlockNotificationProperty == null) ||
+                        Boolean.parseBoolean(adminPasswordResetAccountUnlockNotificationProperty);
         try {
             identityProperties = AccountServiceDataHolder.getInstance()
                     .getIdentityGovernanceService().getConfiguration(getPropertyNames(), tenantDomain);
@@ -190,7 +201,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             try {
                 PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
                 handlePostSetUserClaimValues(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
-                        identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio);
+                        identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio,
+                        adminForcePasswordResetLockNotificationEnabled, adminForcePasswordResetUnlockNotificationEnabled);
             } finally {
                 PrivilegedCarbonContext.endTenantFlow();
             }
@@ -467,7 +479,9 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     protected boolean handlePostSetUserClaimValues(Event event, String userName, UserStoreManager userStoreManager,
                                                    String userStoreDomainName, String tenantDomain,
                                                    Property[] identityProperties, int maximumFailedAttempts,
-                                                   String accountLockTime, double unlockTimeRatio)
+                                                   String accountLockTime, double unlockTimeRatio,
+                                                   boolean adminForcedPasswordResetLockNotificationEnabled,
+                                                   boolean adminForcedPasswordResetUnlockNotificationEnabled)
             throws AccountLockException {
 
         String newAccountState = null;
@@ -511,9 +525,15 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     }
                     boolean isPendingSelfRegistration =
                             AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue);
-                    if (!isPendingSelfRegistration) {
-                        triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
-                                identityProperties, emailTemplateTypeAccUnlocked);
+                    if (IdentityMgtConstants.AccountStates.PENDING_ADMIN_FORCED_USER_PASSWORD_RESET
+                            .equals(existingAccountStateClaimValue)) {
+                        if (adminForcedPasswordResetUnlockNotificationEnabled) {
+                            triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
+                                    emailTemplateTypeAccUnlocked);
+                        }
+                    } else if (!isPendingSelfRegistration) {
+                        triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
+                                emailTemplateTypeAccUnlocked);
                     }
                     newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED, tenantDomain,
                             userStoreManager, userName);
@@ -540,14 +560,21 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                         }
                     }
 
-                    // Send locked email only if the accountState claim value neither PENDING_SR or PENDING_EV.
-                    if (!AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue)
-                            && !AccountConstants.PENDING_EMAIL_VERIFICATION
-                            .equals(existingAccountStateClaimValue)) {
+                    // Check if the account is in PENDING_AFUPR state.
+                    if (IdentityMgtConstants.AccountStates.PENDING_ADMIN_FORCED_USER_PASSWORD_RESET.equals(
+                            existingAccountStateClaimValue)) {
+                        // Send notification if the unlock notification enabled.
+                        if (adminForcedPasswordResetLockNotificationEnabled) {
+                            triggerNotification(event, userName, userStoreManager, userStoreDomainName,
+                                    tenantDomain, identityProperties, emailTemplateTypeAccLocked);
+                        }
+                        // Send locked email only if the accountState claim value is neither PENDIG_SR nor PENDING_EV.
+                    } else if (!AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue) &&
+                            !AccountConstants.PENDING_EMAIL_VERIFICATION.equals(existingAccountStateClaimValue)) {
+                        triggerNotification(event, userName, userStoreManager, userStoreDomainName,
+                                tenantDomain, identityProperties, emailTemplateTypeAccLocked);
                         newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED,
                                 tenantDomain, userStoreManager, userName);
-                        triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
-                                identityProperties, emailTemplateTypeAccLocked);
                     }
                 }
                 auditAccountLock(AuditConstants.ACCOUNT_LOCKED, userName, userStoreDomainName, isAdminInitiated,

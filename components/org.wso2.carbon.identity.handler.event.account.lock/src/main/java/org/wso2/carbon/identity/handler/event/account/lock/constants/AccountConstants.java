@@ -36,6 +36,10 @@ public class AccountConstants {
     public static final String FAILED_LOGIN_ATTEMPTS_PROPERTY = "account.lock.handler.On.Failure.Max.Attempts";
     public static final String LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY = "account.lock.handler.login.fail.timeout.ratio";
     public static final String NOTIFICATION_INTERNALLY_MANAGE = "account.lock.handler.notification.manageInternally";
+    public static final String ADMIN_FORCE_PASSWORD_RESET_ACCOUNT_LOCK_NOTIFICATION_ENABLE_PROPERTY =
+            "Recovery.AdminPasswordReset.AccountLockNotification";
+    public static final String ADMIN_FORCE_PASSWORD_RESET_ACCOUNT_UNLOCK_NOTIFICATION_ENABLE_PROPERTY =
+            "Recovery.AdminPasswordReset.AccountUnlockNotification";
 
     public static final String EMAIL_TEMPLATE_TYPE_ACC_LOCKED = "accountlock";
     public static final String EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED = "accountunlock";
