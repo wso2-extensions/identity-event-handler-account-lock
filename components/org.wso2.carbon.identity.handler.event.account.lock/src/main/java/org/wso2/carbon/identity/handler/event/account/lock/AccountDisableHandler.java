@@ -234,6 +234,9 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                     IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
                     IdentityUtil.threadLocalProperties.get().put(IdentityCoreConstants.USER_ACCOUNT_STATE,
                             IdentityCoreConstants.USER_ACCOUNT_DISABLED_ERROR_CODE);
+                    IdentityUtil.threadLocalProperties.get()
+                            .put(AccountConstants.USER_ACCOUNT_STATE_WITH_USERNAME + userName,
+                                    IdentityCoreConstants.USER_ACCOUNT_DISABLED_ERROR_CODE);
                 }
             } else {
                 if (existingAccountDisabledValue) {
