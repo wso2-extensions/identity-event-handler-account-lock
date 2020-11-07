@@ -19,12 +19,20 @@ package org.wso2.carbon.identity.handler.event.account.lock.util;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONObject;
+import org.slf4j.MDC;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.model.Property;
+import org.wso2.carbon.identity.application.common.model.User;
+import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.event.IdentityEventConstants;
 import org.wso2.carbon.identity.event.IdentityEventException;
+import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.governance.IdentityGovernanceException;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
+import org.wso2.carbon.identity.handler.event.account.lock.AuditConstants;
 import org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants;
 import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockException;
 import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockRuntimeException;
@@ -37,10 +45,15 @@ import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.email.mgt.exceptions.I18nEmailMgtException;
+import org.wso2.carbon.user.core.util.UserCoreUtil;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class AccountUtil {
 
     private static final Log log = LogFactory.getLog(AccountUtil.class);
+    private static final Log AUDIT_LOG = LogFactory.getLog("AUDIT_LOG");
 
     public static String getUserStoreDomainName(UserStoreManager userStoreManager) {
         String domainNameProperty = null;
@@ -145,4 +158,59 @@ public class AccountUtil {
                             + "tenantDomain: " + tenantDomain, e);
         }
     }
+
+    /**
+     * Publishes an event.
+     *
+     * @param eventName                 Event name
+     * @param properties                Event properties
+     * @throws AccountLockException     if event sent failed
+     */
+    public static void publishEvent(String eventName, Map<String, Object> properties) throws AccountLockException {
+
+        Event identityMgtEvent = new Event(eventName, properties);
+        try {
+            AccountServiceDataHolder.getInstance().getIdentityEventService().handleEvent(identityMgtEvent);
+        } catch (IdentityEventException e) {
+            String errorMsg = "Error occurred while triggering the event : " + identityMgtEvent.getEventName();
+            throw new AccountLockException(errorMsg, e);
+        }
+    }
+
+    /**
+     * Prepare and log the audit message.
+     *
+     * @param action                Activity
+     * @param target                Target user affected by this activity
+     * @param userStoreDomainName   User store domain of the user
+     * @param isAdminInitiated      Is initiated by admin
+     * @param errorMsg              Error message if any
+     * @param result                Result of the activity
+     */
+    public static void printAuditLog(String action, String target, String userStoreDomainName,
+                                                     Boolean isAdminInitiated, String errorMsg, String result) {
+
+        JSONObject dataObject = new JSONObject();
+        dataObject.put(AuditConstants.REMOTE_ADDRESS_KEY, MDC.get(AuditConstants.REMOTE_ADDRESS_QUERY_KEY));
+        dataObject.put(AuditConstants.USER_AGENT_KEY, MDC.get(AuditConstants.USER_AGENT_QUERY_KEY));
+        dataObject.put(AuditConstants.SERVICE_PROVIDER_KEY, MDC.get(AuditConstants.SERVICE_PROVIDER_QUERY_KEY));
+        dataObject.put(AuditConstants.USER_STORE_DOMAIN, userStoreDomainName);
+
+        if (isAdminInitiated != null) {
+            dataObject.put(AccountConstants.ADMIN_INITIATED, isAdminInitiated);
+        }
+
+        if (AuditConstants.AUDIT_FAILED.equals(result)) {
+            dataObject.put(AuditConstants.ERROR_MESSAGE_KEY, errorMsg);
+        }
+
+        String loggedInUser = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+        if (StringUtils.isBlank(loggedInUser)) {
+            loggedInUser = AuditConstants.REGISTRY_SYSTEM_USERNAME;
+        }
+        String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+        loggedInUser = UserCoreUtil.addTenantDomainToEntry(loggedInUser, tenantDomain);
+        AUDIT_LOG.info(String.format(AuditConstants.AUDIT_MESSAGE, loggedInUser, action, target, dataObject, result));
+    }
+
 }

@@ -53,7 +53,6 @@ import java.util.Properties;
 
 public class AccountLockHandler extends AbstractEventHandler implements IdentityConnectorConfig {
 
-    public static final Log AUDIT_LOG = LogFactory.getLog("AUDIT_LOG");
     private static final Log log = LogFactory.getLog(AccountLockHandler.class);
 
     private static ThreadLocal<String> lockedState = new ThreadLocal<>();
@@ -441,8 +440,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             .get(AccountConstants.ACCOUNT_LOCKED_CLAIM));
             if (existingAccountLockedValue != newAccountLockedValue) {
                 if (existingAccountLockedValue) {
+                    AccountUtil.publishEvent(IdentityEventConstants.Event.PRE_UNLOCK_ACCOUNT, event.getEventProperties());
                     lockedState.set(lockedStates.UNLOCKED_MODIFIED.toString());
                 } else {
+                    AccountUtil.publishEvent(IdentityEventConstants.Event.PRE_LOCK_ACCOUNT, event.getEventProperties());
                     lockedState.set(lockedStates.LOCKED_MODIFIED.toString());
                     IdentityUtil.threadLocalProperties.get().put(IdentityCoreConstants.USER_ACCOUNT_STATE,
                             UserCoreConstants.ErrorCode.USER_IS_LOCKED);
@@ -517,8 +518,9 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     }
                     newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED, tenantDomain,
                             userStoreManager, userName);
-                    auditAccountLock(AuditConstants.ACCOUNT_UNLOCKED, userName, userStoreDomainName, isAdminInitiated,
-                            null, AuditConstants.AUDIT_SUCCESS);
+                    AccountUtil.printAuditLog(AuditConstants.ACCOUNT_UNLOCKED, userName, userStoreDomainName,
+                            isAdminInitiated, null, AuditConstants.AUDIT_SUCCESS);
+                    AccountUtil.publishEvent(IdentityEventConstants.Event.POST_UNLOCK_ACCOUNT, event.getEventProperties());
                 }
             } else if (lockedStates.LOCKED_MODIFIED.toString().equals(lockedState.get())) {
 
@@ -550,8 +552,9 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                                 identityProperties, emailTemplateTypeAccLocked);
                     }
                 }
-                auditAccountLock(AuditConstants.ACCOUNT_LOCKED, userName, userStoreDomainName, isAdminInitiated,
-                        null, AuditConstants.AUDIT_SUCCESS);
+                AccountUtil.printAuditLog(AuditConstants.ACCOUNT_LOCKED, userName, userStoreDomainName,
+                        isAdminInitiated, null, AuditConstants.AUDIT_SUCCESS);
+                AccountUtil.publishEvent(IdentityEventConstants.Event.POST_LOCK_ACCOUNT, event.getEventProperties());
             }
         } finally {
             lockedState.remove();
@@ -746,48 +749,4 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         }
     }
 
-    /**
-     * To create an audit message based on provided parameters.
-     *
-     * @param action     Activity
-     * @param target     Target affected by this activity.
-     * @param dataObject Information passed along with the request.
-     * @param result     Result value.
-     */
-    private static void createAuditMessage(String action, String target, JSONObject dataObject, String result) {
-
-        String loggedInUser = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
-        if (StringUtils.isBlank(loggedInUser)) {
-            loggedInUser = AuditConstants.REGISTRY_SYSTEM_USERNAME;
-        }
-        String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-        loggedInUser = UserCoreUtil.addTenantDomainToEntry(loggedInUser, tenantDomain);
-        AUDIT_LOG.info(String.format(AuditConstants.AUDIT_MESSAGE, loggedInUser, action, target, dataObject, result));
-    }
-
-    /**
-     * Audit account lock event.
-     *
-     * @param action              activity
-     * @param target              target affected by this activity
-     * @param userStoreDomainName Domain name of the userstore
-     * @param isAdminInitiated    whether Account lock admin initiated
-     * @param errorMsg            if error occurs
-     * @param result              Result value
-     */
-    private void auditAccountLock(String action, String target, String userStoreDomainName, boolean isAdminInitiated,
-                                  String errorMsg, String result) {
-
-        JSONObject dataObject = new JSONObject();
-        dataObject.put(AuditConstants.REMOTE_ADDRESS_KEY, MDC.get(AuditConstants.REMOTE_ADDRESS_QUERY_KEY));
-        dataObject.put(AuditConstants.USER_AGENT_KEY, MDC.get(AuditConstants.USER_AGENT_QUERY_KEY));
-        dataObject.put(AuditConstants.SERVICE_PROVIDER_KEY, MDC.get(AuditConstants.SERVICE_PROVIDER_QUERY_KEY));
-        dataObject.put(AccountConstants.ADMIN_INITIATED, isAdminInitiated);
-        dataObject.put(AuditConstants.USER_STORE_DOMAIN, userStoreDomainName);
-
-        if (AuditConstants.AUDIT_FAILED.equals(result)) {
-            dataObject.put(AuditConstants.ERROR_MESSAGE_KEY, errorMsg);
-        }
-        createAuditMessage(action, target, dataObject, result);
-    }
 }

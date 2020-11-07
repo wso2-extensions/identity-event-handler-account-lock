@@ -19,6 +19,9 @@ package org.wso2.carbon.identity.handler.event.account.lock;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONObject;
+import org.slf4j.MDC;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.handler.InitConfig;
 import org.wso2.carbon.identity.core.model.IdentityErrorMsgContext;
 import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
@@ -226,8 +229,10 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                             .get(AccountConstants.ACCOUNT_DISABLED_CLAIM));
             if (existingAccountDisabledValue != newAccountDisabledValue) {
                 if (existingAccountDisabledValue) {
+                    AccountUtil.publishEvent(IdentityEventConstants.Event.PRE_ENABLE_ACCOUNT, event.getEventProperties());
                     disabledState.set(disabledStates.ENABLED_MODIFIED.toString());
                 } else {
+                    AccountUtil.publishEvent(IdentityEventConstants.Event.PRE_DISABLE_ACCOUNT, event.getEventProperties());
                     disabledState.set(disabledStates.DISABLED_MODIFIED.toString());
                     IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(
                             IdentityCoreConstants.USER_ACCOUNT_DISABLED);
@@ -283,6 +288,9 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                     newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_ENABLED,
                             userStoreManager, tenantDomain, userName);
                 }
+                AccountUtil.publishEvent(IdentityEventConstants.Event.POST_ENABLE_ACCOUNT, event.getEventProperties());
+                AccountUtil.printAuditLog(AuditConstants.ACCOUNT_ENABLED, userName, userStoreDomainName,
+                        null, null, AuditConstants.AUDIT_SUCCESS);
             } else if (disabledStates.DISABLED_MODIFIED.toString().equals(disabledState.get())) {
 
                 if (log.isDebugEnabled()) {
@@ -295,6 +303,9 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                     newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_DISABLED, userStoreManager,
                             tenantDomain, userName);
                 }
+                AccountUtil.publishEvent(IdentityEventConstants.Event.POST_DISABLE_ACCOUNT, event.getEventProperties());
+                AccountUtil.printAuditLog(AuditConstants.ACCOUNT_DISABLED, userName, userStoreDomainName,
+                        null, null, AuditConstants.AUDIT_SUCCESS);
             }
         } finally {
             disabledState.remove();

@@ -36,5 +36,7 @@ public class AuditConstants {
     public static final String REGISTRY_SYSTEM_USERNAME = "wso2.system.user";
     public static final String ACCOUNT_LOCKED = "Account Lock";
     public static final String ACCOUNT_UNLOCKED = "Account Unlock";
+    public static final String ACCOUNT_DISABLED = "Account Disable";
+    public static final String ACCOUNT_ENABLED = "Account Enable";
     public static final String USER_STORE_DOMAIN = "UserStoreDomain";
 }
