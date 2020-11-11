@@ -373,9 +373,13 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
                 IdentityUtil.threadLocalProperties.get().put(IdentityCoreConstants.USER_ACCOUNT_STATE,
                         UserCoreConstants.ErrorCode.USER_IS_LOCKED);
-
+                IdentityUtil.threadLocalProperties.get()
+                        .put(IdentityCoreConstants.USER_ACCOUNT_STATE_WITH_USERNAME + userName,
+                                UserCoreConstants.ErrorCode.USER_IS_LOCKED);
                 if (log.isDebugEnabled()) {
-                    log.debug(String.format("User %s is locked since he/she exceeded the maximum allowed failed attempts", userName));
+                    log.debug(
+                            String.format("User %s is locked since he/she exceeded the maximum allowed failed attempts",
+                                    userName));
                 }
                 IdentityUtil.threadLocalProperties.get().put(AccountConstants.ADMIN_INITIATED, false);
 
@@ -446,6 +450,9 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     lockedState.set(lockedStates.LOCKED_MODIFIED.toString());
                     IdentityUtil.threadLocalProperties.get().put(IdentityCoreConstants.USER_ACCOUNT_STATE,
                             UserCoreConstants.ErrorCode.USER_IS_LOCKED);
+                    IdentityUtil.threadLocalProperties.get()
+                            .put(IdentityCoreConstants.USER_ACCOUNT_STATE_WITH_USERNAME + userName,
+                                    UserCoreConstants.ErrorCode.USER_IS_LOCKED);
                 }
             } else {
                 if (existingAccountLockedValue) {
