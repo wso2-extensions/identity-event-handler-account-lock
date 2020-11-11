@@ -374,7 +374,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 IdentityUtil.threadLocalProperties.get().put(IdentityCoreConstants.USER_ACCOUNT_STATE,
                         UserCoreConstants.ErrorCode.USER_IS_LOCKED);
                 IdentityUtil.threadLocalProperties.get()
-                        .put(AccountConstants.USER_ACCOUNT_STATE_WITH_USERNAME + userName,
+                        .put(IdentityCoreConstants.USER_ACCOUNT_STATE_WITH_USERNAME + userName,
                                 UserCoreConstants.ErrorCode.USER_IS_LOCKED);
                 if (log.isDebugEnabled()) {
                     log.debug(
@@ -451,7 +451,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     IdentityUtil.threadLocalProperties.get().put(IdentityCoreConstants.USER_ACCOUNT_STATE,
                             UserCoreConstants.ErrorCode.USER_IS_LOCKED);
                     IdentityUtil.threadLocalProperties.get()
-                            .put(AccountConstants.USER_ACCOUNT_STATE_WITH_USERNAME + userName,
+                            .put(IdentityCoreConstants.USER_ACCOUNT_STATE_WITH_USERNAME + userName,
                                     UserCoreConstants.ErrorCode.USER_IS_LOCKED);
                 }
             } else {
