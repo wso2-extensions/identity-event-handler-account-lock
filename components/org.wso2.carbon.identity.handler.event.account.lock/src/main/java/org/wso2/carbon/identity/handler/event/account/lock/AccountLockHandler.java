@@ -138,12 +138,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         String adminPasswordResetAccountLockNotificationProperty = IdentityUtil.getProperty(
                 AccountConstants.ADMIN_FORCE_PASSWORD_RESET_ACCOUNT_LOCK_NOTIFICATION_ENABLE_PROPERTY);
         boolean adminForcePasswordResetLockNotificationEnabled =
-                !(adminPasswordResetAccountLockNotificationProperty == null) ||
                         Boolean.parseBoolean(adminPasswordResetAccountLockNotificationProperty);
         String adminPasswordResetAccountUnlockNotificationProperty = IdentityUtil.getProperty(
                 AccountConstants.ADMIN_FORCE_PASSWORD_RESET_ACCOUNT_UNLOCK_NOTIFICATION_ENABLE_PROPERTY);
         boolean adminForcePasswordResetUnlockNotificationEnabled =
-                !(adminPasswordResetAccountUnlockNotificationProperty == null) ||
                         Boolean.parseBoolean(adminPasswordResetAccountUnlockNotificationProperty);
         try {
             identityProperties = AccountServiceDataHolder.getInstance()
