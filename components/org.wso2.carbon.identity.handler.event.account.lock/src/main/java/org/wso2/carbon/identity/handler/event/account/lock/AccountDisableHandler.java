@@ -19,6 +19,7 @@ package org.wso2.carbon.identity.handler.event.account.lock;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.core.bean.context.MessageContext;
 import org.wso2.carbon.identity.core.handler.InitConfig;
 import org.wso2.carbon.identity.core.model.IdentityErrorMsgContext;
 import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
@@ -383,5 +384,15 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
         } catch (UserStoreException e) {
             throw new AccountLockException("Error while setting user claim value :" + username, e);
         }
+    }
+
+    @Override
+    public int getPriority(MessageContext messageContext) {
+
+        int priority = super.getPriority(messageContext);
+        if (priority == -1) {
+            priority = 101;
+        }
+        return priority;
     }
 }
