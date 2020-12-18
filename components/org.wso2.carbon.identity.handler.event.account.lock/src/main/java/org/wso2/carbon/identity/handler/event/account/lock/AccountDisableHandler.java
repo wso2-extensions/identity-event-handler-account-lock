@@ -311,13 +311,13 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                 publishPostAccountDisabledEvent(IdentityEventConstants.Event.POST_DISABLE_ACCOUNT,
                         event.getEventProperties(), true);
                 auditAccountDisable(AuditConstants.ACCOUNT_DISABLED, userName, userStoreDomainName,
-                        null, AuditConstants.AUDIT_SUCCESS,true);
+                        null, AuditConstants.AUDIT_SUCCESS, true);
             } else if (disabledStates.DISABLED_UNMODIFIED.toString().equals(disabledState.get())) {
                 auditAccountDisable(AuditConstants.ACCOUNT_DISABLED, userName, userStoreDomainName,
-                        null, AuditConstants.AUDIT_SUCCESS,false);
+                        null, AuditConstants.AUDIT_SUCCESS, false);
             } else if (disabledStates.ENABLED_UNMODIFIED.toString().equals(disabledState.get())) {
                 auditAccountDisable(AuditConstants.ACCOUNT_ENABLED, userName, userStoreDomainName,
-                        null, AuditConstants.AUDIT_SUCCESS,false);
+                        null, AuditConstants.AUDIT_SUCCESS, false);
             }
         } finally {
             disabledState.remove();

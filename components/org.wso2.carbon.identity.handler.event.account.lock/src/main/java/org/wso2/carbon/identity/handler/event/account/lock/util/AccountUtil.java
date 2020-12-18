@@ -16,6 +16,7 @@
 
 package org.wso2.carbon.identity.handler.event.account.lock.util;
 
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -153,9 +154,9 @@ public class AccountUtil {
     /**
      * Publishes an event.
      *
-     * @param eventName                 Event name
-     * @param properties                Event properties
-     * @throws AccountLockException     if event sent failed
+     * @param eventName                 Event name.
+     * @param properties                Event properties.
+     * @throws AccountLockException     Account Lock Exception.
      */
     public static void publishEvent(String eventName, Map<String, Object> properties) throws AccountLockException {
 
@@ -176,7 +177,7 @@ public class AccountUtil {
      */
     public static Map<String, Object> cloneMap(Map<String, Object> map) {
 
-        if (map == null) {
+        if (MapUtils.isEmpty(map)) {
             return null;
         }
         Map<String, Object> clonedMap = new HashMap<String, Object>();
