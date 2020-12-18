@@ -157,7 +157,6 @@ public class AccountUtil {
      * @param properties                Event properties
      * @throws AccountLockException     if event sent failed
      */
-
     public static void publishEvent(String eventName, Map<String, Object> properties) throws AccountLockException {
 
         Event identityMgtEvent = new Event(eventName, properties);
@@ -175,8 +174,8 @@ public class AccountUtil {
      * @param map          Map.
      * @return             Cloned Map.
      */
-    
     public static Map<String, Object> cloneMap(Map<String, Object> map) {
+
         if (map == null) {
             return null;
         }
