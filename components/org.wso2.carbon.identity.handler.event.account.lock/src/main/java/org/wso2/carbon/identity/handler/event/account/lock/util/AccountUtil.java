@@ -16,6 +16,7 @@
 
 package org.wso2.carbon.identity.handler.event.account.lock.util;
 
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -23,6 +24,7 @@ import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
+import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.governance.IdentityGovernanceException;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants;
@@ -37,6 +39,9 @@ import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.email.mgt.exceptions.I18nEmailMgtException;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class AccountUtil {
 
@@ -144,5 +149,41 @@ public class AccountUtil {
                     "Error occurred while checking email template type: " + templateType + " existence in the "
                             + "tenantDomain: " + tenantDomain, e);
         }
+    }
+
+    /**
+     * Publishes an event.
+     *
+     * @param eventName                 Event name.
+     * @param properties                Event properties.
+     * @throws AccountLockException     Account Lock Exception.
+     */
+    public static void publishEvent(String eventName, Map<String, Object> properties) throws AccountLockException {
+
+        Event identityMgtEvent = new Event(eventName, properties);
+        try {
+            AccountServiceDataHolder.getInstance().getIdentityEventService().handleEvent(identityMgtEvent);
+        } catch (IdentityEventException e) {
+            String errorMsg = "Error occurred while triggering the event : " + identityMgtEvent.getEventName();
+            throw new AccountLockException(errorMsg, e);
+        }
+    }
+
+    /**
+     * Clones the given map.
+     *
+     * @param map          Map.
+     * @return             Cloned Map.
+     */
+    public static Map<String, Object> cloneMap(Map<String, Object> map) {
+
+        if (MapUtils.isEmpty(map)) {
+            return null;
+        }
+        Map<String, Object> clonedMap = new HashMap<String, Object>();
+        for (String key : map.keySet()) {
+            clonedMap.put(key, map.get(key));
+        }
+        return clonedMap;
     }
 }
