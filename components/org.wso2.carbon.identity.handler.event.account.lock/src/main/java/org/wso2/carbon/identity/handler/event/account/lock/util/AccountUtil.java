@@ -20,6 +20,10 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONObject;
+import org.wso2.carbon.CarbonConstants;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.email.mgt.exceptions.I18nEmailMgtException;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
@@ -27,6 +31,7 @@ import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.governance.IdentityGovernanceException;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
+import org.wso2.carbon.identity.handler.event.account.lock.AuditConstants;
 import org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants;
 import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockException;
 import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockRuntimeException;
@@ -38,7 +43,7 @@ import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.service.RealmService;
-import org.wso2.carbon.email.mgt.exceptions.I18nEmailMgtException;
+import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -185,5 +190,25 @@ public class AccountUtil {
             clonedMap.put(key, map.get(key));
         }
         return clonedMap;
+    }
+
+    /**
+     * To create an audit message based on provided parameters.
+     *
+     * @param action     The action.
+     * @param target     The target affected by this activity.
+     * @param dataObject The information passed along with the request.
+     * @param result     The result value.
+     */
+     public static void createAuditMessage(String action, String target, JSONObject dataObject, String result) {
+
+        String loggedInUser = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+        if (StringUtils.isBlank(loggedInUser)) {
+            loggedInUser = AuditConstants.REGISTRY_SYSTEM_USERNAME;
+        }
+        String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+        loggedInUser = UserCoreUtil.addTenantDomainToEntry(loggedInUser, tenantDomain);
+        CarbonConstants.AUDIT_LOG.info(String.format(AuditConstants.AUDIT_MESSAGE, loggedInUser, action, target,
+                dataObject, result));
     }
 }

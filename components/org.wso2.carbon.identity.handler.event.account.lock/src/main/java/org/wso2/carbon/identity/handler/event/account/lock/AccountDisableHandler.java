@@ -16,13 +16,12 @@
 
 package org.wso2.carbon.identity.handler.event.account.lock;
 
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
 import org.slf4j.MDC;
-import org.wso2.carbon.CarbonConstants;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
 import org.wso2.carbon.identity.core.handler.InitConfig;
 import org.wso2.carbon.identity.core.model.IdentityErrorMsgContext;
@@ -415,23 +414,14 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
     }
 
     private void publishPostAccountDisabledEvent(String accountDisabledEventName, Map<String, Object> map, boolean
-            isDisblePropertySuccessfullyModified) throws AccountLockException {
+            isDisablePropertySuccessfullyModified) throws AccountLockException {
 
         Map<String, Object> eventProperties = AccountUtil.cloneMap(map);
-        eventProperties.put(IdentityEventConstants.EventProperty.UPDATED_DISABLED_STATUS,
-                isDisblePropertySuccessfullyModified);
-        AccountUtil.publishEvent(accountDisabledEventName, eventProperties);
-    }
-
-    private static void createAuditMessage(String action, String target, JSONObject dataObject, String result) {
-
-        String loggedInUser = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
-        if (StringUtils.isBlank(loggedInUser)) {
-            loggedInUser = AuditConstants.REGISTRY_SYSTEM_USERNAME;
+        if (MapUtils.isNotEmpty(eventProperties)) {
+            eventProperties.put(IdentityEventConstants.EventProperty.UPDATED_DISABLED_STATUS,
+                    isDisablePropertySuccessfullyModified);
         }
-        String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-        loggedInUser = UserCoreUtil.addTenantDomainToEntry(loggedInUser, tenantDomain);
-        CarbonConstants.AUDIT_LOG.info(String.format(AuditConstants.AUDIT_MESSAGE, loggedInUser, action, target, dataObject, result));
+        AccountUtil.publishEvent(accountDisabledEventName, eventProperties);
     }
 
     private void auditAccountDisable(String action, String target, String userStoreDomainName, String errorMsg,
@@ -447,7 +437,7 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
         if (AuditConstants.AUDIT_FAILED.equals(result)) {
             dataObject.put(AuditConstants.ERROR_MESSAGE_KEY, errorMsg);
         }
-        createAuditMessage(action, target, dataObject, result);
+        AccountUtil.createAuditMessage(action, target, dataObject, result);
     }
 
     @Override
