@@ -16,6 +16,7 @@
 
 package org.wso2.carbon.identity.handler.event.account.lock;
 
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
@@ -450,13 +451,17 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     ((Map<String, String>) event.getEventProperties().get("USER_CLAIMS"))
                             .get(AccountConstants.ACCOUNT_LOCKED_CLAIM));
             if (existingAccountLockedValue != newAccountLockedValue) {
+                String accountLockedEventName;
                 if (existingAccountLockedValue) {
+                    accountLockedEventName = IdentityEventConstants.Event.PRE_UNLOCK_ACCOUNT;
                     lockedState.set(lockedStates.UNLOCKED_MODIFIED.toString());
                 } else {
+                    accountLockedEventName = IdentityEventConstants.Event.PRE_LOCK_ACCOUNT;
                     lockedState.set(lockedStates.LOCKED_MODIFIED.toString());
                     IdentityUtil.threadLocalProperties.get().put(IdentityCoreConstants.USER_ACCOUNT_STATE,
                             UserCoreConstants.ErrorCode.USER_IS_LOCKED);
                 }
+                publishPreAccountLockedEvent(accountLockedEventName, event.getEventProperties());
             } else {
                 if (existingAccountLockedValue) {
                     lockedState.set(lockedStates.LOCKED_UNMODIFIED.toString());
@@ -535,8 +540,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     }
                     newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED, tenantDomain,
                             userStoreManager, userName);
+                    publishPostAccountLockedEvent(IdentityEventConstants.Event.POST_UNLOCK_ACCOUNT,
+                            event.getEventProperties(), true);
                     auditAccountLock(AuditConstants.ACCOUNT_UNLOCKED, userName, userStoreDomainName, isAdminInitiated,
-                            null, AuditConstants.AUDIT_SUCCESS);
+                            null, AuditConstants.AUDIT_SUCCESS, true);
                 }
             } else if (lockedStates.LOCKED_MODIFIED.toString().equals(lockedState.get())) {
 
@@ -575,8 +582,16 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                                 tenantDomain, userStoreManager, userName);
                     }
                 }
+                publishPostAccountLockedEvent(IdentityEventConstants.Event.POST_LOCK_ACCOUNT, event.getEventProperties()
+                        , true);
                 auditAccountLock(AuditConstants.ACCOUNT_LOCKED, userName, userStoreDomainName, isAdminInitiated,
-                        null, AuditConstants.AUDIT_SUCCESS);
+                        null, AuditConstants.AUDIT_SUCCESS, true);
+            } else if (lockedStates.LOCKED_UNMODIFIED.toString().equals(lockedState.get())) {
+                auditAccountLock(AuditConstants.ACCOUNT_LOCKED, userName, userStoreDomainName, isAdminInitiated,
+                        null, AuditConstants.AUDIT_SUCCESS, false);
+            } else if (lockedStates.UNLOCKED_UNMODIFIED.toString().equals(lockedState.get())) {
+                auditAccountLock(AuditConstants.ACCOUNT_UNLOCKED, userName, userStoreDomainName, isAdminInitiated,
+                        null, AuditConstants.AUDIT_SUCCESS, false);
             }
         } finally {
             lockedState.remove();
@@ -772,25 +787,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     }
 
     /**
-     * To create an audit message based on provided parameters.
-     *
-     * @param action     Activity
-     * @param target     Target affected by this activity.
-     * @param dataObject Information passed along with the request.
-     * @param result     Result value.
-     */
-    private static void createAuditMessage(String action, String target, JSONObject dataObject, String result) {
-
-        String loggedInUser = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
-        if (StringUtils.isBlank(loggedInUser)) {
-            loggedInUser = AuditConstants.REGISTRY_SYSTEM_USERNAME;
-        }
-        String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-        loggedInUser = UserCoreUtil.addTenantDomainToEntry(loggedInUser, tenantDomain);
-        AUDIT_LOG.info(String.format(AuditConstants.AUDIT_MESSAGE, loggedInUser, action, target, dataObject, result));
-    }
-
-    /**
      * Audit account lock event.
      *
      * @param action              activity
@@ -801,7 +797,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
      * @param result              Result value
      */
     private void auditAccountLock(String action, String target, String userStoreDomainName, boolean isAdminInitiated,
-                                  String errorMsg, String result) {
+                                  String errorMsg, String result, Boolean isModifiedStatus) {
 
         JSONObject dataObject = new JSONObject();
         dataObject.put(AuditConstants.REMOTE_ADDRESS_KEY, MDC.get(AuditConstants.REMOTE_ADDRESS_QUERY_KEY));
@@ -809,10 +805,28 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         dataObject.put(AuditConstants.SERVICE_PROVIDER_KEY, MDC.get(AuditConstants.SERVICE_PROVIDER_QUERY_KEY));
         dataObject.put(AccountConstants.ADMIN_INITIATED, isAdminInitiated);
         dataObject.put(AuditConstants.USER_STORE_DOMAIN, userStoreDomainName);
+        dataObject.put(AuditConstants.IS_MODIFIED_STATUS, isModifiedStatus);
 
         if (AuditConstants.AUDIT_FAILED.equals(result)) {
             dataObject.put(AuditConstants.ERROR_MESSAGE_KEY, errorMsg);
         }
-        createAuditMessage(action, target, dataObject, result);
+        AccountUtil.createAuditMessage(action, target, dataObject, result);
+    }
+
+    private void publishPreAccountLockedEvent(String accountLockedEventName, Map<String, Object> map) throws
+            AccountLockException {
+
+        AccountUtil.publishEvent(accountLockedEventName, AccountUtil.cloneMap(map));
+    }
+
+    private void publishPostAccountLockedEvent(String accountLockedEventName, Map<String, Object> map, boolean
+            isLockPropertySuccessfullyModified) throws AccountLockException {
+
+        Map<String, Object> eventProperties = AccountUtil.cloneMap(map);
+        if (MapUtils.isNotEmpty(eventProperties)) {
+            eventProperties.put(IdentityEventConstants.EventProperty.UPDATED_LOCKED_STATUS,
+                    isLockPropertySuccessfullyModified);
+        }
+        AccountUtil.publishEvent(accountLockedEventName, eventProperties);
     }
 }

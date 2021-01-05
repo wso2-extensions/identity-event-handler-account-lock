@@ -107,6 +107,7 @@
                             org.osgi.service.component;
                             version="${osgi.service.component.imp.pkg.version.range}",
 
+                            org.apache.commons.collections; version="${commons-collections.wso2.osgi.version.range}",
                             org.apache.commons.lang.*;
                             version="${commons-lang.wso2.osgi.version.range}",
                             org.apache.commons.logging; version="${commons-logging.osgi.version.range}",
@@ -134,6 +135,7 @@
                             version="${carbon.identity.framework.imp.pkg.version.range}",
 
                             org.wso2.carbon.stratos.common.*; version="${carbon.commons.imp.pkg.version}",
+                            org.wso2.carbon; version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.utils.*; version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.context; version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.core.util; version="${carbon.kernel.package.import.version.range}",
