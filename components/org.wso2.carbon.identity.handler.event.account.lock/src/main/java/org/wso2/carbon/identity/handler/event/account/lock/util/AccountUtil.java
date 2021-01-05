@@ -186,9 +186,7 @@ public class AccountUtil {
             return null;
         }
         Map<String, Object> clonedMap = new HashMap<String, Object>();
-        for (String key : map.keySet()) {
-            clonedMap.put(key, map.get(key));
-        }
+        clonedMap.putAll(map);
         return clonedMap;
     }
 
@@ -204,6 +202,10 @@ public class AccountUtil {
 
         String loggedInUser = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
         if (StringUtils.isBlank(loggedInUser)) {
+            if (log.isDebugEnabled()) {
+                log.debug("There is no logged in user. Therefore using the default registry system username when " +
+                        "creating the audit message.");
+            }
             loggedInUser = AuditConstants.REGISTRY_SYSTEM_USERNAME;
         }
         String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
