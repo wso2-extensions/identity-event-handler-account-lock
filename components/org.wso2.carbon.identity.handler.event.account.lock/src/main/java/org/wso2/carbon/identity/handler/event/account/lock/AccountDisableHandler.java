@@ -19,6 +19,10 @@ package org.wso2.carbon.identity.handler.event.account.lock;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONObject;
+import org.slf4j.MDC;
+import org.wso2.carbon.CarbonConstants;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
 import org.wso2.carbon.identity.core.handler.InitConfig;
 import org.wso2.carbon.identity.core.model.IdentityErrorMsgContext;
@@ -226,9 +230,12 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                     ((Map<String, String>) event.getEventProperties().get("USER_CLAIMS"))
                             .get(AccountConstants.ACCOUNT_DISABLED_CLAIM));
             if (existingAccountDisabledValue != newAccountDisabledValue) {
+                String accountDisabledEventName;
                 if (existingAccountDisabledValue) {
+                    accountDisabledEventName = IdentityEventConstants.Event.PRE_ENABLE_ACCOUNT;
                     disabledState.set(disabledStates.ENABLED_MODIFIED.toString());
                 } else {
+                    accountDisabledEventName = IdentityEventConstants.Event.PRE_DISABLE_ACCOUNT;
                     disabledState.set(disabledStates.DISABLED_MODIFIED.toString());
                     IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(
                             IdentityCoreConstants.USER_ACCOUNT_DISABLED);
@@ -236,6 +243,7 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                     IdentityUtil.threadLocalProperties.get().put(IdentityCoreConstants.USER_ACCOUNT_STATE,
                             IdentityCoreConstants.USER_ACCOUNT_DISABLED_ERROR_CODE);
                 }
+                publishPreAccountDisabledEvent(accountDisabledEventName, event.getEventProperties());
             } else {
                 if (existingAccountDisabledValue) {
                     disabledState.set(disabledStates.DISABLED_UNMODIFIED.toString());
@@ -284,6 +292,10 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                     newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_ENABLED,
                             userStoreManager, tenantDomain, userName);
                 }
+                publishPostAccountDisabledEvent(IdentityEventConstants.Event.POST_ENABLE_ACCOUNT,
+                        event.getEventProperties(), true);
+                auditAccountDisable(AuditConstants.ACCOUNT_ENABLED, userName, userStoreDomainName,
+                        null, AuditConstants.AUDIT_SUCCESS,true);
             } else if (disabledStates.DISABLED_MODIFIED.toString().equals(disabledState.get())) {
 
                 if (log.isDebugEnabled()) {
@@ -296,6 +308,16 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                     newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_DISABLED, userStoreManager,
                             tenantDomain, userName);
                 }
+                publishPostAccountDisabledEvent(IdentityEventConstants.Event.POST_DISABLE_ACCOUNT,
+                        event.getEventProperties(), true);
+                auditAccountDisable(AuditConstants.ACCOUNT_DISABLED, userName, userStoreDomainName,
+                        null, AuditConstants.AUDIT_SUCCESS, true);
+            } else if (disabledStates.DISABLED_UNMODIFIED.toString().equals(disabledState.get())) {
+                auditAccountDisable(AuditConstants.ACCOUNT_DISABLED, userName, userStoreDomainName,
+                        null, AuditConstants.AUDIT_SUCCESS, false);
+            } else if (disabledStates.ENABLED_UNMODIFIED.toString().equals(disabledState.get())) {
+                auditAccountDisable(AuditConstants.ACCOUNT_ENABLED, userName, userStoreDomainName,
+                        null, AuditConstants.AUDIT_SUCCESS, false);
             }
         } finally {
             disabledState.remove();
@@ -384,6 +406,48 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
         } catch (UserStoreException e) {
             throw new AccountLockException("Error while setting user claim value :" + username, e);
         }
+    }
+
+    private void publishPreAccountDisabledEvent(String accountDisabledEventName, Map<String, Object> map) throws
+            AccountLockException {
+
+        AccountUtil.publishEvent(accountDisabledEventName, AccountUtil.cloneMap(map));
+    }
+
+    private void publishPostAccountDisabledEvent(String accountDisabledEventName, Map<String, Object> map, boolean
+            isDisblePropertySuccessfullyModified) throws AccountLockException {
+
+        Map<String, Object> eventProperties = AccountUtil.cloneMap(map);
+        eventProperties.put(IdentityEventConstants.EventProperty.UPDATED_DISABLED_STATUS,
+                isDisblePropertySuccessfullyModified);
+        AccountUtil.publishEvent(accountDisabledEventName, eventProperties);
+    }
+
+    private static void createAuditMessage(String action, String target, JSONObject dataObject, String result) {
+
+        String loggedInUser = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+        if (StringUtils.isBlank(loggedInUser)) {
+            loggedInUser = AuditConstants.REGISTRY_SYSTEM_USERNAME;
+        }
+        String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+        loggedInUser = UserCoreUtil.addTenantDomainToEntry(loggedInUser, tenantDomain);
+        CarbonConstants.AUDIT_LOG.info(String.format(AuditConstants.AUDIT_MESSAGE, loggedInUser, action, target, dataObject, result));
+    }
+
+    private void auditAccountDisable(String action, String target, String userStoreDomainName, String errorMsg,
+                                     String result, Boolean isModifiedStatus) {
+
+        JSONObject dataObject = new JSONObject();
+        dataObject.put(AuditConstants.REMOTE_ADDRESS_KEY, MDC.get(AuditConstants.REMOTE_ADDRESS_QUERY_KEY));
+        dataObject.put(AuditConstants.USER_AGENT_KEY, MDC.get(AuditConstants.USER_AGENT_QUERY_KEY));
+        dataObject.put(AuditConstants.SERVICE_PROVIDER_KEY, MDC.get(AuditConstants.SERVICE_PROVIDER_QUERY_KEY));
+        dataObject.put(AuditConstants.USER_STORE_DOMAIN, userStoreDomainName);
+        dataObject.put(AuditConstants.IS_MODIFIED_STATUS, isModifiedStatus);
+
+        if (AuditConstants.AUDIT_FAILED.equals(result)) {
+            dataObject.put(AuditConstants.ERROR_MESSAGE_KEY, errorMsg);
+        }
+        createAuditMessage(action, target, dataObject, result);
     }
 
     @Override
