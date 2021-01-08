@@ -523,13 +523,15 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     }
                     boolean isPendingSelfRegistration =
                             AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue);
+                    boolean isPendingLiteRegistration =
+                            AccountConstants.PENDING_LITE_REGISTRATION.equals(existingAccountStateClaimValue);
                     if (IdentityMgtConstants.AccountStates.PENDING_ADMIN_FORCED_USER_PASSWORD_RESET
                             .equals(existingAccountStateClaimValue)) {
                         if (adminForcedPasswordResetUnlockNotificationEnabled) {
                             triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
                                     emailTemplateTypeAccUnlocked);
                         }
-                    } else if (!isPendingSelfRegistration) {
+                    } else if (!isPendingSelfRegistration && !isPendingLiteRegistration) {
                         triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
                                 emailTemplateTypeAccUnlocked);
                     }
@@ -566,9 +568,11 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             triggerNotification(event, userName, userStoreManager, userStoreDomainName,
                                     tenantDomain, identityProperties, emailTemplateTypeAccLocked);
                         }
-                        // Send locked email only if the accountState claim value is neither PENDIG_SR nor PENDING_EV.
+                        // Send locked email only if the accountState claim value doesn't have PENDIG_SR, PENDING_EV
+                        // or PENDING_LR.
                     } else if (!AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue) &&
-                            !AccountConstants.PENDING_EMAIL_VERIFICATION.equals(existingAccountStateClaimValue)) {
+                            !AccountConstants.PENDING_EMAIL_VERIFICATION.equals(existingAccountStateClaimValue) &&
+                            !AccountConstants.PENDING_LITE_REGISTRATION.equals(existingAccountStateClaimValue)) {
                         triggerNotification(event, userName, userStoreManager, userStoreDomainName,
                                 tenantDomain, identityProperties, emailTemplateTypeAccLocked);
                         newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED,
