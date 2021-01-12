@@ -349,6 +349,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 //Current failed attempts exceeded maximum allowed attempts. So their user should be locked.
 
                 newClaims.put(AccountConstants.ACCOUNT_LOCKED_CLAIM, "true");
+                newClaims.put(AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI,
+                        IdentityMgtConstants.LockedReason.MAX_ATTEMPTS_EXCEEDED.toString());
                 if (NumberUtils.isNumber(accountLockTime)) {
                     long unlockTimePropertyValue = Integer.parseInt(accountLockTime);
                     if (unlockTimePropertyValue != 0) {
@@ -452,6 +454,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             if (existingAccountLockedValue != newAccountLockedValue) {
                 if (existingAccountLockedValue) {
                     lockedState.set(lockedStates.UNLOCKED_MODIFIED.toString());
+                    ((Map<String, String>) event.getEventProperties().get("USER_CLAIMS")).put(AccountConstants.
+                            ACCOUNT_LOCKED_REASON_CLAIM_URI, StringUtils.EMPTY);
                 } else {
                     lockedState.set(lockedStates.LOCKED_MODIFIED.toString());
                     IdentityUtil.threadLocalProperties.get().put(IdentityCoreConstants.USER_ACCOUNT_STATE,
@@ -544,6 +548,11 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     log.debug(String.format("User %s is locked", userName));
                 }
                 String emailTemplateTypeAccLocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED;
+                if (isAdminInitiated && StringUtils.isBlank(getClaimValue(userName, userStoreManager,
+                        AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI))) {
+                    setUserClaim(AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI,
+                            IdentityMgtConstants.LockedReason.ADMIN_INITIATED.toString(), userStoreManager, userName);
+                }
                 if (notificationInternallyManage) {
                     if (isAdminInitiated) {
                         if (AccountUtil.isTemplateExists(
@@ -789,6 +798,19 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         loggedInUser = UserCoreUtil.addTenantDomainToEntry(loggedInUser, tenantDomain);
         AUDIT_LOG.info(String.format(AuditConstants.AUDIT_MESSAGE, loggedInUser, action, target, dataObject, result));
     }
+
+    private String getClaimValue(String username, org.wso2.carbon.user.api.UserStoreManager userStoreManager,
+                                 String claimURI) throws AccountLockException {
+
+        try {
+            Map<String, String> values = userStoreManager.getUserClaimValues(username, new String[]{claimURI},
+                    UserCoreConstants.DEFAULT_PROFILE);
+            return values.get(claimURI);
+        } catch (org.wso2.carbon.user.api.UserStoreException e) {
+            throw new AccountLockException("Error occurred while retrieving claim: " + claimURI, e);
+        }
+    }
+
 
     /**
      * Audit account lock event.
