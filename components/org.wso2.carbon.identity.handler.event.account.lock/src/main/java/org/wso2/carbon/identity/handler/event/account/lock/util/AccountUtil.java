@@ -17,6 +17,7 @@
 package org.wso2.carbon.identity.handler.event.account.lock.util;
 
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -212,5 +213,27 @@ public class AccountUtil {
         loggedInUser = UserCoreUtil.addTenantDomainToEntry(loggedInUser, tenantDomain);
         CarbonConstants.AUDIT_LOG.info(String.format(AuditConstants.AUDIT_MESSAGE, loggedInUser, action, target,
                 dataObject, result));
+    }
+
+    /**
+     * Check if the given user has a role capable of bypassing the account lock.
+     *
+     * @param userStoreManager Userstore manager
+     * @param userName Username of the user.
+     * @return Returns ture if the user can bypass account lock.
+     * @throws AccountLockException
+     */
+    public static boolean isAccountLockByPassForUser(UserStoreManager userStoreManager,
+                                                      String userName) throws AccountLockException {
+
+        try {
+            String[] roleList = userStoreManager.getRoleListOfUser(userName);
+            if (!ArrayUtils.isEmpty(roleList)) {
+                return ArrayUtils.contains(roleList, AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE);
+            }
+        } catch (UserStoreException e) {
+            throw new AccountLockException("Error occurred while listing user role: " + userName, e);
+        }
+        return false;
     }
 }
