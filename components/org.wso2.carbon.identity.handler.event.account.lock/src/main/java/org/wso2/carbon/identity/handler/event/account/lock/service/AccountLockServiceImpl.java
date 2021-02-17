@@ -17,11 +17,17 @@
 package org.wso2.carbon.identity.handler.event.account.lock.service;
 
 import org.apache.commons.lang.math.NumberUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.base.MultitenantConstants;
+import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.governance.IdentityGovernanceException;
 import org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants;
+import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockException;
 import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockServiceException;
 import org.wso2.carbon.identity.handler.event.account.lock.internal.AccountServiceDataHolder;
+import org.wso2.carbon.identity.handler.event.account.lock.util.AccountUtil;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
@@ -34,12 +40,22 @@ import java.util.Map;
  */
 public class AccountLockServiceImpl implements AccountLockService {
 
+    private static final Log log = LogFactory.getLog(AccountLockServiceImpl.class);
+
     @Override
     public boolean isAccountLocked(String domainAwareUsername, String tenantDomain) throws AccountLockServiceException {
 
         UserStoreManager userStoreManager = getUserStoreManager(tenantDomain);
+
+        if (!isAccountLockingEnabled(tenantDomain)) {
+            return false;
+        }
+
         boolean accountLocked = getAccountLockClaimValue(domainAwareUsername, userStoreManager);
         if (accountLocked) {
+            if (isAccountLockByPassForUser(userStoreManager, domainAwareUsername)) {
+                return false;
+            }
             long accountUnlockTime = getAccountUnlockTimeClaimValue(domainAwareUsername, userStoreManager);
             if (accountUnlockTime != 0 && System.currentTimeMillis() >= accountUnlockTime) {
                 return false;
@@ -118,5 +134,53 @@ public class AccountLockServiceImpl implements AccountLockService {
             throw new AccountLockServiceException("Could not retrieve user store for tenant domain: " + tenantDomain,
                     e);
         }
+    }
+
+    private boolean isAccountLockingEnabled(String tenantDomain) throws AccountLockServiceException {
+
+        try {
+            Property[] identityProperties = AccountServiceDataHolder.getInstance().getIdentityGovernanceService()
+                    .getConfiguration(new String[]{AccountConstants.ACCOUNT_LOCKED_PROPERTY}, tenantDomain);
+
+            boolean accountLockingEnabled = false;
+            if (identityProperties != null) {
+                for (Property property : identityProperties) {
+                    if (AccountConstants.ACCOUNT_LOCKED_PROPERTY.equals(property.getName())) {
+                        accountLockingEnabled = Boolean.parseBoolean(property.getValue());
+                    }
+                }
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("Identity event properties is null.");
+                }
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("Account lock feature(%s) is enabled: %s for tenant: %s",
+                        AccountConstants.ACCOUNT_LOCKED_PROPERTY, accountLockingEnabled, tenantDomain));
+            }
+            return accountLockingEnabled;
+        } catch (IdentityGovernanceException e) {
+            throw new AccountLockServiceException("Error while checking account locking capability status.", e);
+        }
+    }
+
+    private boolean isAccountLockByPassForUser(UserStoreManager userStoreManager, String domainAwareUsername)
+            throws AccountLockServiceException {
+
+        try {
+            if (AccountUtil.isAccountLockByPassForUser(userStoreManager, domainAwareUsername)) {
+                if (log.isDebugEnabled()) {
+                    String bypassMsg = String.format("Account locking is bypassed as lock bypass role: %s is " +
+                            "assigned to the user %s", AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, domainAwareUsername);
+                    log.debug(bypassMsg);
+                }
+                return true;
+            }
+        } catch (AccountLockException e) {
+            throw new AccountLockServiceException("Error occurred while checking account lock status for user: "
+                    + domainAwareUsername, e);
+        }
+        return false;
     }
 }

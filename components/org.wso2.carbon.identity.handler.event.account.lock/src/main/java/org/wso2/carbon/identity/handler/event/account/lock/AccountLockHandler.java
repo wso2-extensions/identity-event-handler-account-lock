@@ -232,7 +232,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         long unlockTime = getUnlockTime(userName, userStoreManager);
 
         if (isAccountLock(userName, userStoreManager)) {
-            if (isAccountLockByPassForUser(userStoreManager, userName)) {
+            if (AccountUtil.isAccountLockByPassForUser(userStoreManager, userName)) {
                 if (log.isDebugEnabled()) {
                     String bypassMsg = String.format("Account locking is bypassed as lock bypass role: %s is " +
                             "assigned to the user %s", AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, userName);
@@ -336,7 +336,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             newClaims.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_CLAIM, currentFailedAttempts + "");
             newClaims.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_BEFORE_SUCCESS_CLAIM, "0");
 
-            if (isAccountLockByPassForUser(userStoreManager, userName)) {
+            if (AccountUtil.isAccountLockByPassForUser(userStoreManager, userName)) {
                 IdentityErrorMsgContext customErrorMessageContext =
                         new IdentityErrorMsgContext(UserCoreConstants.ErrorCode.INVALID_CREDENTIAL,
                                 currentFailedAttempts, maximumFailedAttempts);
@@ -425,7 +425,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
         return (unlockTime != 0 && System.currentTimeMillis() >= unlockTime)
                 || currentFailedAttempts > 0
-                || ((Boolean.parseBoolean(accountLockClaim) && isAccountLockByPassForUser(userStoreManager, userName)));
+                || ((Boolean.parseBoolean(accountLockClaim)
+                && AccountUtil.isAccountLockByPassForUser(userStoreManager, userName)));
     }
 
     protected boolean handlePreSetUserClaimValues(Event event, String userName, UserStoreManager userStoreManager,
@@ -721,19 +722,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     private boolean isAuthPolicyAccountExistCheck() {
 
         return Boolean.parseBoolean(IdentityUtil.getProperty("AuthenticationPolicy.CheckAccountExist"));
-    }
-
-    private boolean isAccountLockByPassForUser(UserStoreManager userStoreManager, String userName) throws AccountLockException {
-
-        try {
-            String[] roleList = userStoreManager.getRoleListOfUser(userName);
-            if (!ArrayUtils.isEmpty(roleList)) {
-                return ArrayUtils.contains(roleList, AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE);
-            }
-        } catch (UserStoreException e) {
-            throw new AccountLockException("Error occurred while listing user role: " + userName, e);
-        }
-        return false;
     }
 
     private String buildAccountState(String state, String tenantDomain, UserStoreManager userStoreManager,
