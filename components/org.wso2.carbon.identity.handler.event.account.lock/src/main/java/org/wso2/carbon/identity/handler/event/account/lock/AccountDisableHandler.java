@@ -183,7 +183,7 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                                               String tenantDomain) throws AccountLockException {
 
         if (log.isDebugEnabled()) {
-            log.debug("Handling " + event.getEventName() + " for user " + userName + " in tenant domain " +
+            log.debug("Handling " + event.getEventName() + " for user: " + userName + " in tenant domain: " +
                     tenantDomain);
         }
         return handleAccountDisabledUsers(userName, userStoreManager, userStoreDomainName, tenantDomain);
@@ -205,7 +205,7 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                                                String tenantDomain) throws AccountLockException {
 
         if (log.isDebugEnabled()) {
-            log.debug("Handling " + event.getEventName() + " for user " + userName + " in tenant domain " +
+            log.debug("Handling " + event.getEventName() + " for user: " + userName + " in tenant domain: " +
                     tenantDomain);
         }
         return handleAccountDisabledUsers(userName, userStoreManager, userStoreDomainName, tenantDomain);
