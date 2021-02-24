@@ -155,6 +155,8 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
 
         if (IdentityEventConstants.Event.PRE_AUTHENTICATION.equals(event.getEventName())) {
             handlePreAuthentication(event, userName, userStoreManager, userStoreDomainName, tenantDomain);
+        } else if (IdentityEventConstants.Event.POST_AUTHENTICATION.equals(event.getEventName())) {
+            handlePostAuthentication(event, userName, userStoreManager, userStoreDomainName, tenantDomain);
         } else if (IdentityEventConstants.Event.PRE_SET_USER_CLAIMS.equals(event.getEventName())) {
             handlePreSetUserClaimValues(event, userName, userStoreManager, userStoreDomainName, tenantDomain);
         } else if (IdentityEventConstants.Event.POST_SET_USER_CLAIMS.equals(event.getEventName())) {
@@ -162,42 +164,48 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
         }
     }
 
+    /**
+     * Handle pre authentication event.
+     *
+     * @param event               Event.
+     * @param userName            Username.
+     * @param userStoreManager    User store manager.
+     * @param userStoreDomainName User store domain name.
+     * @param tenantDomain        Tenant domain.
+     * @return True if the account disable claim is set to false for the given user.
+     * @throws AccountLockException Error in handling account disabled users.
+     */
     protected boolean handlePreAuthentication(Event event, String userName, UserStoreManager userStoreManager,
                                               String userStoreDomainName,
                                               String tenantDomain) throws AccountLockException {
 
-        String accountDisabledClaim;
-        try {
-            Map<String, String> claimValues = userStoreManager.getUserClaimValues(userName, new String[]{
-                    AccountConstants.ACCOUNT_DISABLED_CLAIM}, UserCoreConstants.DEFAULT_PROFILE);
-            accountDisabledClaim = claimValues.get(AccountConstants.ACCOUNT_DISABLED_CLAIM);
-
-        } catch (UserStoreException e) {
-            throw new AccountLockException("Error occurred while retrieving " + AccountConstants
-                    .ACCOUNT_DISABLED_CLAIM + " claim value", e);
+        if (log.isDebugEnabled()) {
+            log.debug("Handling " + event.getEventName() + " for user: " + userName + " in tenant domain: " +
+                    tenantDomain);
         }
-        if (Boolean.parseBoolean(accountDisabledClaim)) {
-            String message;
-            if (StringUtils.isNotBlank(userStoreDomainName)) {
-                message = "Account is disabled for user " + userName + " in user store "
-                        + userStoreDomainName + " in tenant " + tenantDomain + ". Cannot login until the " +
-                        "account is enabled.";
-            } else {
-                message = "Account is disabled for user " + userName + " in tenant " + tenantDomain + ". Cannot" +
-                        " login until the account is enabled.";
-            }
+        return handleAccountDisabledUsers(userName, userStoreManager, userStoreDomainName, tenantDomain);
+    }
 
-            if (log.isDebugEnabled()) {
-                log.debug(String.format("Authentication failed for user %s as the account is disabled", userName));
-            }
+    /**
+     * Handle post authentication event.
+     *
+     * @param event               Event.
+     * @param userName            Username.
+     * @param userStoreManager    User store manager.
+     * @param userStoreDomainName User store domain name.
+     * @param tenantDomain        Tenant domain.
+     * @return True if the account disable claim is set to false for the given user.
+     * @throws AccountLockException Error in handling account disabled users.
+     */
+    protected boolean handlePostAuthentication(Event event, String userName, UserStoreManager userStoreManager,
+                                              String userStoreDomainName,
+                                              String tenantDomain) throws AccountLockException {
 
-            IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(
-                    IdentityCoreConstants.USER_ACCOUNT_DISABLED_ERROR_CODE);
-            IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
-
-            throw new AccountLockException(IdentityCoreConstants.USER_ACCOUNT_DISABLED_ERROR_CODE, message);
+        if (log.isDebugEnabled()) {
+            log.debug("Handling " + event.getEventName() + " for user: " + userName + " in tenant domain: " +
+                    tenantDomain);
         }
-        return true;
+        return handleAccountDisabledUsers(userName, userStoreManager, userStoreDomainName, tenantDomain);
     }
 
     protected boolean handlePreSetUserClaimValues(Event event, String userName, UserStoreManager userStoreManager,
@@ -394,5 +402,41 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
             priority = 101;
         }
         return priority;
+    }
+
+    private boolean handleAccountDisabledUsers(String userName, UserStoreManager userStoreManager,
+                                               String userStoreDomainName,
+                                               String tenantDomain) throws AccountLockException {
+
+        String accountDisabledClaim;
+        try {
+            Map<String, String> claimValues = userStoreManager.getUserClaimValues(userName, new String[]{
+                    AccountConstants.ACCOUNT_DISABLED_CLAIM}, UserCoreConstants.DEFAULT_PROFILE);
+            accountDisabledClaim = claimValues.get(AccountConstants.ACCOUNT_DISABLED_CLAIM);
+        } catch (UserStoreException e) {
+            throw new AccountLockException("Error occurred while retrieving " + AccountConstants
+                    .ACCOUNT_DISABLED_CLAIM + " claim value", e);
+        }
+        if (Boolean.parseBoolean(accountDisabledClaim)) {
+            String message;
+            if (StringUtils.isNotBlank(userStoreDomainName)) {
+                message = "Account is disabled for user: " + userName + " in user store: " + userStoreDomainName +
+                        " in tenant: " + tenantDomain + ". Cannot login until the account is enabled.";
+            } else {
+                message = "Account is disabled for user: " + userName + " in tenant: " + tenantDomain + ". Cannot" +
+                        " login until the account is enabled.";
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("Authentication failed for user %s as the account is disabled", userName));
+            }
+
+            IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(
+                    IdentityCoreConstants.USER_ACCOUNT_DISABLED_ERROR_CODE);
+            IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
+
+            throw new AccountLockException(IdentityCoreConstants.USER_ACCOUNT_DISABLED_ERROR_CODE, message);
+        }
+        return true;
     }
 }
