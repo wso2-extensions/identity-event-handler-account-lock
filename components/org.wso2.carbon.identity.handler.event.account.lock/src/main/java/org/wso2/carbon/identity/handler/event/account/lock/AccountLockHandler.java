@@ -547,13 +547,13 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                         triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
                                 emailTemplateTypeAccUnlocked);
                     }
-                    newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED, tenantDomain,
-                            userStoreManager, userName);
-                    publishPostAccountLockedEvent(IdentityEventConstants.Event.POST_UNLOCK_ACCOUNT,
-                            event.getEventProperties(), true);
-                    auditAccountLock(AuditConstants.ACCOUNT_UNLOCKED, userName, userStoreDomainName, isAdminInitiated,
-                            null, AuditConstants.AUDIT_SUCCESS, true);
                 }
+                newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED, tenantDomain,
+                        userStoreManager, userName);
+                publishPostAccountLockedEvent(IdentityEventConstants.Event.POST_UNLOCK_ACCOUNT,
+                        event.getEventProperties(), true);
+                auditAccountLock(AuditConstants.ACCOUNT_UNLOCKED, userName, userStoreDomainName, isAdminInitiated,
+                        null, AuditConstants.AUDIT_SUCCESS, true);
             } else if (lockedStates.LOCKED_MODIFIED.toString().equals(lockedState.get())) {
 
                 if (log.isDebugEnabled()) {
@@ -594,9 +594,15 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             !AccountConstants.PENDING_LITE_REGISTRATION.equals(existingAccountStateClaimValue)) {
                         triggerNotification(event, userName, userStoreManager, userStoreDomainName,
                                 tenantDomain, identityProperties, emailTemplateTypeAccLocked);
-                        newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED,
-                                tenantDomain, userStoreManager, userName);
                     }
+                }
+                /* Set new account state only if the accountState claim value is neither PENDING_SR, PENDING_EV nor
+                PENDING_LR. */
+                if (!AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue) &&
+                        !AccountConstants.PENDING_EMAIL_VERIFICATION.equals(existingAccountStateClaimValue) &&
+                        !AccountConstants.PENDING_LITE_REGISTRATION.equals(existingAccountStateClaimValue)) {
+                    newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED,
+                            tenantDomain, userStoreManager, userName);
                 }
                 publishPostAccountLockedEvent(IdentityEventConstants.Event.POST_LOCK_ACCOUNT, event.getEventProperties()
                         , true);
