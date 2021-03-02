@@ -537,11 +537,11 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                         triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
                                 emailTemplateTypeAccUnlocked);
                     }
-                    newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED, tenantDomain,
-                            userStoreManager, userName);
-                    auditAccountLock(AuditConstants.ACCOUNT_UNLOCKED, userName, userStoreDomainName, isAdminInitiated,
-                            null, AuditConstants.AUDIT_SUCCESS);
                 }
+                newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED, tenantDomain,
+                        userStoreManager, userName);
+                auditAccountLock(AuditConstants.ACCOUNT_UNLOCKED, userName, userStoreDomainName, isAdminInitiated,
+                        null, AuditConstants.AUDIT_SUCCESS);
             } else if (lockedStates.LOCKED_MODIFIED.toString().equals(lockedState.get())) {
 
                 if (log.isDebugEnabled()) {
@@ -580,9 +580,13 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             !AccountConstants.PENDING_EMAIL_VERIFICATION.equals(existingAccountStateClaimValue)) {
                         triggerNotification(event, userName, userStoreManager, userStoreDomainName,
                                 tenantDomain, identityProperties, emailTemplateTypeAccLocked);
-                        newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED,
-                                tenantDomain, userStoreManager, userName);
                     }
+                }
+                // Set new account state only if the accountState claim value is neither PENDING_SR nor PENDING_EV.
+                if (!AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue) &&
+                        !AccountConstants.PENDING_EMAIL_VERIFICATION.equals(existingAccountStateClaimValue)) {
+                    newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED,
+                            tenantDomain, userStoreManager, userName);
                 }
                 auditAccountLock(AuditConstants.ACCOUNT_LOCKED, userName, userStoreDomainName, isAdminInitiated,
                         null, AuditConstants.AUDIT_SUCCESS);
