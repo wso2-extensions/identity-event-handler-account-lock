@@ -596,11 +596,13 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                                 tenantDomain, identityProperties, emailTemplateTypeAccLocked);
                     }
                 }
-                /* Set new account state only if the accountState claim value is neither PENDING_SR, PENDING_EV nor
-                PENDING_LR. */
+                /* Set new account state only if the accountState claim value is neither PENDING_SR, PENDING_EV,
+                PENDING_LR nor PENDING_FUPR. */
                 if (!AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue) &&
                         !AccountConstants.PENDING_EMAIL_VERIFICATION.equals(existingAccountStateClaimValue) &&
-                        !AccountConstants.PENDING_LITE_REGISTRATION.equals(existingAccountStateClaimValue)) {
+                        !AccountConstants.PENDING_LITE_REGISTRATION.equals(existingAccountStateClaimValue) &&
+                        !AccountConstants.PENDING_ADMIN_FORCED_USER_PASSWORD_RESET
+                                .equals(existingAccountStateClaimValue)) {
                     newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED,
                             tenantDomain, userStoreManager, userName);
                 }
