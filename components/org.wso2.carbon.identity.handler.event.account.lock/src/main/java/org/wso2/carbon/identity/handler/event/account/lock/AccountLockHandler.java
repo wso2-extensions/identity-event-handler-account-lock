@@ -461,6 +461,11 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     if (event.getEventProperties().get("USER_CLAIMS") != null) {
                         ((Map<String, String>) event.getEventProperties().get("USER_CLAIMS")).put(AccountConstants.
                                 ACCOUNT_LOCKED_REASON_CLAIM_URI, StringUtils.EMPTY);
+                        if (StringUtils.isNotEmpty(getClaimValue(userName, userStoreManager,
+                                AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM))) {
+                            ((Map<String, String>) event.getEventProperties().get("USER_CLAIMS"))
+                                    .put(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM, "0");
+                        }
                     }
                 } else {
                     accountLockedEventName = IdentityEventConstants.Event.PRE_LOCK_ACCOUNT;
@@ -562,8 +567,14 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 String emailTemplateTypeAccLocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED;
                 if (isAdminInitiated && StringUtils.isBlank(getClaimValue(userName, userStoreManager,
                         AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI))) {
-                    setUserClaim(AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI,
-                            IdentityMgtConstants.LockedReason.ADMIN_INITIATED.toString(), userStoreManager, userName);
+                    Map<String, String> userClaims = new HashMap<>();
+                    userClaims.put(AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI,
+                            IdentityMgtConstants.LockedReason.ADMIN_INITIATED.toString());
+                    if (StringUtils.isNotEmpty(
+                            getClaimValue(userName, userStoreManager, AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM))) {
+                        userClaims.put(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM, "0");
+                    }
+                    setUserClaims(userClaims, userStoreManager, userName);
                 }
                 if (notificationInternallyManage) {
                     if (isAdminInitiated) {
@@ -794,6 +805,16 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             userStoreManager.setUserClaimValues(username, userClaims, null);
         } catch (UserStoreException e) {
             throw new AccountLockException("Error while setting user claim value :" + username, e);
+        }
+    }
+
+    private void setUserClaims(Map<String, String> userClaims, UserStoreManager userStoreManager, String username)
+            throws AccountLockException {
+
+        try {
+            userStoreManager.setUserClaimValues(username, userClaims, null);
+        } catch (UserStoreException e) {
+            throw new AccountLockException("Error while setting user claim values for user: " + username, e);
         }
     }
 
