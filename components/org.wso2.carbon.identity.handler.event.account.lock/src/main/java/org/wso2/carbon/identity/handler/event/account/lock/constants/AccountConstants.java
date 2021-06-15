@@ -16,6 +16,9 @@
 
 package org.wso2.carbon.identity.handler.event.account.lock.constants;
 
+/**
+ * Constants class.
+ */
 public class AccountConstants {
 
     public static final String ACCOUNT_LOCKED_CLAIM = "http://wso2.org/claims/identity/accountLocked";
