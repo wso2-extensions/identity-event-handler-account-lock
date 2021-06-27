@@ -220,6 +220,13 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             } finally {
                 PrivilegedCarbonContext.endTenantFlow();
             }
+        } else if (IdentityEventConstants.Event.POST_NON_BASIC_AUTHENTICATION.equals(event.getEventName())) {
+            /*
+            This will be invoked when an authenticator fires event POST_AUTHENTICATOR_LOGIN_ATTEMPT. This is similar to
+            the POST_AUTHENTICATION.
+             */
+            handleAuthenticatorLoginAttempt(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                    identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio);
         }
     }
 
@@ -236,6 +243,21 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         }
 
         return true;
+    }
+
+    protected boolean handleAuthenticatorLoginAttempt(Event event, String userName, UserStoreManager userStoreManager,
+                                                        String userStoreDomainName, String tenantDomain,
+                                                        Property[] identityProperties, int maximumFailedAttempts,
+                                                        String accountLockTime, double unlockTimeRatio)
+            throws AccountLockException {
+
+        /*
+        This is similar to the POST_AUTHENTICATION. If the authentication attempt at the authenticator is successful,
+        we need to reset any failed login attempts. If the authentication failed, we need to increment failed login
+        attempts and lock the user if the account lock criteria is satisfied.
+         */
+        return handlePostAuthentication(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio);
     }
 
     protected boolean handlePostAuthentication(Event event, String userName, UserStoreManager userStoreManager,
