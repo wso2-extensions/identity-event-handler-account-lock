@@ -222,10 +222,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             }
         } else if (IdentityEventConstants.Event.POST_NON_BASIC_AUTHENTICATION.equals(event.getEventName())) {
             /*
-            This will be invoked when an authenticator fires event POST_AUTHENTICATOR_LOGIN_ATTEMPT. This is similar to
+            This will be invoked when an authenticator fires event POST_NON_BASIC_AUTHENTICATION. This is similar to
             the POST_AUTHENTICATION.
              */
-            handleAuthenticatorLoginAttempt(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+            handleNonBasicAuthentication(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
                     identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio);
         }
     }
@@ -245,10 +245,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         return true;
     }
 
-    protected boolean handleAuthenticatorLoginAttempt(Event event, String userName, UserStoreManager userStoreManager,
-                                                        String userStoreDomainName, String tenantDomain,
-                                                        Property[] identityProperties, int maximumFailedAttempts,
-                                                        String accountLockTime, double unlockTimeRatio)
+    protected boolean handleNonBasicAuthentication(Event event, String userName, UserStoreManager userStoreManager,
+                                                   String userStoreDomainName, String tenantDomain,
+                                                   Property[] identityProperties, int maximumFailedAttempts,
+                                                   String accountLockTime, double unlockTimeRatio)
             throws AccountLockException {
 
         /*
