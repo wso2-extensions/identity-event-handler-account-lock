@@ -479,6 +479,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             throws AccountLockException {
 
         String newAccountState = null;
+        Map<String, String> userClaims = new HashMap<>();
         try {
             boolean notificationInternallyManage = true;
 
@@ -546,14 +547,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 String emailTemplateTypeAccLocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED;
                 if (isAdminInitiated && StringUtils.isBlank(getClaimValue(userName, userStoreManager,
                         AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI))) {
-                    Map<String, String> userClaims = new HashMap<>();
                     userClaims.put(AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI,
                             IdentityMgtConstants.LockedReason.ADMIN_INITIATED.toString());
                     if (StringUtils.isNotEmpty(
                             getClaimValue(userName, userStoreManager, AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM))) {
                         userClaims.put(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM, "0");
                     }
-                    setUserClaims(userName, tenantDomain, userStoreManager, userClaims);
                 }
                 if (notificationInternallyManage) {
                     if (isAdminInitiated) {
@@ -612,8 +611,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             IdentityUtil.threadLocalProperties.get().remove(AccountConstants.ADMIN_INITIATED);
         }
         if (StringUtils.isNotEmpty(newAccountState)) {
-            setUserClaim(AccountConstants.ACCOUNT_STATE_CLAIM_URI, newAccountState,
-                    userStoreManager, userName, tenantDomain);
+            userClaims.put(AccountConstants.ACCOUNT_STATE_CLAIM_URI, newAccountState);
+            setUserClaims(userName, tenantDomain, userStoreManager, userClaims);
+        } else if (!userClaims.isEmpty()) {
+            setUserClaims(userName, tenantDomain, userStoreManager, userClaims);
         }
         return true;
     }
