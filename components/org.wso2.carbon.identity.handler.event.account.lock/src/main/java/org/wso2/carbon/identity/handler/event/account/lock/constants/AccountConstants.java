@@ -39,6 +39,8 @@ public class AccountConstants {
     public static final String FAILED_LOGIN_ATTEMPTS_PROPERTY = "account.lock.handler.On.Failure.Max.Attempts";
     public static final String LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY = "account.lock.handler.login.fail.timeout.ratio";
     public static final String NOTIFICATION_INTERNALLY_MANAGE = "account.lock.handler.notification.manageInternally";
+    public static final String NOTIFY_ON_LOCK_DURATION_INCREMENT =
+            "account.lock.handler.notification.notifyOnLockIncrement";
     public static final String ADMIN_FORCE_PASSWORD_RESET_ACCOUNT_LOCK_NOTIFICATION_ENABLE_PROPERTY =
             "Recovery.AdminPasswordReset.AccountLockNotification";
     public static final String ADMIN_FORCE_PASSWORD_RESET_ACCOUNT_UNLOCK_NOTIFICATION_ENABLE_PROPERTY =
@@ -61,8 +63,10 @@ public class AccountConstants {
     public static final String LOCKED = "LOCKED";
     public static final String UNLOCKED = "UNLOCKED";
     public static final String DISABLED = "DISABLED";
+    public static final String LOCK_EXTENDED = "LOCK_EXTENDED";
 
     public static final String ADMIN_INITIATED = "AdminInitiated";
+    public static final String USER_LOCKED_DURATION = "UserLockedDuration";
 
     public static final String EMAIL_TEMPLATE_TYPE_ACC_LOCKED_ADMIN_TRIGGERED = "accountlockadmin";
     public static final String EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_ADMIN_TRIGGERED = "accountunlockadmin";
@@ -70,4 +74,5 @@ public class AccountConstants {
     public static final String EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT = "accountlockfailedattempt";
     public static final String EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_TIME_BASED = "accountunlocktimebased";
 
+    public static final String LOCK_DURATION_EMAIL_TEMPLATE_PARAMETER = "lock-duration";
 }

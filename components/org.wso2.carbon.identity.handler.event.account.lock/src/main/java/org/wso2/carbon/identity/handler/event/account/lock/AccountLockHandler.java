@@ -113,21 +113,24 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         nameMapping.put(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY, "Initial account lock duration");
         nameMapping.put(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY, "Account lock duration increment factor");
         nameMapping.put(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE, "Manage notification sending internally");
+        nameMapping.put(AccountConstants.NOTIFY_ON_LOCK_DURATION_INCREMENT, "Notify user on account lock increment");
         return nameMapping;
     }
 
     @Override
     public Map<String, String> getPropertyDescriptionMapping() {
         Map<String, String> descriptionMapping = new HashMap<>();
-        descriptionMapping.put(AccountConstants.ACCOUNT_LOCKED_PROPERTY, "Lock user accounts on failed login attempts");
+        descriptionMapping.put(AccountConstants.ACCOUNT_LOCKED_PROPERTY, "Lock user accounts on failed login attempts.");
         descriptionMapping.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY, "Number of failed login attempts " +
                 "allowed until account lock.");
         descriptionMapping.put(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY, "Initial account lock time period in " +
                 "minutes. Account will be automatically unlocked after this time period.");
         descriptionMapping.put(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY, "Account lock duration will be " +
-                "increased by this factor. Ex: Initial duration: 5m; Increment factor: 2; Next lock duration: 5 x 2 = 10m");
+                "increased by this factor. Ex: Initial duration: 5m; Increment factor: 2; Next lock duration: 5 x 2 = 10m.");
         descriptionMapping.put(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE, "Disable if the client application " +
-                "handles notification sending");
+                "handles notification sending.");
+        descriptionMapping.put(AccountConstants.NOTIFY_ON_LOCK_DURATION_INCREMENT, "Notify user via email when the " +
+                "account lock duration increases on consecutive lock cycles.");
         return descriptionMapping;
     }
 
@@ -168,7 +171,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             if (AccountConstants.ACCOUNT_LOCKED_PROPERTY.equals(identityProperty.getName())) {
                 accountLockedEnabled = Boolean.parseBoolean(identityProperty.getValue());
             } else if (AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY.equals(identityProperty.getName())) {
-                maximumFailedAttempts = Integer.parseInt(identityProperty.getValue());
+                String value = identityProperty.getValue();
+                if (NumberUtils.isNumber(value)) {
+                    maximumFailedAttempts = Integer.parseInt(identityProperty.getValue());
+                }
             } else if (AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY.equals(identityProperty.getName())) {
                 accountLockTime = identityProperty.getValue();
             } else if (AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY.equals(identityProperty.getName())) {
@@ -381,10 +387,15 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                         unlockTimePropertyValue = (long) (unlockTimePropertyValue * 1000 * 60 * Math.pow
                                 (unlockTimeRatio, currentFailedLoginLockouts));
                         unlockTime = System.currentTimeMillis() + unlockTimePropertyValue;
+                        IdentityUtil.threadLocalProperties.get().put(AccountConstants.USER_LOCKED_DURATION,
+                                Long.toString(unlockTimePropertyValue/60000));
                         newClaims.put(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM, Long.toString(unlockTime));
                     }
                 }
                 currentFailedLoginLockouts += 1;
+                if (currentFailedLoginLockouts > 1) {
+                    IdentityUtil.threadLocalProperties.get().put(AccountConstants.LOCK_EXTENDED, true);
+                }
                 newClaims.put(FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, Integer.toString(currentFailedLoginLockouts));
                 newClaims.put(failedAttemptsClaim, "0");
 
@@ -622,6 +633,38 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 auditAccountLock(AuditConstants.ACCOUNT_LOCKED, userName, userStoreDomainName, isAdminInitiated,
                         null, AuditConstants.AUDIT_SUCCESS, true);
             } else if (lockedStates.LOCKED_UNMODIFIED.toString().equals(lockedState.get())) {
+                boolean notificationOnLockIncrement = false;
+                try {
+                    notificationOnLockIncrement = Boolean.parseBoolean(AccountUtil.getConnectorConfig(AccountConstants
+                            .NOTIFY_ON_LOCK_DURATION_INCREMENT, tenantDomain));
+                } catch (IdentityEventException e) {
+                    log.warn("Error while reading notification on lock increment property in account lock handler");
+                    if (log.isDebugEnabled()) {
+                        log.debug("Error while reading notification on lock increment property in account lock " +
+                                "handler", e);
+                    }
+                }
+
+                if (notificationOnLockIncrement &&
+                        IdentityUtil.threadLocalProperties.get().get(AccountConstants.LOCK_EXTENDED) != null) {
+                    boolean isAccountLockExtended = (boolean) IdentityUtil.threadLocalProperties.get()
+                            .get(AccountConstants.LOCK_EXTENDED);
+                    if (isAccountLockExtended && !isAdminInitiated && notificationInternallyManage &&
+                            AccountUtil.isTemplateExists(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT,
+                                    tenantDomain)) {
+
+                        // Send locked email only if the accountState claim value doesn't have PENDING_AFUPR,
+                        // PENDING_SR, PENDING_EV or PENDING_LR.
+                        if (!IdentityMgtConstants.AccountStates.PENDING_ADMIN_FORCED_USER_PASSWORD_RESET.equals(
+                                existingAccountStateClaimValue) &&
+                                !AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue) &&
+                                !AccountConstants.PENDING_EMAIL_VERIFICATION.equals(existingAccountStateClaimValue) &&
+                                !AccountConstants.PENDING_LITE_REGISTRATION.equals(existingAccountStateClaimValue)) {
+                            triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                                    identityProperties, AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT);
+                        }
+                    }
+                }
                 auditAccountLock(AuditConstants.ACCOUNT_LOCKED, userName, userStoreDomainName, isAdminInitiated,
                         null, AuditConstants.AUDIT_SUCCESS, false);
             } else if (lockedStates.UNLOCKED_UNMODIFIED.toString().equals(lockedState.get())) {
@@ -631,6 +674,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         } finally {
             lockedState.remove();
             IdentityUtil.threadLocalProperties.get().remove(AccountConstants.ADMIN_INITIATED);
+            IdentityUtil.threadLocalProperties.get().remove(AccountConstants.USER_LOCKED_DURATION);
+            IdentityUtil.threadLocalProperties.get().remove(AccountConstants.LOCK_EXTENDED);
         }
         if (StringUtils.isNotEmpty(newAccountState)) {
             userClaims.put(AccountConstants.ACCOUNT_STATE_CLAIM_URI, newAccountState);
@@ -648,6 +693,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         properties.add(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY);
         properties.add(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY);
         properties.add(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE);
+        properties.add(AccountConstants.NOTIFY_ON_LOCK_DURATION_INCREMENT);
 
         return properties.toArray(new String[properties.size()]);
     }
@@ -673,6 +719,15 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         properties.put(IdentityEventConstants.EventProperty.USER_STORE_DOMAIN, userStoreDomainName);
         properties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN, tenantDomain);
         properties.put("TEMPLATE_TYPE", notificationEvent);
+        if (AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT.equals(notificationEvent)) {
+            String userLockedDuration = (String) IdentityUtil.threadLocalProperties.get().
+                    get(AccountConstants.USER_LOCKED_DURATION);
+            if (StringUtils.isNotEmpty(userLockedDuration)) {
+                properties.put(AccountConstants.LOCK_DURATION_EMAIL_TEMPLATE_PARAMETER, userLockedDuration);
+            } else {
+                properties.put(AccountConstants.LOCK_DURATION_EMAIL_TEMPLATE_PARAMETER, "0");
+            }
+        }
         Event identityMgtEvent = new Event(eventName, properties);
         try {
             AccountServiceDataHolder.getInstance().getIdentityEventService().handleEvent(identityMgtEvent);
