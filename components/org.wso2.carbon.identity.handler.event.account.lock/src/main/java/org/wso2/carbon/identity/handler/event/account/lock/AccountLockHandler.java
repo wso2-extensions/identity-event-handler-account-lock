@@ -120,15 +120,15 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     @Override
     public Map<String, String> getPropertyDescriptionMapping() {
         Map<String, String> descriptionMapping = new HashMap<>();
-        descriptionMapping.put(AccountConstants.ACCOUNT_LOCKED_PROPERTY, "Lock user accounts on failed login attempts.");
+        descriptionMapping.put(AccountConstants.ACCOUNT_LOCKED_PROPERTY, "Lock user accounts on failed login attempts");
         descriptionMapping.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY, "Number of failed login attempts " +
                 "allowed until account lock.");
         descriptionMapping.put(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY, "Initial account lock time period in " +
                 "minutes. Account will be automatically unlocked after this time period.");
         descriptionMapping.put(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY, "Account lock duration will be " +
-                "increased by this factor. Ex: Initial duration: 5m; Increment factor: 2; Next lock duration: 5 x 2 = 10m.");
+                "increased by this factor. Ex: Initial duration: 5m; Increment factor: 2; Next lock duration: 5 x 2 = 10m");
         descriptionMapping.put(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE, "Disable if the client application " +
-                "handles notification sending.");
+                "handles notification sending");
         descriptionMapping.put(AccountConstants.NOTIFY_ON_LOCK_DURATION_INCREMENT, "Notify user when the account " +
                 "lock duration is increased due to continuous failed login attempts.");
         return descriptionMapping;
