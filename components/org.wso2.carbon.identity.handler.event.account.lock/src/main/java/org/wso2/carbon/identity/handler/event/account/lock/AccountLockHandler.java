@@ -113,7 +113,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         nameMapping.put(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY, "Initial account lock duration");
         nameMapping.put(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY, "Account lock duration increment factor");
         nameMapping.put(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE, "Manage notification sending internally");
-        nameMapping.put(AccountConstants.NOTIFY_ON_LOCK_DURATION_INCREMENT, "Notify user on account lock increment");
+        nameMapping.put(AccountConstants.NOTIFY_ON_LOCK_DURATION_INCREMENT, "Notify user when lock time is increased");
         return nameMapping;
     }
 
@@ -129,8 +129,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 "increased by this factor. Ex: Initial duration: 5m; Increment factor: 2; Next lock duration: 5 x 2 = 10m.");
         descriptionMapping.put(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE, "Disable if the client application " +
                 "handles notification sending.");
-        descriptionMapping.put(AccountConstants.NOTIFY_ON_LOCK_DURATION_INCREMENT, "Notify user via email when the " +
-                "account lock duration increases on consecutive lock cycles.");
+        descriptionMapping.put(AccountConstants.NOTIFY_ON_LOCK_DURATION_INCREMENT, "Notify user when the account " +
+                "lock duration is increased due to continuous failed login attempts.");
         return descriptionMapping;
     }
 
