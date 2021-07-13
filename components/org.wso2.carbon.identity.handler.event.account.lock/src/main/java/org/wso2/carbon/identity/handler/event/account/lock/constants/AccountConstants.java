@@ -63,10 +63,9 @@ public class AccountConstants {
     public static final String LOCKED = "LOCKED";
     public static final String UNLOCKED = "UNLOCKED";
     public static final String DISABLED = "DISABLED";
-    public static final String LOCK_EXTENDED = "LOCK_EXTENDED";
 
     public static final String ADMIN_INITIATED = "AdminInitiated";
-    public static final String USER_LOCKED_DURATION = "UserLockedDuration";
+    public static final String ACCOUNT_UNLOCK_TIME = "AccountUnlockTime";
 
     public static final String EMAIL_TEMPLATE_TYPE_ACC_LOCKED_ADMIN_TRIGGERED = "accountlockadmin";
     public static final String EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_ADMIN_TRIGGERED = "accountunlockadmin";
