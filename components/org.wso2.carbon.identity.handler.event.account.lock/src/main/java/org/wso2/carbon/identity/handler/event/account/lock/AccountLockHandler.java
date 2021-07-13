@@ -396,18 +396,9 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 currentFailedLoginLockouts += 1;
 
                 if (currentFailedLoginLockouts > 1) {
-                    boolean notificationOnLockIncrement = false;
-                    try {
-                        notificationOnLockIncrement = Boolean.parseBoolean(AccountUtil.getConnectorConfig(AccountConstants
-                                .NOTIFY_ON_LOCK_DURATION_INCREMENT, tenantDomain));
-                    } catch (IdentityEventException e) {
-                        log.warn("Error while reading notification on lock increment property in account lock handler. "
-                                + e.getMessage());
-                        if (log.isDebugEnabled()) {
-                            log.debug("Error while reading notification on lock increment property in account lock " +
-                                    "handler", e);
-                        }
-                    }
+                    boolean notificationOnLockIncrement = getNotificationOnLockIncrementConfig(tenantDomain);
+                    // If the 'NOTIFY_ON_LOCK_DURATION_INCREMENT' config is enabled, trigger the account lock email
+                    // notification with the new lock duration information.
                     if (notificationOnLockIncrement) {
                         Property identityProperty = new Property();
                         identityProperty.setName(AccountConstants.ACCOUNT_UNLOCK_TIME);
@@ -1046,5 +1037,28 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             userLockedDuration = (long) Math.ceil((accountUnlockTime - System.currentTimeMillis())/60000.0);
         }
         return Long.toString(userLockedDuration);
+    }
+
+    /**
+     * Get the account lock connector configuration to decide whether to trigger notifications on every lockout cycle.
+     *
+     * @param tenantDomain  Tenant Domain.
+     * @return  Whether the config is enabled not not.
+     */
+    private boolean getNotificationOnLockIncrementConfig(String tenantDomain) {
+
+        boolean notificationOnLockIncrement = false;
+        try {
+            notificationOnLockIncrement = Boolean.parseBoolean(AccountUtil.getConnectorConfig(AccountConstants
+                    .NOTIFY_ON_LOCK_DURATION_INCREMENT, tenantDomain));
+        } catch (IdentityEventException e) {
+            log.warn("Error while reading notification on lock increment property in account lock handler. "
+                    + e.getMessage());
+            if (log.isDebugEnabled()) {
+                log.debug("Error while reading notification on lock increment property in account lock " +
+                        "handler", e);
+            }
+        }
+        return notificationOnLockIncrement;
     }
 }
