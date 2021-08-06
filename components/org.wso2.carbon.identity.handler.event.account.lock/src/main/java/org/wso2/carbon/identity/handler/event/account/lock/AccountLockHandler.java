@@ -109,7 +109,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
     public Map<String, String> getPropertyNameMapping() {
         Map<String, String> nameMapping = new HashMap<>();
-        nameMapping.put(AccountConstants.ACCOUNT_LOCKED_PROPERTY, "Lock user accounts");
+        nameMapping.put(AccountConstants.ACCOUNT_LOCK_MAX_FAILED_ATTEMPTS_PROPERTY,
+                "Lock user accounts on maximum failed attempts");
         nameMapping.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY, "Maximum failed login attempts");
         nameMapping.put(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY, "Initial account lock duration");
         nameMapping.put(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY, "Account lock duration increment factor");
@@ -121,7 +122,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     @Override
     public Map<String, String> getPropertyDescriptionMapping() {
         Map<String, String> descriptionMapping = new HashMap<>();
-        descriptionMapping.put(AccountConstants.ACCOUNT_LOCKED_PROPERTY, "Lock user accounts on failed login attempts");
+        descriptionMapping.put(AccountConstants.ACCOUNT_LOCK_MAX_FAILED_ATTEMPTS_PROPERTY,
+                "Lock user accounts on failed login attempts");
         descriptionMapping.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY, "Number of failed login attempts " +
                 "allowed until account lock.");
         descriptionMapping.put(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY, "Initial account lock time period in " +
@@ -150,7 +152,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         String tenantDomain = (String) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_DOMAIN);
 
         Property[] identityProperties;
-        boolean accountLockedEnabled = false;
+        boolean accountLockOnFailedAttemptsEnabled = false;
         String accountLockTime = "0";
         int maximumFailedAttempts = 0;
         double unlockTimeRatio = 1;
@@ -169,8 +171,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             throw new IdentityEventException("Error while retrieving Account Locking Handler properties.", e);
         }
         for (Property identityProperty : identityProperties) {
-            if (AccountConstants.ACCOUNT_LOCKED_PROPERTY.equals(identityProperty.getName())) {
-                accountLockedEnabled = Boolean.parseBoolean(identityProperty.getValue());
+            if (AccountConstants.ACCOUNT_LOCK_MAX_FAILED_ATTEMPTS_PROPERTY.equals(identityProperty.getName())) {
+                accountLockOnFailedAttemptsEnabled = Boolean.parseBoolean(identityProperty.getValue());
             } else if (AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY.equals(identityProperty.getName())) {
                 String value = identityProperty.getValue();
                 if (NumberUtils.isNumber(value)) {
@@ -188,13 +190,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             }
         }
 
-        if (!accountLockedEnabled) {
-            if (log.isDebugEnabled()) {
-                log.debug("Account lock handler is disabled in tenant: " + tenantDomain);
-            }
-            return;
-        }
-
         String usernameWithDomain = UserCoreUtil.addDomainToName(userName, userStoreDomainName);
         boolean userExists;
         try {
@@ -210,6 +205,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             handlePreAuthentication(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
                     identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio);
         } else if (IdentityEventConstants.Event.POST_AUTHENTICATION.equals(event.getEventName())) {
+            if (!accountLockOnFailedAttemptsEnabled) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Account lock on failed login attempts is disabled in tenant: " + tenantDomain);
+                }
+                return;
+            }
             handlePostAuthentication(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
                     identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio);
         } else if (IdentityEventConstants.Event.PRE_SET_USER_CLAIMS.equals(event.getEventName())) {
@@ -232,6 +233,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             This will be invoked when an authenticator fires event POST_NON_BASIC_AUTHENTICATION. This is similar to
             the POST_AUTHENTICATION.
              */
+            if (!accountLockOnFailedAttemptsEnabled) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Account lock on failed login attempts is disabled in tenant: " + tenantDomain);
+                }
+                return;
+            }
             handleNonBasicAuthentication(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
                     identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio);
         }
@@ -672,7 +679,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
     public String[] getPropertyNames() {
         List<String> properties = new ArrayList<>();
-        properties.add(AccountConstants.ACCOUNT_LOCKED_PROPERTY);
+        properties.add(AccountConstants.ACCOUNT_LOCK_MAX_FAILED_ATTEMPTS_PROPERTY);
         properties.add(AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY);
         properties.add(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY);
         properties.add(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY);
