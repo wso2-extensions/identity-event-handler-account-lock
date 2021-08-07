@@ -567,13 +567,15 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue);
                     boolean isPendingLiteRegistration =
                             AccountConstants.PENDING_LITE_REGISTRATION.equals(existingAccountStateClaimValue);
+                    boolean isPendingAskPassword =
+                            AccountConstants.PENDING_ASK_PASSWORD.equals(existingAccountStateClaimValue);
                     if (IdentityMgtConstants.AccountStates.PENDING_ADMIN_FORCED_USER_PASSWORD_RESET
                             .equals(existingAccountStateClaimValue)) {
                         if (adminForcedPasswordResetUnlockNotificationEnabled) {
                             triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
                                     emailTemplateTypeAccUnlocked);
                         }
-                    } else if (!isPendingSelfRegistration && !isPendingLiteRegistration) {
+                    } else if (!isPendingSelfRegistration && !isPendingLiteRegistration && !isPendingAskPassword) {
                         triggerNotification(event, userName, userStoreManager, userStoreDomainName, tenantDomain, identityProperties,
                                 emailTemplateTypeAccUnlocked);
                     }
@@ -628,21 +630,23 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                                     tenantDomain, identityProperties, emailTemplateTypeAccLocked);
                         }
                         // Send locked email only if the accountState claim value doesn't have PENDIG_SR, PENDING_EV
-                        // or PENDING_LR.
+                        // PENDING_LR or PENDING_AP.
                     } else if (!AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue) &&
                             !AccountConstants.PENDING_EMAIL_VERIFICATION.equals(existingAccountStateClaimValue) &&
-                            !AccountConstants.PENDING_LITE_REGISTRATION.equals(existingAccountStateClaimValue)) {
+                            !AccountConstants.PENDING_LITE_REGISTRATION.equals(existingAccountStateClaimValue) &&
+                            !AccountConstants.PENDING_ASK_PASSWORD.equals(existingAccountStateClaimValue)) {
                         triggerNotification(event, userName, userStoreManager, userStoreDomainName,
                                 tenantDomain, properties, emailTemplateTypeAccLocked);
                     }
                 }
                 /* Set new account state only if the accountState claim value is neither PENDING_SR, PENDING_EV,
-                PENDING_LR nor PENDING_FUPR. */
+                PENDING_LR, PENDING_FUPR or PENDING_AP. */
                 if (!AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue) &&
                         !AccountConstants.PENDING_EMAIL_VERIFICATION.equals(existingAccountStateClaimValue) &&
                         !AccountConstants.PENDING_LITE_REGISTRATION.equals(existingAccountStateClaimValue) &&
                         !AccountConstants.PENDING_ADMIN_FORCED_USER_PASSWORD_RESET
-                                .equals(existingAccountStateClaimValue)) {
+                                .equals(existingAccountStateClaimValue) &&
+                        !AccountConstants.PENDING_ASK_PASSWORD.equals(existingAccountStateClaimValue)) {
                     newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED,
                             tenantDomain, userStoreManager, userName);
                 }
@@ -1062,3 +1066,4 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         return notificationOnLockIncrement;
     }
 }
+
