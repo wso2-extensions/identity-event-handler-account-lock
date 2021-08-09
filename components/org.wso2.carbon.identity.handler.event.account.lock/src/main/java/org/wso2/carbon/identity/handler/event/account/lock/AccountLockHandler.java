@@ -640,7 +640,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     }
                 }
                 /* Set new account state only if the accountState claim value is neither PENDING_SR, PENDING_EV,
-                PENDING_LR, PENDING_FUPR or PENDING_AP. */
+                PENDING_LR, PENDING_FUPR nor PENDING_AP. */
                 if (!AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue) &&
                         !AccountConstants.PENDING_EMAIL_VERIFICATION.equals(existingAccountStateClaimValue) &&
                         !AccountConstants.PENDING_LITE_REGISTRATION.equals(existingAccountStateClaimValue) &&
