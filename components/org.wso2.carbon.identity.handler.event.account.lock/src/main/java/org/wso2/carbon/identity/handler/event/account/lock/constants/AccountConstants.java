@@ -60,6 +60,7 @@ public class AccountConstants {
     public static final String PENDING_EMAIL_VERIFICATION = "PENDING_EV";
     public static final String PENDING_LITE_REGISTRATION = "PENDING_LR";
     public static final String PENDING_ADMIN_FORCED_USER_PASSWORD_RESET = "PENDING_FUPR";
+    public static final String PENDING_ASK_PASSWORD = "PENDING_AP";
     public static final String LOCKED = "LOCKED";
     public static final String UNLOCKED = "UNLOCKED";
     public static final String DISABLED = "DISABLED";
@@ -75,3 +76,4 @@ public class AccountConstants {
 
     public static final String LOCK_DURATION_EMAIL_TEMPLATE_PARAMETER = "lock-duration";
 }
+
