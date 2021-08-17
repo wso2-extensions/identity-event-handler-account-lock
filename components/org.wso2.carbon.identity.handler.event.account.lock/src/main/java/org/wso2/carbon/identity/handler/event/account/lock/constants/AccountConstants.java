@@ -31,8 +31,7 @@ public class AccountConstants {
     public static final String FAILED_LOGIN_ATTEMPTS_BEFORE_SUCCESS_CLAIM =
             "http://wso2.org/claims/identity/failedLoginAttemptsBeforeSuccess";
 
-    public static final String ACCOUNT_LOCK_MAX_FAILED_ATTEMPTS_PROPERTY =
-            "account.lock.handler.lock.on.max.failed.attempts.enable";
+    public static final String ACCOUNT_LOCKED_PROPERTY = "account.lock.handler.enable";
     public static final String ACCOUNT_DISABLED_PROPERTY = "account.disable.handler.enable";
     public static final String ACCOUNT_DISABLED_NOTIFICATION_INTERNALLY_MANAGE = "account.disable.handler.notification.manageInternally";
 
