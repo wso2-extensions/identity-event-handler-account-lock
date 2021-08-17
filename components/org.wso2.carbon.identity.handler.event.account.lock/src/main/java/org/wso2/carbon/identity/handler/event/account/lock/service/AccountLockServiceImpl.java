@@ -47,6 +47,10 @@ public class AccountLockServiceImpl implements AccountLockService {
 
         UserStoreManager userStoreManager = getUserStoreManager(tenantDomain);
 
+        if (!isAccountLockingEnabled(tenantDomain)) {
+            return false;
+        }
+
         boolean accountLocked = getAccountLockClaimValue(domainAwareUsername, userStoreManager);
         if (accountLocked) {
             if (isAccountLockByPassForUser(userStoreManager, domainAwareUsername)) {
@@ -129,6 +133,35 @@ public class AccountLockServiceImpl implements AccountLockService {
         } catch (UserStoreException e) {
             throw new AccountLockServiceException("Could not retrieve user store for tenant domain: " + tenantDomain,
                     e);
+        }
+    }
+
+    private boolean isAccountLockingEnabled(String tenantDomain) throws AccountLockServiceException {
+
+        try {
+            Property[] identityProperties = AccountServiceDataHolder.getInstance().getIdentityGovernanceService()
+                    .getConfiguration(new String[]{AccountConstants.ACCOUNT_LOCKED_PROPERTY}, tenantDomain);
+
+            boolean accountLockingEnabled = false;
+            if (identityProperties != null) {
+                for (Property property : identityProperties) {
+                    if (AccountConstants.ACCOUNT_LOCKED_PROPERTY.equals(property.getName())) {
+                        accountLockingEnabled = Boolean.parseBoolean(property.getValue());
+                    }
+                }
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("Identity event properties is null.");
+                }
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("Account lock feature(%s) is enabled: %s for tenant: %s",
+                        AccountConstants.ACCOUNT_LOCKED_PROPERTY, accountLockingEnabled, tenantDomain));
+            }
+            return accountLockingEnabled;
+        } catch (IdentityGovernanceException e) {
+            throw new AccountLockServiceException("Error while checking account locking capability status.", e);
         }
     }
 
