@@ -290,16 +290,33 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             successful authentication.
              */
             if (System.currentTimeMillis() < unlockTime || unlockTime == 0) {
+                boolean isAdminInitiatedAccountLock = isAdminInitiatedAccountLock(userName, userStoreManager);
                 String message;
                 if (StringUtils.isNotBlank(userStoreDomainName)) {
                     message = String.format("Account is locked for user: %s in user store: %s in tenant: %s. " +
                             "Cannot login until the account is unlocked.", userName, userStoreDomainName, tenantDomain);
+                    if (isAdminInitiatedAccountLock) {
+                        message = String.format("Account is locked by admin for user: %s in user store: %s in " +
+                                "tenant: %s. Cannot login until the account is unlocked.",
+                                userName, userStoreDomainName, tenantDomain);
+                    }
                 } else {
                     message = String.format("Account is locked for user: %s in tenant: %s. Cannot login until the " +
                             "account is unlocked.", userName, tenantDomain);
+                    if (isAdminInitiatedAccountLock) {
+                        message = String.format("Account is locked by admin for user: %s in tenant: %s. " +
+                                "Cannot login until the account is unlocked.", userName, tenantDomain);
+                    }
                 }
                 if (log.isDebugEnabled()) {
                     log.debug(message);
+                }
+
+                if (isAdminInitiatedAccountLock) {
+                    IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(
+                            USER_IS_LOCKED + ":" + AccountConstants.ADMIN_INITIATED);
+                    IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
+                    throw new AccountLockException(USER_IS_LOCKED + ":" + AccountConstants.ADMIN_INITIATED, message);
                 }
 
                 IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(USER_IS_LOCKED);
@@ -1071,6 +1088,28 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             }
         }
         return notificationOnLockIncrement;
+    }
+
+    /**
+     * @param userName         Current username.
+     * @param userStoreManager User store.
+     * @return Whether the account is locked by admin.
+     * @throws AccountLockException If an error occurred while retrieving account locked claim value.
+     */
+    private boolean isAdminInitiatedAccountLock(String userName, UserStoreManager userStoreManager)
+            throws AccountLockException {
+
+        String accountLockedReasonClaim;
+        try {
+            Map<String, String> values = userStoreManager.getUserClaimValues(userName, new String[]{
+                    AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI}, UserCoreConstants.DEFAULT_PROFILE);
+            accountLockedReasonClaim = values.get(AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI);
+
+        } catch (UserStoreException e) {
+            throw new AccountLockException("Error occurred while retrieving " + ACCOUNT_LOCKED_CLAIM
+                    + " claim value", e);
+        }
+        return IdentityMgtConstants.LockedReason.ADMIN_INITIATED.toString().equals(accountLockedReasonClaim);
     }
 }
 
