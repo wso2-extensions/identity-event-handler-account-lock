@@ -361,8 +361,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             // Return if user authentication is successful on the first try.
             if (!Boolean.parseBoolean(accountLockClaim) && currentFailedAttempts == 0 &&
                     currentFailedLoginLockouts == 0 && unlockTime == 0) {
-                newClaims.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_BEFORE_SUCCESS_CLAIM, "0");
-                setUserClaims(userName, tenantDomain, userStoreManager, newClaims);
                 return true;
             }
 
