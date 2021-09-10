@@ -325,6 +325,15 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             }
         }
 
+        // Skip account lock if account lock by pass is enabled for the userstore manager.
+        if (AccountUtil.isAccountLockByPassForUserStore(userStoreManager)) {
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("Account lock has been by passed for the %s userstore manager.",
+                        userStoreManager.getRealmConfiguration().getRealmClassName()));
+            }
+            return true;
+        }
+
         if (!accountLockOnFailedAttemptsEnabled) {
             if (log.isDebugEnabled()) {
                 log.debug("Account lock on failed login attempts is disabled in tenant: " + tenantDomain);
