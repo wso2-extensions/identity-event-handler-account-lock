@@ -244,14 +244,10 @@ public class AccountUtil {
      * @param userStoreManager Userstore Manager.
      * @return true if account lock by pass is enabled for userstore.
      */
-    public static boolean isAccountLockByPassForUserStore(org.wso2.carbon.user.core.UserStoreManager userStoreManager) {
+    public static boolean isAccountLockBypassForUserStore(org.wso2.carbon.user.core.UserStoreManager userStoreManager) {
 
         String isAccountLockByPassEnabled = userStoreManager.getRealmConfiguration().getUserStoreProperty(
                 UserStoreConfigConstants.BYPASS_ACCOUNT_LOCK);
-        if (StringUtils.isBlank(isAccountLockByPassEnabled)) {
-            return false;
-        } else {
-            return Boolean.parseBoolean(isAccountLockByPassEnabled);
-        }
+        return Boolean.parseBoolean(isAccountLockByPassEnabled);
     }
 }
