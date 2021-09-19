@@ -376,6 +376,14 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             setUserClaims(userName, tenantDomain, userStoreManager, newClaims);
         } else {
             // User authentication failed.
+            // Skip account lock if account lock by pass is enabled for the userstore manager.
+            if (AccountUtil.isAccountLockBypassForUserStore(userStoreManager)) {
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("Account lock has been by passed for the %s userstore manager.",
+                            userStoreManager.getRealmConfiguration().getRealmClassName()));
+                }
+                return true;
+            }
             currentFailedAttempts += 1;
             newClaims.put(failedAttemptsClaim, Integer.toString(currentFailedAttempts));
             newClaims.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_BEFORE_SUCCESS_CLAIM, "0");

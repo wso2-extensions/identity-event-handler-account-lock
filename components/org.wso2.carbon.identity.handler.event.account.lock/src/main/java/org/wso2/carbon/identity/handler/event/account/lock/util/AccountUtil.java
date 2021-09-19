@@ -43,6 +43,7 @@ import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.user.core.UserCoreConstants;
+import org.wso2.carbon.user.core.UserStoreConfigConstants;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
@@ -235,5 +236,18 @@ public class AccountUtil {
             throw new AccountLockException("Error occurred while listing user role: " + userName, e);
         }
         return false;
+    }
+
+    /**
+     * Check if the account lock by pass is enabled for the userstore.
+     *
+     * @param userStoreManager Userstore Manager.
+     * @return true if account lock by pass is enabled for userstore.
+     */
+    public static boolean isAccountLockBypassForUserStore(org.wso2.carbon.user.core.UserStoreManager userStoreManager) {
+
+        String isAccountLockByPassEnabled = userStoreManager.getRealmConfiguration().getUserStoreProperty(
+                UserStoreConfigConstants.BYPASS_ACCOUNT_LOCK);
+        return Boolean.parseBoolean(isAccountLockByPassEnabled);
     }
 }
