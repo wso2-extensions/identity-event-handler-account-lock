@@ -175,13 +175,18 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
         // We need to derive below values from identity properties.
         boolean accountLockOnFailedAttemptsEnabled = false;
+        boolean accountLockHandlerEnabled = true;
         String accountLockTime = "0";
         int maximumFailedAttempts = 0;
         double unlockTimeRatio = 1;
 
-        // Go through every property and get the values we need.
+        // Go through every property and get the values we need. These properties are from identity-event.properties
+        // file.
         for (Property identityProperty : identityProperties) {
             switch (identityProperty.getName()) {
+                case AccountConstants.ACCOUNT_LOCK_HANDLER_ENABLE:
+                    accountLockHandlerEnabled = Boolean.parseBoolean(identityProperty.getValue());
+                    break;
                 case AccountConstants.ACCOUNT_LOCK_MAX_FAILED_ATTEMPTS_PROPERTY:
                     accountLockOnFailedAttemptsEnabled = Boolean.parseBoolean(identityProperty.getValue());
                     break;
@@ -205,6 +210,13 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     break;
                 }
             }
+        }
+
+        // This property is added to use when we need enhanced performance in scenarios where we don't use account
+        // lock related features. Default action always should be this handler is enabled.
+        if (!accountLockHandlerEnabled) {
+            log.info("Account lock handler is disabled using identity configs.");
+            return;
         }
 
         // Check whether user exists.
@@ -299,13 +311,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                                                boolean accountLockOnFailedAttemptsEnabled)
             throws AccountLockException {
 
-        if (!accountLockOnFailedAttemptsEnabled) {
-            if (log.isDebugEnabled()) {
-                log.debug("Account lock on failed login attempts is disabled in tenant: " + tenantDomain);
-            }
-            return true;
-        }
-
         long unlockTime = getUnlockTime(userName, userStoreManager);
 
         if (isAccountLock(userName, userStoreManager)) {
@@ -355,6 +360,13 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
                 throw new AccountLockException(USER_IS_LOCKED, message);
             }
+        }
+
+        if (!accountLockOnFailedAttemptsEnabled) {
+            if (log.isDebugEnabled()) {
+                log.debug("Account lock on failed login attempts is disabled in tenant: " + tenantDomain);
+            }
+            return true;
         }
 
         Map<String, Object> eventProperties = event.getEventProperties();
@@ -733,6 +745,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
     public String[] getPropertyNames() {
         List<String> properties = new ArrayList<>();
+        properties.add(AccountConstants.ACCOUNT_LOCK_HANDLER_ENABLE);
         properties.add(AccountConstants.ACCOUNT_LOCK_MAX_FAILED_ATTEMPTS_PROPERTY);
         properties.add(AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY);
         properties.add(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY);
