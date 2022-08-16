@@ -145,7 +145,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     @Override
     public void handleEvent(Event event) throws IdentityEventException {
 
-        // Get event properties and then user store manager from it.
+        // This property is added to disable the account lock handler completely to enhance the performance. This
+        // can be done only where we are not using in account lock related features.
+        if (Boolean.parseBoolean(IdentityUtil.getProperty(AccountConstants.DISABLE_ACCOUNT_LOCK_HANDLER))) {
+            return;
+        }
+
         Map<String, Object> eventProperties = event.getEventProperties();
         UserStoreManager userStoreManager = (UserStoreManager) eventProperties.get(USER_STORE_MANAGER);
 

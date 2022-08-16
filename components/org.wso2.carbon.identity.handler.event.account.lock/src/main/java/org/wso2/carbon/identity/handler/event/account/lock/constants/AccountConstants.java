@@ -49,6 +49,8 @@ public class AccountConstants {
     public static final String ADMIN_FORCE_PASSWORD_RESET_ACCOUNT_UNLOCK_NOTIFICATION_ENABLE_PROPERTY =
             "Recovery.AdminPasswordReset.AccountUnlockNotification";
 
+    public static final String DISABLE_ACCOUNT_LOCK_HANDLER = "AuthenticationPolicy.DisableAccountLockHandler";
+
     public static final String EMAIL_TEMPLATE_TYPE_ACC_LOCKED = "accountlock";
     public static final String EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED = "accountunlock";
 
