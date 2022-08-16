@@ -146,7 +146,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     public void handleEvent(Event event) throws IdentityEventException {
 
         // This property is added to disable the account lock handler completely to enhance the performance. This
-        // can be done only where we are not using in account lock related features.
+        // can be done only where we are not using any account lock related features.
         if (Boolean.parseBoolean(IdentityUtil.getProperty(AccountConstants.DISABLE_ACCOUNT_LOCK_HANDLER))) {
             return;
         }
@@ -158,6 +158,20 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         String userName = (String) eventProperties.get(USER_NAME);
         String userStoreDomainName = AccountUtil.getUserStoreDomainName(userStoreManager);
         String tenantDomain = (String) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_DOMAIN);
+
+        // Check whether user exists.
+        String usernameWithDomain = UserCoreUtil.addDomainToName(userName, userStoreDomainName);
+        boolean userExists;
+        try {
+            userExists = userStoreManager.isExistingUser(usernameWithDomain);
+        } catch (UserStoreException e) {
+            throw new IdentityEventException("Error in accessing user store", e);
+        }
+
+        // If this user does not exist, no use of going forward.
+        if (!userExists) {
+            return;
+        }
 
         // Force password related properties.
         String adminPasswordResetAccountLockNotificationProperty = IdentityUtil
@@ -180,7 +194,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
         // We need to derive below values from identity properties.
         boolean accountLockOnFailedAttemptsEnabled = false;
-        boolean accountLockHandlerEnabled = true;
         String accountLockTime = "0";
         int maximumFailedAttempts = 0;
         double unlockTimeRatio = 1;
@@ -189,9 +202,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         // file.
         for (Property identityProperty : identityProperties) {
             switch (identityProperty.getName()) {
-                case AccountConstants.ACCOUNT_LOCK_HANDLER_ENABLE:
-                    accountLockHandlerEnabled = Boolean.parseBoolean(identityProperty.getValue());
-                    break;
                 case AccountConstants.ACCOUNT_LOCK_MAX_FAILED_ATTEMPTS_PROPERTY:
                     accountLockOnFailedAttemptsEnabled = Boolean.parseBoolean(identityProperty.getValue());
                     break;
@@ -215,27 +225,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     break;
                 }
             }
-        }
-
-        // This property is added to use when we need enhanced performance in scenarios where we don't use account
-        // lock related features. Default action always should be this handler is enabled.
-        if (!accountLockHandlerEnabled) {
-            log.info("Account lock handler is disabled using identity configs.");
-            return;
-        }
-
-        // Check whether user exists.
-        String usernameWithDomain = UserCoreUtil.addDomainToName(userName, userStoreDomainName);
-        boolean userExists;
-        try {
-            userExists = userStoreManager.isExistingUser(usernameWithDomain);
-        } catch (UserStoreException e) {
-            throw new IdentityEventException("Error in accessing user store", e);
-        }
-
-        // If this user does not exist, no use of going forward.
-        if (!userExists) {
-            return;
         }
 
         // Based on the event name, we need to handle each case separately.
