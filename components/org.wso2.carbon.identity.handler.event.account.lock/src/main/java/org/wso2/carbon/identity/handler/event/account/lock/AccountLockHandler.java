@@ -739,7 +739,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
     public String[] getPropertyNames() {
         List<String> properties = new ArrayList<>();
-        properties.add(AccountConstants.ACCOUNT_LOCK_HANDLER_ENABLE);
         properties.add(AccountConstants.ACCOUNT_LOCK_MAX_FAILED_ATTEMPTS_PROPERTY);
         properties.add(AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY);
         properties.add(AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY);
