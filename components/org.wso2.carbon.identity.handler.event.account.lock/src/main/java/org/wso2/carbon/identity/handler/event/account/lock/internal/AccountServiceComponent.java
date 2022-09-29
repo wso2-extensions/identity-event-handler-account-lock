@@ -32,6 +32,8 @@ import org.wso2.carbon.identity.handler.event.account.lock.AccountDisableHandler
 import org.wso2.carbon.identity.handler.event.account.lock.AccountLockHandler;
 import org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants;
 import org.wso2.carbon.identity.handler.event.account.lock.listener.AccountLockTenantMgtListener;
+import org.wso2.carbon.identity.handler.event.account.lock.service.AccountDisableService;
+import org.wso2.carbon.identity.handler.event.account.lock.service.AccountDisableServiceImpl;
 import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockService;
 import org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockServiceImpl;
 import org.wso2.carbon.stratos.common.listeners.TenantMgtListener;
@@ -64,6 +66,12 @@ public class AccountServiceComponent {
             context.getBundleContext().registerService(AccountLockService.class.getName(), accountLockService, null);
             if (log.isDebugEnabled()) {
                 log.debug("AccountLockService is registered");
+            }
+            AccountDisableService accountDisableService = new AccountDisableServiceImpl();
+            context.getBundleContext().registerService(AccountDisableService.class.getName(), accountDisableService,
+                    null);
+            if (log.isDebugEnabled()) {
+                log.debug("AccountDisableService is registered");
             }
             AccountLockTenantMgtListener accountLockTenantMgtListener = new AccountLockTenantMgtListener();
             context.getBundleContext().registerService(TenantMgtListener.class, accountLockTenantMgtListener, null);
