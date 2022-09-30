@@ -26,8 +26,7 @@ import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountDisa
 public interface AccountDisableService {
 
     /**
-     * Returns if account is disabled or not. Account is considered to be disabled, if the account disabled claim
-     * (http://wso2.org/claims/identity/accountDisabled) is set to 'true'.
+     * Returns if account is disabled or not.
      *
      * @param username Username without user store domain.
      * @param tenantDomain Tenant domain of the user.

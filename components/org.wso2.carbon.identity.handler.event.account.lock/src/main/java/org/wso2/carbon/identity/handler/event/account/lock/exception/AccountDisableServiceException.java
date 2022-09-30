@@ -20,6 +20,9 @@ package org.wso2.carbon.identity.handler.event.account.lock.exception;
 
 import org.wso2.carbon.identity.base.IdentityException;
 
+/**
+ * Exception class for failures in account disable service related operations.
+ */
 public class AccountDisableServiceException extends IdentityException {
 
     public AccountDisableServiceException(String message) {

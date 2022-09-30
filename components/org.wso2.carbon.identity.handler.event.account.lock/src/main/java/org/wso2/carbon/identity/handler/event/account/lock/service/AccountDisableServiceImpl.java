@@ -41,7 +41,8 @@ public class AccountDisableServiceImpl implements AccountDisableService {
 
         String domainAwareUsername = IdentityUtil.addDomainToName(username, userStoreDomain);
         UserStoreManager userStoreManager = getUserStoreManager(tenantDomain);
-        return getAccountDisableClaimValue(domainAwareUsername, userStoreManager);
+        // Account is considered to be disabled, if the account disabled claim is set to 'true'.
+        return getAccountDisabledClaimValue(domainAwareUsername, userStoreManager);
     }
 
     private UserStoreManager getUserStoreManager(String tenantDomain) throws AccountDisableServiceException {
@@ -73,7 +74,7 @@ public class AccountDisableServiceImpl implements AccountDisableService {
         }
     }
 
-    private boolean getAccountDisableClaimValue(String username, UserStoreManager userStoreManager)
+    private boolean getAccountDisabledClaimValue(String username, UserStoreManager userStoreManager)
             throws AccountDisableServiceException {
 
         String accountDisabledClaimValue;
