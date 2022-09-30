@@ -28,10 +28,10 @@ public interface AccountDisableService {
     /**
      * Returns if account is disabled or not.
      *
-     * @param username Username without user store domain.
-     * @param tenantDomain Tenant domain of the user.
-     * @param userStoreDomain User store domain of the user.
-     * @return True if the account is disabled. False otherwise.
+     * @param username          Username without user store domain.
+     * @param tenantDomain      Tenant domain of the user.
+     * @param userStoreDomain   User store domain of the user.
+     * @return                  True if the account is disabled. False otherwise.
      */
     boolean isAccountDisabled(String username, String tenantDomain, String userStoreDomain)
             throws AccountDisableServiceException;
