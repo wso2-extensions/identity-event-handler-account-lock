@@ -26,6 +26,7 @@ import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.email.mgt.exceptions.I18nEmailMgtException;
 import org.wso2.carbon.identity.application.common.model.Property;
+import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
@@ -211,8 +212,16 @@ public class AccountUtil {
             loggedInUser = AuditConstants.REGISTRY_SYSTEM_USERNAME;
         }
         String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-        loggedInUser = UserCoreUtil.addTenantDomainToEntry(loggedInUser, tenantDomain);
-        CarbonConstants.AUDIT_LOG.info(String.format(AuditConstants.AUDIT_MESSAGE, loggedInUser, action, target,
+        String initiator = UserCoreUtil.addTenantDomainToEntry(loggedInUser, tenantDomain);
+        if (LoggerUtils.isLogMaskingEnable) {
+            if (StringUtils.isNotBlank(tenantDomain)) {
+                initiator = IdentityUtil.getInitiatorId(loggedInUser, tenantDomain);
+            } if (StringUtils.isBlank(initiator)) {
+                initiator = LoggerUtils.maskContent(loggedInUser);
+            }
+            target = LoggerUtils.maskContent(target);
+        }
+        CarbonConstants.AUDIT_LOG.info(String.format(AuditConstants.AUDIT_MESSAGE, initiator, action, target,
                 dataObject, result));
     }
 
