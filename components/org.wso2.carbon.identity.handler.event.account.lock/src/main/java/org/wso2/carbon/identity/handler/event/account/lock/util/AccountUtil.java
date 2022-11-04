@@ -26,6 +26,7 @@ import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.email.mgt.exceptions.I18nEmailMgtException;
 import org.wso2.carbon.identity.application.common.model.Property;
+import org.wso2.carbon.identity.central.log.mgt.utils.LogConstants;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
@@ -213,7 +214,7 @@ public class AccountUtil {
         }
         String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
         String initiator = UserCoreUtil.addTenantDomainToEntry(loggedInUser, tenantDomain);
-        if (LoggerUtils.isLogMaskingEnable) {
+        if (LogConstants.isLogMaskingEnable) {
             if (StringUtils.isNotBlank(tenantDomain)) {
                 initiator = IdentityUtil.getInitiatorId(loggedInUser, tenantDomain);
             } if (StringUtils.isBlank(initiator)) {
