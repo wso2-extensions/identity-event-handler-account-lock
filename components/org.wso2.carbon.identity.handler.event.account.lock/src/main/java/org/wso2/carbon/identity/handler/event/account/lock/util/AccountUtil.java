@@ -266,7 +266,8 @@ public class AccountUtil {
         if (LoggerUtils.isLogMaskingEnable) {
             if (StringUtils.isNotBlank(tenantDomain) && StringUtils.isNotBlank(loggedInUser)) {
                 initiator = IdentityUtil.getInitiatorId(loggedInUser, tenantDomain);
-            } if (StringUtils.isBlank(initiator)) {
+            }
+            if (StringUtils.isBlank(initiator)) {
                 initiator = LoggerUtils.getMaskedContent(loggedInUser);
             }
         } else {
