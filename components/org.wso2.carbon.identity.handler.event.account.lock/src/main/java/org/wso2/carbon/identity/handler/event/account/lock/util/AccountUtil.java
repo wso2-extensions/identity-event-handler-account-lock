@@ -26,6 +26,8 @@ import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.email.mgt.exceptions.I18nEmailMgtException;
 import org.wso2.carbon.identity.application.common.model.Property;
+import org.wso2.carbon.identity.central.log.mgt.utils.LogConstants;
+import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
@@ -210,10 +212,8 @@ public class AccountUtil {
             }
             loggedInUser = AuditConstants.REGISTRY_SYSTEM_USERNAME;
         }
-        String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-        loggedInUser = UserCoreUtil.addTenantDomainToEntry(loggedInUser, tenantDomain);
-        CarbonConstants.AUDIT_LOG.info(String.format(AuditConstants.AUDIT_MESSAGE, loggedInUser, action, target,
-                dataObject, result));
+        CarbonConstants.AUDIT_LOG.info(String.format(AuditConstants.AUDIT_MESSAGE, getInitiator(loggedInUser), action,
+                getTarget(target), dataObject, result));
     }
 
     /**
@@ -249,5 +249,43 @@ public class AccountUtil {
         String isAccountLockByPassEnabled = userStoreManager.getRealmConfiguration().getUserStoreProperty(
                 UserStoreConfigConstants.BYPASS_ACCOUNT_LOCK);
         return Boolean.parseBoolean(isAccountLockByPassEnabled);
+    }
+
+    /**
+     * Returns initiator for audit logs based on log masking config.
+     *
+     * @param loggedInUser  Logged in user.
+     * @return initiator. Returns userId if log masking is enabled, if userId cannot be resolved then returns the masked
+     * username.
+     * */
+    private static String getInitiator(String loggedInUser) {
+
+        String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+        String initiator = null;
+
+        if (LoggerUtils.isLogMaskingEnable) {
+            if (StringUtils.isNotBlank(tenantDomain) && StringUtils.isNotBlank(loggedInUser)) {
+                initiator = IdentityUtil.getInitiatorId(loggedInUser, tenantDomain);
+            }
+            if (StringUtils.isBlank(initiator)) {
+                initiator = LoggerUtils.getMaskedContent(loggedInUser);
+            }
+        } else {
+            initiator = UserCoreUtil.addTenantDomainToEntry(loggedInUser, tenantDomain);
+        }
+        return initiator;
+    }
+
+    /** Retruns the target for audit log based on log masking config.
+     *
+     * @param target Target.
+     * @return target. Returns masked value if log masking is enabled.
+     */
+    private static String getTarget(String target) {
+
+        if (LoggerUtils.isLogMaskingEnable) {
+            return LoggerUtils.getMaskedContent(target);
+        }
+        return target;
     }
 }
