@@ -146,56 +146,20 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     public void handleEvent(Event event) throws IdentityEventException {
 
         // This property is added to disable the account lock handler completely to enhance the performance. This
-        // can be done only where we are not using in account lock related features.
+        // can be done only where we are not using any account lock related features.
         if (Boolean.parseBoolean(IdentityUtil.getProperty(AccountConstants.DISABLE_ACCOUNT_LOCK_HANDLER))) {
             return;
         }
 
         Map<String, Object> eventProperties = event.getEventProperties();
-        String userName = (String) eventProperties.get(USER_NAME);
         UserStoreManager userStoreManager = (UserStoreManager) eventProperties.get(USER_STORE_MANAGER);
+
+        // Basic data from event.
+        String userName = (String) eventProperties.get(USER_NAME);
         String userStoreDomainName = AccountUtil.getUserStoreDomainName(userStoreManager);
         String tenantDomain = (String) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_DOMAIN);
 
-        Property[] identityProperties;
-        boolean accountLockOnFailedAttemptsEnabled = false;
-        String accountLockTime = "0";
-        int maximumFailedAttempts = 0;
-        double unlockTimeRatio = 1;
-        String adminPasswordResetAccountLockNotificationProperty = IdentityUtil.getProperty(
-                AccountConstants.ADMIN_FORCE_PASSWORD_RESET_ACCOUNT_LOCK_NOTIFICATION_ENABLE_PROPERTY);
-        boolean adminForcePasswordResetLockNotificationEnabled =
-                Boolean.parseBoolean(adminPasswordResetAccountLockNotificationProperty);
-        String adminPasswordResetAccountUnlockNotificationProperty = IdentityUtil.getProperty(
-                AccountConstants.ADMIN_FORCE_PASSWORD_RESET_ACCOUNT_UNLOCK_NOTIFICATION_ENABLE_PROPERTY);
-        boolean adminForcePasswordResetUnlockNotificationEnabled =
-                        Boolean.parseBoolean(adminPasswordResetAccountUnlockNotificationProperty);
-        try {
-            identityProperties = AccountServiceDataHolder.getInstance()
-                    .getIdentityGovernanceService().getConfiguration(getPropertyNames(), tenantDomain);
-        } catch (IdentityGovernanceException e) {
-            throw new IdentityEventException("Error while retrieving Account Locking Handler properties.", e);
-        }
-        for (Property identityProperty : identityProperties) {
-            if (AccountConstants.ACCOUNT_LOCK_MAX_FAILED_ATTEMPTS_PROPERTY.equals(identityProperty.getName())) {
-                accountLockOnFailedAttemptsEnabled = Boolean.parseBoolean(identityProperty.getValue());
-            } else if (AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY.equals(identityProperty.getName())) {
-                String value = identityProperty.getValue();
-                if (NumberUtils.isNumber(value)) {
-                    maximumFailedAttempts = Integer.parseInt(identityProperty.getValue());
-                }
-            } else if (AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY.equals(identityProperty.getName())) {
-                accountLockTime = identityProperty.getValue();
-            } else if (AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY.equals(identityProperty.getName())) {
-                String value = identityProperty.getValue();
-                if (NumberUtils.isNumber(value)) {
-                    if (Integer.parseInt(value) > 0) {
-                        unlockTimeRatio = Integer.parseInt(value);
-                    }
-                }
-            }
-        }
-
+        // Check whether user exists.
         String usernameWithDomain = UserCoreUtil.addDomainToName(userName, userStoreDomainName);
         boolean userExists;
         try {
@@ -203,40 +167,100 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         } catch (UserStoreException e) {
             throw new IdentityEventException("Error in accessing user store", e);
         }
+
+        // If this user does not exist, no use of going forward.
         if (!userExists) {
             return;
         }
 
-        if (IdentityEventConstants.Event.PRE_AUTHENTICATION.equals(event.getEventName())) {
-            handlePreAuthentication(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
-                    identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio);
-        } else if (IdentityEventConstants.Event.POST_AUTHENTICATION.equals(event.getEventName())) {
-            handlePostAuthentication(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
-                    identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio,
-                    accountLockOnFailedAttemptsEnabled);
-        } else if (IdentityEventConstants.Event.PRE_SET_USER_CLAIMS.equals(event.getEventName())) {
-            handlePreSetUserClaimValues(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
-                    identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio);
-        } else if (IdentityEventConstants.Event.POST_SET_USER_CLAIMS.equals(event.getEventName())) {
-            PrivilegedCarbonContext.startTenantFlow();
-            try {
-                PrivilegedCarbonContext.getThreadLocalCarbonContext().
-                        setTenantDomain(tenantDomain, true);
-                handlePostSetUserClaimValues(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
-                        identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio,
-                        adminForcePasswordResetLockNotificationEnabled,
-                        adminForcePasswordResetUnlockNotificationEnabled);
-            } finally {
-                PrivilegedCarbonContext.endTenantFlow();
+        // Force password related properties.
+        String adminPasswordResetAccountLockNotificationProperty = IdentityUtil
+                .getProperty(AccountConstants.ADMIN_FORCE_PASSWORD_RESET_ACCOUNT_LOCK_NOTIFICATION_ENABLE_PROPERTY);
+        String adminPasswordResetAccountUnlockNotificationProperty = IdentityUtil
+                .getProperty(AccountConstants.ADMIN_FORCE_PASSWORD_RESET_ACCOUNT_UNLOCK_NOTIFICATION_ENABLE_PROPERTY);
+        boolean adminForcePasswordResetLockNotificationEnabled = Boolean
+                .parseBoolean(adminPasswordResetAccountLockNotificationProperty);
+        boolean adminForcePasswordResetUnlockNotificationEnabled = Boolean
+                .parseBoolean(adminPasswordResetAccountUnlockNotificationProperty);
+
+        // Read identity properties.
+        Property[] identityProperties;
+        try {
+            identityProperties = AccountServiceDataHolder.getInstance().getIdentityGovernanceService()
+                    .getConfiguration(getPropertyNames(), tenantDomain);
+        } catch (IdentityGovernanceException e) {
+            throw new IdentityEventException("Error while retrieving Account Locking Handler properties.", e);
+        }
+
+        // We need to derive below values from identity properties.
+        boolean accountLockOnFailedAttemptsEnabled = false;
+        String accountLockTime = "0";
+        int maximumFailedAttempts = 0;
+        double unlockTimeRatio = 1;
+
+        // Go through every property and get the values we need. These properties are from identity-event.properties
+        // file.
+        for (Property identityProperty : identityProperties) {
+            switch (identityProperty.getName()) {
+                case AccountConstants.ACCOUNT_LOCK_MAX_FAILED_ATTEMPTS_PROPERTY:
+                    accountLockOnFailedAttemptsEnabled = Boolean.parseBoolean(identityProperty.getValue());
+                    break;
+                case AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY: {
+                    String value = identityProperty.getValue();
+                    if (NumberUtils.isNumber(value)) {
+                        maximumFailedAttempts = Integer.parseInt(identityProperty.getValue());
+                    }
+                    break;
+                }
+                case AccountConstants.ACCOUNT_UNLOCK_TIME_PROPERTY:
+                    accountLockTime = identityProperty.getValue();
+                    break;
+                case AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY: {
+                    String value = identityProperty.getValue();
+                    if (NumberUtils.isNumber(value)) {
+                        if (Integer.parseInt(value) > 0) {
+                            unlockTimeRatio = Integer.parseInt(value);
+                        }
+                    }
+                    break;
+                }
             }
-        } else if (IdentityEventConstants.Event.POST_NON_BASIC_AUTHENTICATION.equals(event.getEventName())) {
-            /*
-            This will be invoked when an authenticator fires event POST_NON_BASIC_AUTHENTICATION. This is similar to
-            the POST_AUTHENTICATION.
-             */
-            handleNonBasicAuthentication(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
-                    identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio,
-                    accountLockOnFailedAttemptsEnabled);
+        }
+
+        // Based on the event name, we need to handle each case separately.
+        switch (event.getEventName()) {
+            case IdentityEventConstants.Event.PRE_AUTHENTICATION:
+                handlePreAuthentication(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                        identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio);
+                break;
+            case IdentityEventConstants.Event.POST_AUTHENTICATION:
+                handlePostAuthentication(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                        identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio,
+                        accountLockOnFailedAttemptsEnabled);
+                break;
+            case IdentityEventConstants.Event.PRE_SET_USER_CLAIMS:
+                handlePreSetUserClaimValues(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                        identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio);
+                break;
+            case IdentityEventConstants.Event.POST_SET_USER_CLAIMS:
+                PrivilegedCarbonContext.startTenantFlow();
+                try {
+                    PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
+                    handlePostSetUserClaimValues(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                            identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio,
+                            adminForcePasswordResetLockNotificationEnabled,
+                            adminForcePasswordResetUnlockNotificationEnabled);
+                } finally {
+                    PrivilegedCarbonContext.endTenantFlow();
+                }
+                break;
+            case IdentityEventConstants.Event.POST_NON_BASIC_AUTHENTICATION:
+                // This will be invoked when an authenticator fires event POST_NON_BASIC_AUTHENTICATION.
+                // This is similar to the POST_AUTHENTICATION.
+                handleNonBasicAuthentication(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
+                        identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio,
+                        accountLockOnFailedAttemptsEnabled);
+                break;
         }
     }
 
@@ -246,6 +270,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                                               String accountLockTime, double unlockTimeRatio)
             throws AccountLockException {
 
+        // If the authorization policy to check whether the user exists is enabled and if user does not exist in the
+        // given domain, we have to set an error.
         if (isAuthPolicyAccountExistCheck() && !isUserExistsInDomain(userStoreManager, userName)) {
             IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(UserCoreConstants
                     .ErrorCode.USER_DOES_NOT_EXIST);
@@ -263,9 +289,9 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             throws AccountLockException {
 
         /*
-        This is similar to the POST_AUTHENTICATION. If the authentication attempt at the authenticator is successful,
-        we need to reset any failed login attempts. If the authentication failed, we need to increment failed login
-        attempts and lock the user if the account lock criteria is satisfied.
+         * This is similar to the POST_AUTHENTICATION. If the authentication attempt at the authenticator is successful,
+         * we need to reset any failed login attempts. If the authentication failed, we need to increment failed login
+         * attempts and lock the user if the account lock criteria is satisfied.
          */
         return handlePostAuthentication(event, userName, userStoreManager, userStoreDomainName, tenantDomain,
                 identityProperties, maximumFailedAttempts, accountLockTime, unlockTimeRatio,
@@ -290,11 +316,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 }
                 return true;
             }
-            /*
-            User account is locked. If the current time is not exceeded user unlock time, send a error message
-            saying user is locked, otherwise users can try to authenticate and unlock their account upon a
-            successful authentication.
-             */
+
+            // User account is locked. If the current time is not exceeded user unlock time, send an error message
+            // saying user is locked, otherwise users can try to authenticate and unlock their account upon a
+            // successful authentication.
             if (System.currentTimeMillis() < unlockTime || unlockTime == 0) {
                 boolean isAdminInitiatedAccountLock = isAdminInitiatedAccountLock(userName, userStoreManager);
                 String message;
@@ -361,7 +386,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         Map<String, String> newClaims = new HashMap<>();
         if ((Boolean) event.getEventProperties().get(IdentityEventConstants.EventProperty.OPERATION_STATUS)) {
 
-            // User is authenticated, Need to check the unlock time to verify whether the user is previously locked.
+            // User is authenticated, Need to check the unlock-time to verify whether the user is previously locked.
             String accountLockClaim = claimValues.get(AccountConstants.ACCOUNT_LOCKED_CLAIM);
 
             // Return if user authentication is successful on the first try.
