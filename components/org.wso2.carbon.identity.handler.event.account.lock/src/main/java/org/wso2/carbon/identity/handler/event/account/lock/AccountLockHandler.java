@@ -401,7 +401,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 newClaims.put(failedAttemptsClaim, "0");
                 newClaims.put(ACCOUNT_UNLOCK_TIME_CLAIM, "0");
                 newClaims.put(ACCOUNT_LOCKED_CLAIM, Boolean.FALSE.toString());
-                newClaims.put(FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, "0");
                 IdentityUtil.threadLocalProperties.get().put(AccountConstants.ADMIN_INITIATED, false);
             }
             setUserClaims(userName, tenantDomain, userStoreManager, newClaims);

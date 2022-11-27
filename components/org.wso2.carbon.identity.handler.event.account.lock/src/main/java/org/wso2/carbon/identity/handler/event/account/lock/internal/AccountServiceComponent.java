@@ -25,12 +25,14 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.email.mgt.EmailTemplateManager;
+import org.wso2.carbon.identity.application.authentication.framework.handler.request.PostAuthenticationHandler;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.handler.event.account.lock.AccountDisableHandler;
 import org.wso2.carbon.identity.handler.event.account.lock.AccountLockHandler;
 import org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants;
+import org.wso2.carbon.identity.handler.event.account.lock.handlers.PostAuthnFailedLockoutClaimHandler;
 import org.wso2.carbon.identity.handler.event.account.lock.listener.AccountLockTenantMgtListener;
 import org.wso2.carbon.identity.handler.event.account.lock.service.AccountDisableService;
 import org.wso2.carbon.identity.handler.event.account.lock.service.AccountDisableServiceImpl;
@@ -78,6 +80,10 @@ public class AccountServiceComponent {
             if (log.isDebugEnabled()) {
                 log.debug("AccountLockTenantMgtListener is registered");
             }
+            PostAuthenticationHandler postAuthnFailedLockoutClaimHandler = PostAuthnFailedLockoutClaimHandler
+                    .getInstance();
+            context.getBundleContext()
+                    .registerService(PostAuthenticationHandler.class.getName(), postAuthnFailedLockoutClaimHandler, null);
             try {
                 UserStoreManager userStoreManager = AccountServiceDataHolder.getInstance().getRealmService()
                         .getBootstrapRealm().getUserStoreManager();
