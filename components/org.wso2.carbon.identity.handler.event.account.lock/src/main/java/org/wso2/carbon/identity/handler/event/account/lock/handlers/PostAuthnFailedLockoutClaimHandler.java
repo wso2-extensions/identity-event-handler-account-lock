@@ -99,6 +99,9 @@ public class PostAuthnFailedLockoutClaimHandler extends AbstractPostAuthnHandler
 
         AuthenticatedUser authenticatedUser = context.getSequenceConfig().getAuthenticatedUser();
         try {
+            if (authenticatedUser == null) {
+                return SUCCESS_COMPLETED;
+            }
             /* Check whether account locking enabled and user is a local user.
             Account locking is not done for federated flows. */
             if (authenticatedUser.isFederatedUser() || isAccountLockingDisabled(authenticatedUser.getTenantDomain())) {
