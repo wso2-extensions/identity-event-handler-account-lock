@@ -70,7 +70,7 @@ public class PostAuthnFailedLockoutClaimHandler extends AbstractPostAuthnHandler
     /**
      * To get an instance of {@link PostAuthnFailedLockoutClaimHandler}.
      *
-     * @return an instance of PostJITProvisioningHandler.
+     * @return an instance of PostAuthnFailedLockoutClaimHandler.
      */
     public static PostAuthnFailedLockoutClaimHandler getInstance() {
 
@@ -126,7 +126,7 @@ public class PostAuthnFailedLockoutClaimHandler extends AbstractPostAuthnHandler
             }
 
         } catch (UserStoreException e) {
-            // If user not found e, then continue
+            // If user not found e, then continue.
             if (!e.getMessage().contains(UserCoreErrorConstants.ErrorMessages.ERROR_CODE_NON_EXISTING_USER.getCode())) {
                 throw new PostAuthenticationFailedException(ERROR_WHILE_GETTING_USER_STORE_MANAGER_ERROR_CODE,
                         "Error occurred while retrieving user store manager.");
