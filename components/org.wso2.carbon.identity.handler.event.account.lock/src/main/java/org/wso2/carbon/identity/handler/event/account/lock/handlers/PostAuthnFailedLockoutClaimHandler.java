@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.org) All Rights Reserved.
  *
@@ -22,10 +21,12 @@ package org.wso2.carbon.identity.handler.event.account.lock.handlers;
 import static org.wso2.carbon.identity.application.authentication.framework.handler.request.PostAuthnHandlerFlowStatus.SUCCESS_COMPLETED;
 import static org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants.ACCOUNT_LOCKED_CLAIM;
 import static org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM;
+
 import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -46,6 +47,7 @@ import org.wso2.carbon.identity.handler.event.account.lock.internal.AccountServi
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.user.core.UserRealm;
+import org.wso2.carbon.user.core.constants.UserCoreErrorConstants;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -54,11 +56,16 @@ import org.wso2.carbon.user.core.service.RealmService;
 public class PostAuthnFailedLockoutClaimHandler extends AbstractPostAuthnHandler {
 
     private static final Log log = LogFactory.getLog(PostAuthnFailedLockoutClaimHandler.class);
-    private static volatile PostAuthnFailedLockoutClaimHandler instance = new PostAuthnFailedLockoutClaimHandler();
+    private static final PostAuthnFailedLockoutClaimHandler instance = new PostAuthnFailedLockoutClaimHandler();
     private static final String handlerName = "PostAuthnFailedLockoutClaimHandler";
-    private static final String LOCAL_AUTHENTICATOR = "LOCAL";
     private static final String ERROR_WHILE_GETTING_USER_STORE_MANAGER_ERROR_CODE = "80022";
-    public static final String ACCOUNT_LOCK_HANDLER_ENABLE_PROPERTY = "account.lock.handler.enable";
+
+    /**
+     * To avoid creation of multiple instances of this handler.
+     */
+    protected PostAuthnFailedLockoutClaimHandler() {
+
+    }
 
     /**
      * To get an instance of {@link PostAuthnFailedLockoutClaimHandler}.
@@ -68,13 +75,6 @@ public class PostAuthnFailedLockoutClaimHandler extends AbstractPostAuthnHandler
     public static PostAuthnFailedLockoutClaimHandler getInstance() {
 
         return instance;
-    }
-
-    /**
-     * To avoid creation of multiple instances of this handler.
-     */
-    protected PostAuthnFailedLockoutClaimHandler() {
-
     }
 
     @Override
@@ -111,24 +111,26 @@ public class PostAuthnFailedLockoutClaimHandler extends AbstractPostAuthnHandler
                     authenticatedUser.getUserName(), authenticatedUser.getUserStoreDomain());
             UserRealm realm = getUserRealm(authenticatedUser.getTenantDomain());
             UserStoreManager userStoreManager = realm.getUserStoreManager();
-            if (userStoreManager.isExistingUser(usernameWithDomain)) {
-                Map<String, String> claimValues = getUserClaims(userStoreManager, usernameWithDomain);
-                String accountLockClaim = claimValues.get(ACCOUNT_LOCKED_CLAIM);
-                if (accountLockClaim != null && !Boolean.parseBoolean(accountLockClaim)) {
-                    String failedLoginLockoutCount =
-                            claimValues.get(FAILED_LOGIN_LOCKOUT_COUNT_CLAIM);
-                    // check if the value is already not zero
-                    if (NumberUtils.isNumber(failedLoginLockoutCount) && Integer.parseInt(failedLoginLockoutCount) > 0) {
-                        Map<String, String> updatedClaims = new HashMap<>();
-                        updatedClaims.put(FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, "0");
-                        userStoreManager.setUserClaimValues(usernameWithDomain, updatedClaims, null);
-                    }
+            Map<String, String> claimValues = getUserClaims(userStoreManager, usernameWithDomain);
+            String accountLockClaim = claimValues.get(ACCOUNT_LOCKED_CLAIM);
+            if (accountLockClaim != null && !Boolean.parseBoolean(accountLockClaim)) {
+                String failedLoginLockoutCount =
+                        claimValues.get(FAILED_LOGIN_LOCKOUT_COUNT_CLAIM);
+                // Check if the value is already not zero.
+                if (NumberUtils.isNumber(failedLoginLockoutCount) &&
+                        Integer.parseInt(failedLoginLockoutCount) > 0) {
+                    Map<String, String> updatedClaims = new HashMap<>();
+                    updatedClaims.put(FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, "0");
+                    userStoreManager.setUserClaimValues(usernameWithDomain, updatedClaims, null);
                 }
             }
 
         } catch (UserStoreException e) {
-            throw new PostAuthenticationFailedException(ERROR_WHILE_GETTING_USER_STORE_MANAGER_ERROR_CODE,
-                    "Error occurred while retrieving user store manager.");
+            // If user not found e, then continue
+            if (!e.getMessage().contains(UserCoreErrorConstants.ErrorMessages.ERROR_CODE_NON_EXISTING_USER.getCode())) {
+                throw new PostAuthenticationFailedException(ERROR_WHILE_GETTING_USER_STORE_MANAGER_ERROR_CODE,
+                        "Error occurred while retrieving user store manager.");
+            }
         } catch (FrameworkException e) {
             throw new PostAuthenticationFailedException(
                     FrameworkErrorConstants.ErrorMessages.ERROR_WHILE_GETTING_CLAIM_MAPPINGS.getCode(),
@@ -146,18 +148,13 @@ public class PostAuthnFailedLockoutClaimHandler extends AbstractPostAuthnHandler
     }
 
     private Map<String, String> getUserClaims(UserStoreManager userStoreManager, String authenticatedUser)
-            throws FrameworkException {
+            throws UserStoreException {
 
-        try {
-            Map<String, String> claimValues = userStoreManager.getUserClaimValues(
-                    authenticatedUser,
-                    new String[] {FrameworkConstants.ACCOUNT_LOCKED_CLAIM_URI, FAILED_LOGIN_LOCKOUT_COUNT_CLAIM},
-                    null);
-            return claimValues;
-
-        } catch (UserStoreException e) {
-            throw new FrameworkException("Error occurred while retrieving user claims", e);
-        }
+        Map<String, String> claimValues = userStoreManager.getUserClaimValues(
+                authenticatedUser,
+                new String[] {FrameworkConstants.ACCOUNT_LOCKED_CLAIM_URI, FAILED_LOGIN_LOCKOUT_COUNT_CLAIM},
+                null);
+        return claimValues;
     }
 
     private boolean isAccountLockingDisabled(String tenantDomain) throws FrameworkException {
