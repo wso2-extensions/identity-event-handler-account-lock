@@ -25,6 +25,7 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
 import org.slf4j.MDC;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
 import org.wso2.carbon.identity.core.handler.InitConfig;
@@ -401,7 +402,15 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 newClaims.put(failedAttemptsClaim, "0");
                 newClaims.put(ACCOUNT_UNLOCK_TIME_CLAIM, "0");
                 newClaims.put(ACCOUNT_LOCKED_CLAIM, Boolean.FALSE.toString());
-                newClaims.put(FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, "0");
+                boolean isAuthenticationFrameworkFlow = false;
+                if (IdentityUtil.threadLocalProperties.get().get(
+                        FrameworkConstants.AUTHENTICATION_FRAMEWORK_FLOW) != null) {
+                    isAuthenticationFrameworkFlow = (boolean) IdentityUtil.threadLocalProperties.get().get(
+                            FrameworkConstants.AUTHENTICATION_FRAMEWORK_FLOW);
+                }
+                if (!isAuthenticationFrameworkFlow) {
+                    newClaims.put(FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, "0");
+                }
                 IdentityUtil.threadLocalProperties.get().put(AccountConstants.ADMIN_INITIATED, false);
             }
             setUserClaims(userName, tenantDomain, userStoreManager, newClaims);
