@@ -59,6 +59,7 @@ import static org.wso2.carbon.identity.event.IdentityEventConstants.EventPropert
 import static org.wso2.carbon.identity.event.IdentityEventConstants.EventProperty.USER_NAME;
 import static org.wso2.carbon.identity.event.IdentityEventConstants.EventProperty.USER_STORE_MANAGER;
 import static org.wso2.carbon.identity.governance.IdentityMgtConstants.LockedReason.MAX_ATTEMPTS_EXCEEDED;
+import static org.wso2.carbon.identity.governance.IdentityMgtConstants.LockedReason.ADMIN_INITIATED;
 import static org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants.ACCOUNT_LOCKED_CLAIM;
 import static org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM;
 import static org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants.FAILED_LOGIN_ATTEMPTS_CLAIM;
@@ -322,7 +323,9 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             // saying user is locked, otherwise users can try to authenticate and unlock their account upon a
             // successful authentication.
             if (System.currentTimeMillis() < unlockTime || unlockTime == 0) {
-                boolean isAdminInitiatedAccountLock = isAdminInitiatedAccountLock(userName, userStoreManager);
+                String accountLockedReason = getAccountLockedReason(userName, userStoreManager);
+                boolean isAdminInitiatedAccountLock = ADMIN_INITIATED.toString().equals(accountLockedReason);
+
                 String message;
                 if (StringUtils.isNotBlank(userStoreDomainName)) {
                     message = String.format("Account is locked for user: %s in user store: %s in tenant: %s. " +
@@ -349,6 +352,13 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             USER_IS_LOCKED + ":" + AccountConstants.ADMIN_INITIATED);
                     IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
                     throw new AccountLockException(USER_IS_LOCKED + ":" + AccountConstants.ADMIN_INITIATED, message);
+                }
+
+                if (MAX_ATTEMPTS_EXCEEDED.toString().equals(accountLockedReason)) {
+                    IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(
+                            USER_IS_LOCKED + ":" + AccountConstants.MAX_ATTEMPTS_EXCEEDED);
+                    IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
+                    throw new AccountLockException(USER_IS_LOCKED + ":" + AccountConstants.MAX_ATTEMPTS_EXCEEDED, message);
                 }
 
                 IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(USER_IS_LOCKED);
@@ -428,6 +438,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             newClaims.put(failedAttemptsClaim, Integer.toString(currentFailedAttempts));
             newClaims.put(AccountConstants.FAILED_LOGIN_ATTEMPTS_BEFORE_SUCCESS_CLAIM, "0");
             long accountLockDuration = 0;
+            boolean isMaxAttemptsExceeded = false;
 
             if (AccountUtil.isAccountLockByPassForUser(userStoreManager, userName)) {
                 IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(INVALID_CREDENTIAL,
@@ -439,6 +450,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 return true;
             } else if (currentFailedAttempts >= maximumFailedAttempts) {
                 // Current failed attempts exceeded maximum allowed attempts. So user should be locked.
+                isMaxAttemptsExceeded = true;
                 newClaims.put(ACCOUNT_LOCKED_CLAIM, "true");
                 newClaims.put(AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI, MAX_ATTEMPTS_EXCEEDED.toString());
                 if (NumberUtils.isNumber(accountLockTime)) {
@@ -483,8 +495,9 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 newClaims.put(FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, Integer.toString(currentFailedLoginLockouts));
                 newClaims.put(failedAttemptsClaim, "0");
 
-                IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(USER_IS_LOCKED,
-                        currentFailedAttempts, maximumFailedAttempts);
+                IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(
+                        USER_IS_LOCKED + ":" + AccountConstants.MAX_ATTEMPTS_EXCEEDED, currentFailedAttempts,
+                        maximumFailedAttempts);
                 IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
                 IdentityUtil.threadLocalProperties.get().put(IdentityCoreConstants.USER_ACCOUNT_STATE, USER_IS_LOCKED);
                 if (log.isDebugEnabled()) {
@@ -501,6 +514,16 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 setUserClaims(userName, tenantDomain, userStoreManager, newClaims);
             } catch (NumberFormatException e) {
                 throw new AccountLockException("Error occurred while parsing config values", e);
+            }
+            if (isMaxAttemptsExceeded) {
+                /*
+                 * Setting the error message context with locked reason again here, as it is overridden when setting
+                 * user claims by org.wso2.carbon.identity.governance.listener.IdentityStoreEventListener .
+                 */
+                IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(
+                        USER_IS_LOCKED + ":" + AccountConstants.MAX_ATTEMPTS_EXCEEDED, currentFailedAttempts,
+                        maximumFailedAttempts);
+                IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
             }
         }
         return true;
@@ -1139,25 +1162,24 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     }
 
     /**
+     * Retrieve the Account Locked Claim Value of a given user.
+     *
      * @param userName         Current username.
      * @param userStoreManager User store.
-     * @return Whether the account is locked by admin.
+     * @return Account locked claim value.
      * @throws AccountLockException If an error occurred while retrieving account locked claim value.
      */
-    private boolean isAdminInitiatedAccountLock(String userName, UserStoreManager userStoreManager)
+    private String getAccountLockedReason(String userName, UserStoreManager userStoreManager)
             throws AccountLockException {
-
-        String accountLockedReasonClaim;
         try {
             Map<String, String> values = userStoreManager.getUserClaimValues(userName, new String[]{
                     AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI}, UserCoreConstants.DEFAULT_PROFILE);
-            accountLockedReasonClaim = values.get(AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI);
+            return values.get(AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI);
 
         } catch (UserStoreException e) {
             throw new AccountLockException("Error occurred while retrieving " + ACCOUNT_LOCKED_CLAIM
                     + " claim value", e);
         }
-        return IdentityMgtConstants.LockedReason.ADMIN_INITIATED.toString().equals(accountLockedReasonClaim);
     }
 }
 
