@@ -98,7 +98,7 @@ public class PostAuthnFailedLockoutClaimHandler extends AbstractPostAuthnHandler
     public PostAuthnHandlerFlowStatus handle(HttpServletRequest request, HttpServletResponse response,
                                              AuthenticationContext context) throws PostAuthenticationFailedException {
 
-        AuthenticatedUser authenticatedUser = context.getSequenceConfig().getAuthenticatedUser();
+        AuthenticatedUser authenticatedUser = getAuthenticatedUser(context);
         try {
             if (authenticatedUser == null) {
                 return SUCCESS_COMPLETED;
@@ -139,6 +139,17 @@ public class PostAuthnFailedLockoutClaimHandler extends AbstractPostAuthnHandler
         }
 
         return SUCCESS_COMPLETED;
+    }
+
+    /**
+     * Get Authenticated user from the context.
+     *
+     * @param context Authentication context.
+     * @return Authenticated user.
+     */
+    protected AuthenticatedUser getAuthenticatedUser(AuthenticationContext context) {
+
+        return context.getSequenceConfig().getAuthenticatedUser();
     }
 
     private UserRealm getUserRealm(String tenantDomain) throws UserStoreException {
