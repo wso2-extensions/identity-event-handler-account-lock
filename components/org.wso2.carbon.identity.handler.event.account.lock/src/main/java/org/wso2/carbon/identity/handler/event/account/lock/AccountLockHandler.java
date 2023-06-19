@@ -323,10 +323,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
         } catch (UserStoreException e) {
             throw new AccountLockException(String.format("Error occurred while retrieving %s , %s , %s , %s, %s " +
-                            "and %s claim values.", AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM,
+                            "and %s claim values for user domain.", AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM,
                     AccountConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, AccountConstants.FAILED_LOGIN_ATTEMPTS_CLAIM,
                     AccountConstants.ACCOUNT_LOCKED_CLAIM, AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI,
-                    failedAttemptsClaim), e);
+                    failedAttemptsClaim, userStoreDomainName), e);
         }
 
         long unlockTime = getUnlockTime(claimValues.get(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM));
