@@ -307,19 +307,26 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                                                boolean accountLockOnFailedAttemptsEnabled) throws AccountLockException {
 
         Map<String, String> claimValues = null;
+
+        // Resolve the claim which stores failed attempts depending on the authenticator.
+        Map<String, Object> eventProperties = event.getEventProperties();
+        String authenticator = String.valueOf(eventProperties.get(AUTHENTICATOR_NAME));
+        String failedAttemptsClaim = resolveFailedLoginAttemptsCounterClaim(authenticator, eventProperties);
+
         try {
             claimValues = userStoreManager.getUserClaimValues(userName,
                     new String[]{AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM,
                             AccountConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM,
                             AccountConstants.FAILED_LOGIN_ATTEMPTS_CLAIM, AccountConstants.ACCOUNT_LOCKED_CLAIM,
-                            AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI}, UserCoreConstants.DEFAULT_PROFILE);
+                            AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI, failedAttemptsClaim},
+                    UserCoreConstants.DEFAULT_PROFILE);
 
         } catch (UserStoreException e) {
-            throw new AccountLockException(String.format("Error occurred while retrieving %s , %s , %s , %s and %s " +
-                            "claim values for user %s in domain %s", AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM,
+            throw new AccountLockException(String.format("Error occurred while retrieving %s , %s , %s , %s, %s " +
+                            "and %s claim values for user domain.", AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM,
                     AccountConstants.FAILED_LOGIN_LOCKOUT_COUNT_CLAIM, AccountConstants.FAILED_LOGIN_ATTEMPTS_CLAIM,
-                    AccountConstants.ACCOUNT_LOCKED_CLAIM, AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI, userName,
-                    userStoreDomainName), e);
+                    AccountConstants.ACCOUNT_LOCKED_CLAIM, AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI,
+                    failedAttemptsClaim, userStoreDomainName), e);
         }
 
         long unlockTime = getUnlockTime(claimValues.get(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM));
@@ -388,11 +395,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             }
             return true;
         }
-
-        Map<String, Object> eventProperties = event.getEventProperties();
-        String authenticator = String.valueOf(eventProperties.get(AUTHENTICATOR_NAME));
-        // Resolve the claim which stores failed attempts depending on the authenticator.
-        String failedAttemptsClaim = resolveFailedLoginAttemptsCounterClaim(authenticator, eventProperties);
 
         int currentFailedAttempts = 0;
         int currentFailedLoginLockouts = 0;
