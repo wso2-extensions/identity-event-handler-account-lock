@@ -714,7 +714,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 publishPostAccountLockedEvent(IdentityEventConstants.Event.POST_UNLOCK_ACCOUNT,
                         event.getEventProperties(), true);
                 auditAccountLock(AuditConstants.ACCOUNT_UNLOCKED, userName, userStoreDomainName, isAdminInitiated,
-                        null, AuditConstants.AUDIT_SUCCESS, true);
+                        null, AuditConstants.AUDIT_SUCCESS, true, claimValues);
             } else if (lockedStates.LOCKED_MODIFIED.toString().equals(lockedState.get())) {
 
                 if (log.isDebugEnabled()) {
@@ -781,13 +781,13 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 publishPostAccountLockedEvent(IdentityEventConstants.Event.POST_LOCK_ACCOUNT, event.getEventProperties()
                         , true);
                 auditAccountLock(AuditConstants.ACCOUNT_LOCKED, userName, userStoreDomainName, isAdminInitiated,
-                        null, AuditConstants.AUDIT_SUCCESS, true);
+                        null, AuditConstants.AUDIT_SUCCESS, true, claimValues);
             } else if (lockedStates.LOCKED_UNMODIFIED.toString().equals(lockedState.get())) {
                 auditAccountLock(AuditConstants.ACCOUNT_LOCKED, userName, userStoreDomainName, isAdminInitiated,
-                        null, AuditConstants.AUDIT_SUCCESS, false);
+                        null, AuditConstants.AUDIT_SUCCESS, false, claimValues);
             } else if (lockedStates.UNLOCKED_UNMODIFIED.toString().equals(lockedState.get())) {
                 auditAccountLock(AuditConstants.ACCOUNT_UNLOCKED, userName, userStoreDomainName, isAdminInitiated,
-                        null, AuditConstants.AUDIT_SUCCESS, false);
+                        null, AuditConstants.AUDIT_SUCCESS, false, claimValues);
             }
         } finally {
             lockedState.remove();
@@ -1088,9 +1088,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
      * @param isAdminInitiated    whether Account lock admin initiated
      * @param errorMsg            if error occurs
      * @param result              Result value
+     * @param claims
      */
     private void auditAccountLock(String action, String target, String userStoreDomainName, boolean isAdminInitiated,
-                                  String errorMsg, String result, Boolean isModifiedStatus) {
+                                  String errorMsg, String result, Boolean isModifiedStatus, Map<String, String> claims) {
 
         JSONObject dataObject = new JSONObject();
         dataObject.put(AuditConstants.REMOTE_ADDRESS_KEY, MDC.get(AuditConstants.REMOTE_ADDRESS_QUERY_KEY));
@@ -1100,6 +1101,9 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         dataObject.put(AuditConstants.USER_STORE_DOMAIN, userStoreDomainName);
         dataObject.put(AuditConstants.IS_MODIFIED_STATUS, isModifiedStatus);
 
+        if (claims != null) {
+            dataObject.put(AuditConstants.USER_IDENTITY_CLAIMS, new JSONObject(claims));
+        }
         if (AuditConstants.AUDIT_FAILED.equals(result)) {
             dataObject.put(AuditConstants.ERROR_MESSAGE_KEY, errorMsg);
         }

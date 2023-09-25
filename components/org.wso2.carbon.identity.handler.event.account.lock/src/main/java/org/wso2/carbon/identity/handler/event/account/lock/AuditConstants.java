@@ -40,4 +40,5 @@ public class AuditConstants {
     public static final String ACCOUNT_DISABLED = "Account Disable";
     public static final String ACCOUNT_ENABLED = "Account Enable";
     public static final String IS_MODIFIED_STATUS = "modifiedStatus";
+    public static final String USER_IDENTITY_CLAIMS = "User Identity Claims";
 }
