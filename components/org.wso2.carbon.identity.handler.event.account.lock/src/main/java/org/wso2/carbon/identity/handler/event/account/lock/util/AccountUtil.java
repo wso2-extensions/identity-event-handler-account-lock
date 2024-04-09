@@ -264,7 +264,10 @@ public class AccountUtil {
         String initiator = null;
 
         if (LoggerUtils.isLogMaskingEnable) {
-            if (StringUtils.isNotBlank(tenantDomain) && StringUtils.isNotBlank(loggedInUser)) {
+            // If the loggedInUser is resolved as the system user, getInitiatorId will return null.
+            // No need to perform an unnecessary DB call.
+            if (StringUtils.isNotBlank(tenantDomain) && StringUtils.isNotBlank(loggedInUser) &&
+                    !AuditConstants.REGISTRY_SYSTEM_USERNAME.equals(loggedInUser)) {
                 initiator = IdentityUtil.getInitiatorId(loggedInUser, tenantDomain);
             }
             if (StringUtils.isBlank(initiator)) {
