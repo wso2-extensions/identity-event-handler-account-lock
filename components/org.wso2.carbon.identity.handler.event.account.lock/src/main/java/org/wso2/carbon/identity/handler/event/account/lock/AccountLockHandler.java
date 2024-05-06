@@ -380,7 +380,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(
                             USER_IS_LOCKED + ":" + AccountConstants.MAX_ATTEMPTS_EXCEEDED);
                     IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
-                    throw new AccountLockException(USER_IS_LOCKED + ":" + AccountConstants.MAX_ATTEMPTS_EXCEEDED, message);
+                    throw new AccountLockException(USER_IS_LOCKED, message);
                 }
 
                 IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(USER_IS_LOCKED);
