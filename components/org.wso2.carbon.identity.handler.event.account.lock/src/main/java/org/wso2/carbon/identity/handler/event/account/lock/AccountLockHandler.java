@@ -710,7 +710,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             triggerNotification(userName, userStoreDomainName, tenantDomain, identityProperties,
                                     emailTemplateTypeAccUnlocked);
                         }
-                    } else if (!isPendingSelfRegistration && !isPendingLiteRegistration && !isPendingAskPassword) {
+                    } else if (!isPendingSelfRegistration && !isPendingLiteRegistration &&
+                            !(isPendingAskPassword && isAccountLockOnCreationEnabled(tenantDomain))) {
                         triggerNotification(userName, userStoreDomainName, tenantDomain, identityProperties,
                                 emailTemplateTypeAccUnlocked);
                     }
