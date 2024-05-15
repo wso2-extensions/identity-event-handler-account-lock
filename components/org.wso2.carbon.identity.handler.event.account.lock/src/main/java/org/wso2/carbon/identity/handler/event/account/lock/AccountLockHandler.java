@@ -1278,7 +1278,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
      * @return Whether the EmailVerification.LockOnCreation config is enabled not.
      * @throws AccountLockException If an unexpected error occurred while retrieving Email Verification properties.
      */
-    private static boolean isAccountLockOnCreationEnabled(String tenantDomain) throws AccountLockException {
+    private boolean isAccountLockOnCreationEnabled(String tenantDomain) throws AccountLockException {
 
         // Default value of EmailVerification.LockOnCreation is true.
         boolean accountLockOnCreationEnabled = true;
