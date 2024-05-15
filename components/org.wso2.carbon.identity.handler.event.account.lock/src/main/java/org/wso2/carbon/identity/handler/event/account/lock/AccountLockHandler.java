@@ -194,7 +194,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             identityProperties = AccountServiceDataHolder.getInstance().getIdentityGovernanceService()
                     .getConfiguration(getPropertyNames(), tenantDomain);
         } catch (IdentityGovernanceException e) {
-            throw new IdentityEventException("Error while retrieving Identity Governance properties.", e);
+            throw new IdentityEventException("Error while retrieving Account Locking Handler properties.", e);
         }
 
         // We need to derive below values from identity properties.
@@ -755,17 +755,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                         }
                     }
 
-                    boolean accountLockOnCreationEnabled = true;
-                    if (ArrayUtils.isNotEmpty(identityProperties)) {
-                        for (Property property : identityProperties) {
-                            if (IdentityRecoveryConstants.ConnectorConfig.EMAIL_ACCOUNT_LOCK_ON_CREATION.equals(
-                                    property.getName())) {
-                                accountLockOnCreationEnabled = Boolean.parseBoolean(property.getValue());
-                                break;
-                            }
-                        }
-                    }
-
                     // Check if the account is in PENDING_AFUPR state.
                     if (IdentityMgtConstants.AccountStates.PENDING_ADMIN_FORCED_USER_PASSWORD_RESET.equals(
                             existingAccountStateClaimValue)) {
@@ -780,7 +769,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             !AccountConstants.PENDING_EMAIL_VERIFICATION.equals(existingAccountStateClaimValue) &&
                             !AccountConstants.PENDING_LITE_REGISTRATION.equals(existingAccountStateClaimValue) &&
                             !(AccountConstants.PENDING_ASK_PASSWORD.equals(existingAccountStateClaimValue) &&
-                                    accountLockOnCreationEnabled)) {
+                                    isAccountLockOnCreationEnabled(tenantDomain))) {
                         triggerNotification(userName, userStoreDomainName, tenantDomain, properties,
                                 emailTemplateTypeAccLocked);
                     }
@@ -829,7 +818,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         properties.add(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY);
         properties.add(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE);
         properties.add(AccountConstants.NOTIFY_ON_LOCK_DURATION_INCREMENT);
-        properties.add(IdentityRecoveryConstants.ConnectorConfig.EMAIL_ACCOUNT_LOCK_ON_CREATION);
 
         return properties.toArray(new String[properties.size()]);
     }
@@ -1281,5 +1269,36 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             }
         }
         return notificationOnLockIncrement;
+    }
+
+    /**
+     * Returns whether the EmailVerification.LockOnCreation config is enabled or not.
+     *
+     * @param tenantDomain Tenant domain.
+     * @return Whether the EmailVerification.LockOnCreation config is enabled not.
+     * @throws AccountLockException If an unexpected error occurred while retrieving Email Verification properties.
+     */
+    private static boolean isAccountLockOnCreationEnabled(String tenantDomain) throws AccountLockException {
+
+        // Default value of EmailVerification.LockOnCreation is true.
+        boolean accountLockOnCreationEnabled = true;
+        Property[] emailVerificationProperties;
+        try {
+            emailVerificationProperties =
+                    AccountServiceDataHolder.getInstance().getIdentityGovernanceService()
+                            .getConfiguration(new String[]{
+                                            IdentityRecoveryConstants.ConnectorConfig.EMAIL_ACCOUNT_LOCK_ON_CREATION},
+                                    tenantDomain);
+            if (ArrayUtils.isNotEmpty(emailVerificationProperties) &&
+                    emailVerificationProperties.length == 1 &&
+                    IdentityRecoveryConstants.ConnectorConfig.EMAIL_ACCOUNT_LOCK_ON_CREATION.equals(
+                            emailVerificationProperties[0].getName())) {
+                accountLockOnCreationEnabled =
+                        Boolean.parseBoolean(emailVerificationProperties[0].getValue());
+            }
+        } catch (IdentityGovernanceException e) {
+            throw new AccountLockException("Error while retrieving Email Verification properties.", e);
+        }
+        return accountLockOnCreationEnabled;
     }
 }
