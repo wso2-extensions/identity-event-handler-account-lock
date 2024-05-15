@@ -1,17 +1,19 @@
 /*
- * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2016-2024, WSO2 LLC. (http://www.wso2.com).
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
  * You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations und
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 
 package org.wso2.carbon.identity.handler.event.account.lock;
@@ -43,6 +45,7 @@ import org.wso2.carbon.identity.handler.event.account.lock.constants.AccountCons
 import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockException;
 import org.wso2.carbon.identity.handler.event.account.lock.internal.AccountServiceDataHolder;
 import org.wso2.carbon.identity.handler.event.account.lock.util.AccountUtil;
+import org.wso2.carbon.identity.recovery.IdentityRecoveryConstants;
 import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
@@ -191,7 +194,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             identityProperties = AccountServiceDataHolder.getInstance().getIdentityGovernanceService()
                     .getConfiguration(getPropertyNames(), tenantDomain);
         } catch (IdentityGovernanceException e) {
-            throw new IdentityEventException("Error while retrieving Account Locking Handler properties.", e);
+            throw new IdentityEventException("Error while retrieving Identity Governance properties.", e);
         }
 
         // We need to derive below values from identity properties.
@@ -648,9 +651,11 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM}, UserCoreConstants.DEFAULT_PROFILE);
 
         } catch (UserStoreException e) {
-            throw new AccountLockException(String.format("Error occurred while retrieving %s, %s, %s and %s claim values",
-                    AccountConstants.ACCOUNT_STATE_CLAIM_URI, AccountConstants.ACCOUNT_DISABLED_CLAIM,
-                    AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI, AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM), e);
+            throw new AccountLockException(
+                    String.format("Error occurred while retrieving %s, %s, %s and %s claim values",
+                            AccountConstants.ACCOUNT_STATE_CLAIM_URI, AccountConstants.ACCOUNT_DISABLED_CLAIM,
+                            AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI,
+                            AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM), e);
         }
 
         try {
@@ -684,7 +689,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                         if (AccountUtil
                                 .isTemplateExists(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_ADMIN_TRIGGERED,
                                         tenantDomain)) {
-                            emailTemplateTypeAccUnlocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_ADMIN_TRIGGERED;
+                            emailTemplateTypeAccUnlocked =
+                                    AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_ADMIN_TRIGGERED;
                         }
                     } else {
                         if (AccountUtil.isTemplateExists(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_TIME_BASED,
@@ -739,13 +745,24 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                         }
                     } else {
                         if (AccountUtil.isTemplateExists(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT,
-                                        tenantDomain)) {
+                                tenantDomain)) {
                             emailTemplateTypeAccLocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT;
                             Property identityProperty = new Property();
                             identityProperty.setName(AccountConstants.ACCOUNT_UNLOCK_TIME);
                             identityProperty.setValue(getAccountLockDuration(claimValues.get(AccountConstants
                                     .ACCOUNT_UNLOCK_TIME_CLAIM)));
-                            properties = new Property[]{ identityProperty };
+                            properties = new Property[]{identityProperty};
+                        }
+                    }
+
+                    boolean accountLockOnCreationEnabled = true;
+                    if (ArrayUtils.isNotEmpty(identityProperties)) {
+                        for (Property property : identityProperties) {
+                            if (IdentityRecoveryConstants.ConnectorConfig.EMAIL_ACCOUNT_LOCK_ON_CREATION.equals(
+                                    property.getName())) {
+                                accountLockOnCreationEnabled = Boolean.parseBoolean(property.getValue());
+                                break;
+                            }
                         }
                     }
 
@@ -757,12 +774,13 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             triggerNotification(userName, userStoreDomainName, tenantDomain, identityProperties,
                                     emailTemplateTypeAccLocked);
                         }
-                        // Send locked email only if the accountState claim value doesn't have PENDIG_SR, PENDING_EV
-                        // PENDING_LR or PENDING_AP.
+                        // Send locked email only if the accountState claim value doesn't have PENDING_SR, PENDING_EV
+                        // PENDING_LR or PENDING_AP with EmailVerification.LockOnCreation enabled.
                     } else if (!AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue) &&
                             !AccountConstants.PENDING_EMAIL_VERIFICATION.equals(existingAccountStateClaimValue) &&
                             !AccountConstants.PENDING_LITE_REGISTRATION.equals(existingAccountStateClaimValue) &&
-                            !AccountConstants.PENDING_ASK_PASSWORD.equals(existingAccountStateClaimValue)) {
+                            !(AccountConstants.PENDING_ASK_PASSWORD.equals(existingAccountStateClaimValue) &&
+                                    accountLockOnCreationEnabled)) {
                         triggerNotification(userName, userStoreDomainName, tenantDomain, properties,
                                 emailTemplateTypeAccLocked);
                     }
@@ -803,6 +821,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     }
 
     public String[] getPropertyNames() {
+
         List<String> properties = new ArrayList<>();
         properties.add(AccountConstants.ACCOUNT_LOCK_MAX_FAILED_ATTEMPTS_PROPERTY);
         properties.add(AccountConstants.FAILED_LOGIN_ATTEMPTS_PROPERTY);
@@ -810,6 +829,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         properties.add(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY);
         properties.add(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE);
         properties.add(AccountConstants.NOTIFY_ON_LOCK_DURATION_INCREMENT);
+        properties.add(IdentityRecoveryConstants.ConnectorConfig.EMAIL_ACCOUNT_LOCK_ON_CREATION);
 
         return properties.toArray(new String[properties.size()]);
     }
