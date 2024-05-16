@@ -45,7 +45,6 @@ import org.wso2.carbon.identity.handler.event.account.lock.constants.AccountCons
 import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockException;
 import org.wso2.carbon.identity.handler.event.account.lock.internal.AccountServiceDataHolder;
 import org.wso2.carbon.identity.handler.event.account.lock.util.AccountUtil;
-import org.wso2.carbon.identity.recovery.IdentityRecoveryConstants;
 import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
@@ -1288,11 +1287,11 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             emailVerificationProperties =
                     AccountServiceDataHolder.getInstance().getIdentityGovernanceService()
                             .getConfiguration(new String[]{
-                                            IdentityRecoveryConstants.ConnectorConfig.EMAIL_ACCOUNT_LOCK_ON_CREATION},
+                                            AccountConstants.EMAIL_ACCOUNT_LOCK_ON_CREATION},
                                     tenantDomain);
             if (ArrayUtils.isNotEmpty(emailVerificationProperties) &&
                     emailVerificationProperties.length == 1 &&
-                    IdentityRecoveryConstants.ConnectorConfig.EMAIL_ACCOUNT_LOCK_ON_CREATION.equals(
+                    AccountConstants.EMAIL_ACCOUNT_LOCK_ON_CREATION.equals(
                             emailVerificationProperties[0].getName())) {
                 accountLockOnCreationEnabled =
                         Boolean.parseBoolean(emailVerificationProperties[0].getValue());
