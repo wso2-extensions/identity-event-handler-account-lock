@@ -68,10 +68,6 @@
             <artifactId>org.wso2.carbon.identity.governance</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.wso2.carbon.identity.governance</groupId>
-            <artifactId>org.wso2.carbon.identity.recovery</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.wso2.carbon.identity.event.handler.notification</groupId>
             <artifactId>org.wso2.carbon.email.mgt</artifactId>
         </dependency>
@@ -159,8 +155,6 @@
                             org.wso2.carbon.identity.governance;
                             version="${identity.governance.imp.pkg.version.range}",
                             org.wso2.carbon.identity.governance.common;
-                            version="${identity.governance.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.recovery;
                             version="${identity.governance.imp.pkg.version.range}",
                             org.wso2.carbon.email.mgt;
                             version="${identity.event.handler.notification.version.range}",
