@@ -42,10 +42,8 @@ public class AccountLockTenantMgtListener extends AbstractIdentityTenantMgtListe
             log.debug("AccountLockTenantMgtListener is fired for Tenant ID : " + tenantId);
         }
         String tenantDomain = IdentityTenantUtil.getTenantDomain(tenantId);
-        boolean isOrganization = false;
         try {
-            isOrganization = OrganizationManagementUtil.isOrganization(tenantDomain);
-            if(!isOrganization) {
+            if(!OrganizationManagementUtil.isOrganization(tenantDomain)) {
                 AccountServiceDataHolder.getInstance().getRealmService().getTenantUserRealm(tenantId).
                         getUserStoreManager().addRole(AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, null, null, false);
             }
