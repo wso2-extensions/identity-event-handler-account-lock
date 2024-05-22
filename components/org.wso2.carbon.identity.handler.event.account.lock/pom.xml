@@ -72,6 +72,10 @@
             <artifactId>org.wso2.carbon.email.mgt</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.wso2.carbon.identity.organization.management.core</groupId>
+            <artifactId>org.wso2.carbon.identity.organization.management.service</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.scr.ds-annotations</artifactId>
             <scope>provided</scope>
@@ -160,6 +164,8 @@
                             version="${identity.event.handler.notification.version.range}",
                             org.wso2.carbon.email.mgt.exceptions;
                             version="${identity.event.handler.notification.version.range}",
+                            org.wso2.carbon.identity.organization.management.service.*;
+                            version="${org.wso2.carbon.identity.organization.management.core.version.range}"
                         </Import-Package>
                     </instructions>
                 </configuration>
