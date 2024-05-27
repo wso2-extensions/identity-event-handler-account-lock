@@ -21,10 +21,12 @@ package org.wso2.carbon.identity.handler.event.account.lock.listener;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.AbstractIdentityTenantMgtListener;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants;
 import org.wso2.carbon.identity.handler.event.account.lock.internal.AccountServiceDataHolder;
-import org.wso2.carbon.stratos.common.beans.TenantInfoBean;
 import org.wso2.carbon.stratos.common.exception.StratosException;
+import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 /**
  * Tenant activation listener for Account Lock component to do the task when the tenant get create.
@@ -39,10 +41,14 @@ public class AccountLockTenantMgtListener extends AbstractIdentityTenantMgtListe
         if (log.isDebugEnabled()) {
             log.debug("AccountLockTenantMgtListener is fired for Tenant ID : " + tenantId);
         }
-
+        String tenantDomain = IdentityTenantUtil.getTenantDomain(tenantId);
         try {
-            AccountServiceDataHolder.getInstance().getRealmService().getTenantUserRealm(tenantId).
-                    getUserStoreManager().addRole(AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, null, null, false);
+            if(!OrganizationManagementUtil.isOrganization(tenantDomain)) {
+                AccountServiceDataHolder.getInstance().getRealmService().getTenantUserRealm(tenantId).
+                        getUserStoreManager().addRole(AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, null, null, false);
+            }
+        } catch (OrganizationManagementException e) {
+            log.error(String.format("Error while checking is sub org by tenant domain: %s", tenantDomain), e);
         } catch (org.wso2.carbon.user.api.UserStoreException e) {
             log.error(String.format("Error while adding role: %s on Tenant: %d",
                     AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, tenantId), e);
