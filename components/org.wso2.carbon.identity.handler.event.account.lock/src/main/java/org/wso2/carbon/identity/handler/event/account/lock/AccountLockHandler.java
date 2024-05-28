@@ -479,8 +479,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             String msg = String.format("Set account unlock time for user: %s in user store: %s " +
                                             "in tenant: %s. Adding account unlock time out: %s, account lock timeout " +
                                             "increment factor: %s raised to the power of failed login attempt cycles: %s",
-                                    userName, userStoreManager, tenantDomain,
-                                    unlockTimePropertyValue, unlockTimeRatio, currentFailedLoginLockouts);
+                                    userName, userStoreManager, tenantDomain, unlockTimePropertyValue,
+                                    unlockTimeRatio, currentFailedLoginLockouts);
                             log.debug(msg);
                         }
                         /*
