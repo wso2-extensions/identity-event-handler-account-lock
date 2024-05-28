@@ -482,8 +482,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                                             "in tenant: %s. Adding account unlock time out: %s, account lock timeout " +
                                             "increment factor: %s raised to the power of failed login attempt cycles: %s",
                                     AccountUtil.maskIfRequired(userName), userStoreManager, tenantDomain,
-                                    unlockTimePropertyValue,
-                                    unlockTimeRatio, currentFailedLoginLockouts);
+                                    unlockTimePropertyValue, unlockTimeRatio, currentFailedLoginLockouts);
                             log.debug(msg);
                         }
                         /*
