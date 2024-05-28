@@ -337,8 +337,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             if (AccountUtil.isAccountLockByPassForUser(userStoreManager, userName)) {
                 if (log.isDebugEnabled()) {
                     String bypassMsg = String.format("Account locking is bypassed as lock bypass role: %s is " +
-                                    "assigned to the user %s", AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE,
-                            AccountUtil.maskIfRequired(userName));
+                            "assigned to the user %s", AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, userName);
                     log.debug(bypassMsg);
                 }
                 return true;
@@ -465,8 +464,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                         currentFailedAttempts, maximumFailedAttempts);
                 IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
                 if (log.isDebugEnabled()) {
-                    log.debug("Login attempt failed. Bypassing account locking for user: " +
-                            AccountUtil.maskIfRequired(userName));
+                    log.debug("Login attempt failed. Bypassing account locking for user: " + userName);
                 }
                 return true;
             } else if (currentFailedAttempts >= maximumFailedAttempts) {
@@ -481,7 +479,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             String msg = String.format("Set account unlock time for user: %s in user store: %s " +
                                             "in tenant: %s. Adding account unlock time out: %s, account lock timeout " +
                                             "increment factor: %s raised to the power of failed login attempt cycles: %s",
-                                    AccountUtil.maskIfRequired(userName), userStoreManager, tenantDomain,
+                                    userName, userStoreManager, tenantDomain,
                                     unlockTimePropertyValue, unlockTimeRatio, currentFailedLoginLockouts);
                             log.debug(msg);
                         }
@@ -524,7 +522,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 IdentityUtil.threadLocalProperties.get().put(IdentityCoreConstants.USER_ACCOUNT_STATE, USER_IS_LOCKED);
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("User: %s is locked due to exceeded the maximum allowed failed " +
-                            "attempts", AccountUtil.maskIfRequired(userName)));
+                            "attempts", userName));
                 }
                 IdentityUtil.threadLocalProperties.get().put(AccountConstants.ADMIN_INITIATED, false);
             } else {
@@ -684,7 +682,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             if (lockedStates.UNLOCKED_MODIFIED.toString().equals(lockedState.get())) {
 
                 if (log.isDebugEnabled()) {
-                    log.debug(String.format("User %s is unlocked", AccountUtil.maskIfRequired(userName)));
+                    log.debug(String.format("User %s is unlocked", userName));
                 }
                 String emailTemplateTypeAccUnlocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED;
                 if (notificationInternallyManage) {
@@ -728,7 +726,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             } else if (lockedStates.LOCKED_MODIFIED.toString().equals(lockedState.get())) {
 
                 if (log.isDebugEnabled()) {
-                    log.debug(String.format("User %s is locked", AccountUtil.maskIfRequired(userName)));
+                    log.debug(String.format("User %s is locked", userName));
                 }
                 String emailTemplateTypeAccLocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED;
                 if (isAdminInitiated && StringUtils.isBlank(claimValues.get(
