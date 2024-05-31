@@ -67,6 +67,7 @@ public class AccountConstants {
     public static final String PENDING_LITE_REGISTRATION = "PENDING_LR";
     public static final String PENDING_ADMIN_FORCED_USER_PASSWORD_RESET = "PENDING_FUPR";
     public static final String PENDING_ASK_PASSWORD = "PENDING_AP";
+    public static final String PASSWORD_SET_FLOW = "PasswordSetFlow";
     public static final String LOCKED = "LOCKED";
     public static final String UNLOCKED = "UNLOCKED";
     public static final String DISABLED = "DISABLED";

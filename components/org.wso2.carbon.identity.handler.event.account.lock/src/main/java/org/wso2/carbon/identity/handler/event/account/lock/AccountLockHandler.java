@@ -703,6 +703,13 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             AccountConstants.PENDING_LITE_REGISTRATION.equals(existingAccountStateClaimValue);
                     boolean isPendingAskPassword =
                             AccountConstants.PENDING_ASK_PASSWORD.equals(existingAccountStateClaimValue);
+                    boolean isPasswordSetFlow = false;
+                    if (IdentityUtil.threadLocalProperties.get() != null &&
+                            IdentityUtil.threadLocalProperties.get().get(AccountConstants.PASSWORD_SET_FLOW) != null) {
+                        isPasswordSetFlow = (boolean) IdentityUtil.threadLocalProperties.get()
+                                .get(AccountConstants.PASSWORD_SET_FLOW);
+                    }
+
                     if (IdentityMgtConstants.AccountStates.PENDING_ADMIN_FORCED_USER_PASSWORD_RESET
                             .equals(existingAccountStateClaimValue)) {
                         if (adminForcedPasswordResetUnlockNotificationEnabled) {
@@ -710,7 +717,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                                     emailTemplateTypeAccUnlocked);
                         }
                     } else if (!isPendingSelfRegistration && !isPendingLiteRegistration &&
-                            !(isPendingAskPassword && isAccountLockOnCreationEnabled(tenantDomain))) {
+                            !((isPendingAskPassword || isPasswordSetFlow) &&
+                                    isAccountLockOnCreationEnabled(tenantDomain))) {
                         triggerNotification(userName, userStoreDomainName, tenantDomain, identityProperties,
                                 emailTemplateTypeAccUnlocked);
                     }
