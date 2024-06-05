@@ -353,18 +353,20 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 String message;
                 if (StringUtils.isNotBlank(userStoreDomainName)) {
                     message = String.format("Account is locked for user: %s in user store: %s in tenant: %s. " +
-                            "Cannot login until the account is unlocked.", userName, userStoreDomainName, tenantDomain);
+                                    "Cannot login until the account is unlocked.", AccountUtil.maskIfRequired(userName),
+                            userStoreDomainName, tenantDomain);
                     if (isAdminInitiatedAccountLock) {
                         message = String.format("Account is locked by admin for user: %s in user store: %s in " +
-                                "tenant: %s. Cannot login until the account is unlocked.",
-                                userName, userStoreDomainName, tenantDomain);
+                                        "tenant: %s. Cannot login until the account is unlocked.",
+                                AccountUtil.maskIfRequired(userName), userStoreDomainName, tenantDomain);
                     }
                 } else {
                     message = String.format("Account is locked for user: %s in tenant: %s. Cannot login until the " +
-                            "account is unlocked.", userName, tenantDomain);
+                            "account is unlocked.", AccountUtil.maskIfRequired(userName), tenantDomain);
                     if (isAdminInitiatedAccountLock) {
                         message = String.format("Account is locked by admin for user: %s in tenant: %s. " +
-                                "Cannot login until the account is unlocked.", userName, tenantDomain);
+                                        "Cannot login until the account is unlocked.", AccountUtil.maskIfRequired(userName),
+                                tenantDomain);
                     }
                 }
                 if (log.isDebugEnabled()) {
@@ -459,10 +461,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
             if (AccountUtil.isAccountLockByPassForUser(userStoreManager, userName)) {
                 IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(INVALID_CREDENTIAL,
-                                currentFailedAttempts, maximumFailedAttempts);
+                        currentFailedAttempts, maximumFailedAttempts);
                 IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
                 if (log.isDebugEnabled()) {
-                    log.debug("Login attempt failed. Bypassing account locking for user: "+ userName);
+                    log.debug("Login attempt failed. Bypassing account locking for user: " + userName);
                 }
                 return true;
             } else if (currentFailedAttempts >= maximumFailedAttempts) {
@@ -475,8 +477,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                     if (unlockTimePropertyValue != 0) {
                         if (log.isDebugEnabled()) {
                             String msg = String.format("Set account unlock time for user: %s in user store: %s " +
-                                    "in tenant: %s. Adding account unlock time out: %s, account lock timeout " +
-                                    "increment factor: %s raised to the power of failed login attempt cycles: %s",
+                                            "in tenant: %s. Adding account unlock time out: %s, account lock timeout " +
+                                            "increment factor: %s raised to the power of failed login attempt cycles: %s",
                                     userName, userStoreManager, tenantDomain, unlockTimePropertyValue,
                                     unlockTimeRatio, currentFailedLoginLockouts);
                             log.debug(msg);
@@ -489,7 +491,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                          */
                         unlockTimePropertyValue = (long) (unlockTimePropertyValue * 1000 * 60 * Math.pow
                                 (unlockTimeRatio, currentFailedLoginLockouts));
-                        accountLockDuration = unlockTimePropertyValue/60000;
+                        accountLockDuration = unlockTimePropertyValue / 60000;
                         unlockTime = System.currentTimeMillis() + unlockTimePropertyValue;
                         newClaims.put(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM, Long.toString(unlockTime));
                     }
@@ -506,7 +508,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                         identityProperty.setValue(Long.toString(accountLockDuration));
                         triggerNotificationOnAccountLockIncrement(userName, userStoreDomainName,
                                 claimValues.get(AccountConstants.ACCOUNT_STATE_CLAIM_URI), tenantDomain,
-                                new Property[]{ identityProperty });
+                                new Property[]{identityProperty});
                     }
                 }
 
@@ -1018,7 +1020,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 isExists = true;
             }
         } catch (UserStoreException e) {
-            throw new AccountLockException("Error occurred while check user existence: " + userName, e);
+            throw new AccountLockException(
+                    "Error occurred while check user existence: " + AccountUtil.maskIfRequired(userName), e);
         }
         return isExists;
     }
@@ -1151,7 +1154,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             userStoreManager.setUserClaimValues(username, claimsList, UserCoreConstants.DEFAULT_PROFILE);
         } catch (UserStoreException e) {
             throw new AccountLockException(String.format("Error occurred while updating the user claims " +
-                    "for user: %s in tenant: %s", username, tenantDomain), e);
+                    "for user: %s in tenant: %s", AccountUtil.maskIfRequired(username), tenantDomain), e);
         }
     }
 
