@@ -73,6 +73,7 @@ public class AccountConstants {
 
     public static final String ADMIN_INITIATED = "AdminInitiated";
     public static final String MAX_ATTEMPTS_EXCEEDED = "MaxAttemptsExceeded";
+    public static final String PREVIOUS_ACCOUNT_STATE = "PreviousAccountState";
 
     public static final String ACCOUNT_UNLOCK_TIME = "AccountUnlockTime";
 
