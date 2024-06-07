@@ -664,7 +664,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
             String existingAccountStateClaimValue = getAccountState(claimValues.get(AccountConstants
                     .ACCOUNT_STATE_CLAIM_URI), tenantDomain);
-            String previousAccountStateClaimValue = "";
+            String previousAccountStateClaimValue = StringUtils.EMPTY;
             if (IdentityUtil.threadLocalProperties.get().get(AccountConstants.PREVIOUS_ACCOUNT_STATE) != null) {
                 previousAccountStateClaimValue =
                         getAccountState(
