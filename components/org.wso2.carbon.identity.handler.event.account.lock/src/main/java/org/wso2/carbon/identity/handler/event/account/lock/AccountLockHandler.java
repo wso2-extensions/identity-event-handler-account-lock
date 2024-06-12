@@ -584,10 +584,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
         try {
             claimValues = userStoreManager.getUserClaimValues(userName,
-                    new String[]{AccountConstants.ACCOUNT_LOCKED_CLAIM, AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM},
+                    new String[]{AccountConstants.ACCOUNT_LOCKED_CLAIM, AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM,
+                            AccountConstants.ACCOUNT_STATE_CLAIM_URI},
                     UserCoreConstants.DEFAULT_PROFILE);
             existingAccountLockedValue = Boolean.parseBoolean(claimValues.get(AccountConstants.ACCOUNT_LOCKED_CLAIM));
-
+            IdentityUtil.threadLocalProperties.get().put(AccountConstants.PREVIOUS_ACCOUNT_STATE,
+                    claimValues.get(AccountConstants.ACCOUNT_STATE_CLAIM_URI));
         } catch (UserStoreException e) {
             throw new AccountLockException(String.format("Error occurred while retrieving %s and %s claim values",
                     AccountConstants.ACCOUNT_LOCKED_CLAIM, AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM), e);
@@ -664,6 +666,14 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
             String existingAccountStateClaimValue = getAccountState(claimValues.get(AccountConstants
                     .ACCOUNT_STATE_CLAIM_URI), tenantDomain);
+            String previousAccountStateClaimValue = StringUtils.EMPTY;
+            if (IdentityUtil.threadLocalProperties.get().get(AccountConstants.PREVIOUS_ACCOUNT_STATE) != null) {
+                previousAccountStateClaimValue =
+                        getAccountState(
+                                (String) IdentityUtil.threadLocalProperties.get()
+                                        .get(AccountConstants.PREVIOUS_ACCOUNT_STATE),
+                                tenantDomain);
+            }
             try {
                 notificationInternallyManage = Boolean.parseBoolean(AccountUtil.getConnectorConfig(AccountConstants
                         .NOTIFICATION_INTERNALLY_MANAGE, tenantDomain));
@@ -700,13 +710,13 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                         }
                     }
                     boolean isPendingSelfRegistration =
-                            AccountConstants.PENDING_SELF_REGISTRATION.equals(existingAccountStateClaimValue);
+                            AccountConstants.PENDING_SELF_REGISTRATION.equals(previousAccountStateClaimValue);
                     boolean isPendingLiteRegistration =
-                            AccountConstants.PENDING_LITE_REGISTRATION.equals(existingAccountStateClaimValue);
+                            AccountConstants.PENDING_LITE_REGISTRATION.equals(previousAccountStateClaimValue);
                     boolean isPendingAskPassword =
-                            AccountConstants.PENDING_ASK_PASSWORD.equals(existingAccountStateClaimValue);
+                            AccountConstants.PENDING_ASK_PASSWORD.equals(previousAccountStateClaimValue);
                     if (IdentityMgtConstants.AccountStates.PENDING_ADMIN_FORCED_USER_PASSWORD_RESET
-                            .equals(existingAccountStateClaimValue)) {
+                            .equals(previousAccountStateClaimValue)) {
                         if (adminForcedPasswordResetUnlockNotificationEnabled) {
                             triggerNotification(userName, userStoreDomainName, tenantDomain, identityProperties,
                                     emailTemplateTypeAccUnlocked);
@@ -801,6 +811,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         } finally {
             lockedState.remove();
             IdentityUtil.threadLocalProperties.get().remove(AccountConstants.ADMIN_INITIATED);
+            IdentityUtil.threadLocalProperties.get().remove(AccountConstants.PREVIOUS_ACCOUNT_STATE);
         }
         if (StringUtils.isNotEmpty(newAccountState)) {
             userClaims.put(AccountConstants.ACCOUNT_STATE_CLAIM_URI, newAccountState);
