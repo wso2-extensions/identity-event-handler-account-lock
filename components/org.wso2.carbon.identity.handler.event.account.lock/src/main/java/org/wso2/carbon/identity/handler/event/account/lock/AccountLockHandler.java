@@ -907,7 +907,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         properties.put(USER_NAME, userName);
         properties.put(IdentityEventConstants.EventProperty.USER_STORE_DOMAIN, userStoreDomainName);
         properties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN, tenantDomain);
-
         properties.put("TEMPLATE_TYPE", notificationEvent);
 
         if (AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT.equals(notificationEvent) &&
