@@ -901,7 +901,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         String serviceProviderUUID = (String) IdentityUtil.threadLocalProperties.get().get(IdentityEventConstants.EventProperty.SERVICE_PROVIDER_UUID);
 
         HashMap<String, Object> properties = new HashMap<>();
-        if (!serviceProviderUUID.isBlank()) {
+        if (serviceProviderUUID != null && !serviceProviderUUID.isEmpty()) {
             properties.put(IdentityEventConstants.EventProperty.SERVICE_PROVIDER_UUID, serviceProviderUUID);
         }
         properties.put(USER_NAME, userName);
