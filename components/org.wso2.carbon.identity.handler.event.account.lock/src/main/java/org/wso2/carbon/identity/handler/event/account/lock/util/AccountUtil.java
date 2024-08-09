@@ -291,4 +291,10 @@ public class AccountUtil {
         }
         return initiator;
     }
+
+    public static boolean isPreAuthLockedAccountCheckEnabled() {
+
+        return Boolean.parseBoolean(IdentityUtil.getProperty(
+                AccountConstants.PRE_AUTHENTICATION_ACCOUNT_LOCK_CHECK_PROPERTY));
+    }
 }
