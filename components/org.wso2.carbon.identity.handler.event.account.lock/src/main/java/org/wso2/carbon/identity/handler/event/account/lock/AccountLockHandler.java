@@ -282,6 +282,23 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
         }
 
+        if (AccountUtil.isPreAuthLockedAccountCheckEnabled()) {
+            Map<String, String> claimValues;
+            try {
+                claimValues = userStoreManager.getUserClaimValues(userName,
+                        new String[]{AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM,
+                                AccountConstants.ACCOUNT_LOCKED_CLAIM,
+                                AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI},
+                        UserCoreConstants.DEFAULT_PROFILE);
+            } catch (UserStoreException e) {
+                throw new AccountLockException(String.format("Error occurred while retrieving %s, %s " +
+                                "and %s claim values for user store domain: %s",
+                        AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM, AccountConstants.ACCOUNT_LOCKED_CLAIM,
+                        AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI, userStoreDomainName), e);
+            }
+            handleLockedAccount(userName, userStoreManager, userStoreDomainName, tenantDomain, claimValues);
+        }
+
         return true;
     }
 
@@ -333,64 +350,13 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
         long unlockTime = getUnlockTime(claimValues.get(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM));
 
-        if (isAccountLock(claimValues.get(AccountConstants.ACCOUNT_LOCKED_CLAIM))) {
-            if (AccountUtil.isAccountLockByPassForUser(userStoreManager, userName)) {
-                if (log.isDebugEnabled()) {
-                    String bypassMsg = String.format("Account locking is bypassed as lock bypass role: %s is " +
-                            "assigned to the user %s", AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, userName);
-                    log.debug(bypassMsg);
-                }
-                return true;
-            }
-
-            // User account is locked. If the current time is not exceeded user unlock time, send an error message
-            // saying user is locked, otherwise users can try to authenticate and unlock their account upon a
-            // successful authentication.
-            if (System.currentTimeMillis() < unlockTime || unlockTime == 0) {
-                String accountLockedReason = claimValues.get(AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI);
-                boolean isAdminInitiatedAccountLock = ADMIN_INITIATED.toString().equals(accountLockedReason);
-
-                String message;
-                if (StringUtils.isNotBlank(userStoreDomainName)) {
-                    message = String.format("Account is locked for user: %s in user store: %s in tenant: %s. " +
-                                    "Cannot login until the account is unlocked.", AccountUtil.maskIfRequired(userName),
-                            userStoreDomainName, tenantDomain);
-                    if (isAdminInitiatedAccountLock) {
-                        message = String.format("Account is locked by admin for user: %s in user store: %s in " +
-                                        "tenant: %s. Cannot login until the account is unlocked.",
-                                AccountUtil.maskIfRequired(userName), userStoreDomainName, tenantDomain);
-                    }
-                } else {
-                    message = String.format("Account is locked for user: %s in tenant: %s. Cannot login until the " +
-                            "account is unlocked.", AccountUtil.maskIfRequired(userName), tenantDomain);
-                    if (isAdminInitiatedAccountLock) {
-                        message = String.format("Account is locked by admin for user: %s in tenant: %s. " +
-                                        "Cannot login until the account is unlocked.", AccountUtil.maskIfRequired(userName),
-                                tenantDomain);
-                    }
-                }
-                if (log.isDebugEnabled()) {
-                    log.debug(message);
-                }
-
-                if (isAdminInitiatedAccountLock) {
-                    IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(
-                            USER_IS_LOCKED + ":" + AccountConstants.ADMIN_INITIATED);
-                    IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
-                    throw new AccountLockException(USER_IS_LOCKED + ":" + AccountConstants.ADMIN_INITIATED, message);
-                }
-
-                if (MAX_ATTEMPTS_EXCEEDED.toString().equals(accountLockedReason)) {
-                    IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(
-                            USER_IS_LOCKED + ":" + AccountConstants.MAX_ATTEMPTS_EXCEEDED);
-                    IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
-                    throw new AccountLockException(USER_IS_LOCKED, message);
-                }
-
-                IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(USER_IS_LOCKED);
-                IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
-                throw new AccountLockException(USER_IS_LOCKED, message);
-            }
+        if (!AccountUtil.isPreAuthLockedAccountCheckEnabled() &&
+                handleLockedAccount(userName, userStoreManager, userStoreDomainName, tenantDomain, claimValues)) {
+            /*
+             * handleLockedAccount will return true if the account locking is bypassed for this user
+             * in which case we don't need to proceed.
+             */
+            return true;
         }
 
         if (!accountLockOnFailedAttemptsEnabled) {
@@ -547,6 +513,76 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             }
         }
         return true;
+    }
+
+    private boolean handleLockedAccount(String userName, UserStoreManager userStoreManager, String userStoreDomainName,
+                              String tenantDomain, Map<String, String> claimValues)
+            throws AccountLockException {
+
+        long unlockTime = getUnlockTime(claimValues.get(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM));
+
+        if (isAccountLock(claimValues.get(AccountConstants.ACCOUNT_LOCKED_CLAIM))) {
+            if (AccountUtil.isAccountLockByPassForUser(userStoreManager, userName)) {
+                if (log.isDebugEnabled()) {
+                    String bypassMsg = String.format("Account locking is bypassed as lock bypass role: %s is " +
+                            "assigned to the user %s", AccountConstants.ACCOUNT_LOCK_BYPASS_ROLE, userName);
+                    log.debug(bypassMsg);
+                }
+                return true;
+            }
+            /*
+             * User account is locked. If the current time is not exceeded user unlock time, send an error message
+             * saying user is locked, otherwise users can try to authenticate and unlock their account upon a
+             * successful authentication.
+             */
+            if (System.currentTimeMillis() < unlockTime || unlockTime == 0) {
+                String accountLockedReason = claimValues.get(AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI);
+                boolean isAdminInitiatedAccountLock = ADMIN_INITIATED.toString().equals(accountLockedReason);
+
+                String message;
+                if (StringUtils.isNotBlank(userStoreDomainName)) {
+                    message = String.format("Account is locked for user: %s in user store: %s in tenant: %s. " +
+                                    "Cannot login until the account is unlocked.", AccountUtil.maskIfRequired(userName),
+                            userStoreDomainName, tenantDomain);
+                    if (isAdminInitiatedAccountLock) {
+                        message = String.format("Account is locked by admin for user: %s in user store: %s in " +
+                                        "tenant: %s. Cannot login until the account is unlocked.",
+                                AccountUtil.maskIfRequired(userName), userStoreDomainName, tenantDomain);
+                    }
+                } else {
+                    message = String.format("Account is locked for user: %s in tenant: %s. Cannot login until the " +
+                            "account is unlocked.", AccountUtil.maskIfRequired(userName), tenantDomain);
+                    if (isAdminInitiatedAccountLock) {
+                        message = String.format("Account is locked by admin for user: %s in tenant: %s. " +
+                                        "Cannot login until the account is unlocked.", AccountUtil.maskIfRequired(
+                                        userName),
+                                tenantDomain);
+                    }
+                }
+                if (log.isDebugEnabled()) {
+                    log.debug(message);
+                }
+
+                if (isAdminInitiatedAccountLock) {
+                    IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(
+                            USER_IS_LOCKED + ":" + AccountConstants.ADMIN_INITIATED);
+                    IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
+                    throw new AccountLockException(USER_IS_LOCKED + ":" + AccountConstants.ADMIN_INITIATED, message);
+                }
+
+                if (MAX_ATTEMPTS_EXCEEDED.toString().equals(accountLockedReason)) {
+                    IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(
+                            USER_IS_LOCKED + ":" + AccountConstants.MAX_ATTEMPTS_EXCEEDED);
+                    IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
+                    throw new AccountLockException(USER_IS_LOCKED, message);
+                }
+
+                IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(USER_IS_LOCKED);
+                IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
+                throw new AccountLockException(USER_IS_LOCKED, message);
+            }
+        }
+        return false;
     }
 
     /**
