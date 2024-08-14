@@ -290,7 +290,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                                 AccountConstants.ACCOUNT_LOCKED_CLAIM,
                                 AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI},
                         UserCoreConstants.DEFAULT_PROFILE);
-
             } catch (UserStoreException e) {
                 throw new AccountLockException(String.format("Error occurred while retrieving %s, %s " +
                                 "and %s claim values for user store domain: %s",
@@ -353,8 +352,10 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
         if (!AccountUtil.isPreAuthLockedAccountCheckEnabled() &&
                 handleLockedAccount(userName, userStoreManager, userStoreDomainName, tenantDomain, claimValues)) {
-            // handleLockedAccount will return true if the account locking is bypassed for this user
-            // in which case we don't need to proceed.
+            /*
+             * handleLockedAccount will return true if the account locking is bypassed for this user
+             * in which case we don't need to proceed.
+             */
             return true;
         }
 
@@ -529,10 +530,11 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 }
                 return true;
             }
-
-            // User account is locked. If the current time is not exceeded user unlock time, send an error message
-            // saying user is locked, otherwise users can try to authenticate and unlock their account upon a
-            // successful authentication.
+            /*
+             * User account is locked. If the current time is not exceeded user unlock time, send an error message
+             * saying user is locked, otherwise users can try to authenticate and unlock their account upon a
+             * successful authentication.
+             */
             if (System.currentTimeMillis() < unlockTime || unlockTime == 0) {
                 String accountLockedReason = claimValues.get(AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI);
                 boolean isAdminInitiatedAccountLock = ADMIN_INITIATED.toString().equals(accountLockedReason);
