@@ -88,5 +88,6 @@ public class AccountConstants {
     public static final String LOCK_DURATION_EMAIL_TEMPLATE_PARAMETER = "lock-duration";
 
     public static final String EMAIL_ACCOUNT_LOCK_ON_CREATION = "EmailVerification.LockOnCreation";
+    public static final String DISABLE_ACCOUNT_UNLOCK_NOTIFICATION = "EmailVerification.DisableNotifyUnlockState";
 }
 
