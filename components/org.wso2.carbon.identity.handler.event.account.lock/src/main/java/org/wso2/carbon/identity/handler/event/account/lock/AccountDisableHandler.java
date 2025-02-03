@@ -129,22 +129,22 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
     public void handleEvent(Event event) throws IdentityEventException {
 
         Map<String, Object> eventProperties = event.getEventProperties();
+        String tenantDomain = (String) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_DOMAIN);
+        boolean isAccountDisableFeatureEnabled = Boolean.parseBoolean(AccountUtil.getConnectorConfig(AccountConstants
+                .ACCOUNT_DISABLED_PROPERTY, tenantDomain));
+
+        if (!isAccountDisableFeatureEnabled) {
+            if (log.isDebugEnabled()) {
+                log.debug("Account disable feature is disabled for tenant: " + tenantDomain);
+            }
+            return;
+        }
+
         String userName = (String) eventProperties.get(IdentityEventConstants.EventProperty.USER_NAME);
         UserStoreManager userStoreManager = (UserStoreManager) eventProperties.get(IdentityEventConstants.EventProperty
                 .USER_STORE_MANAGER);
         String userStoreDomainName = AccountUtil.getUserStoreDomainName(userStoreManager);
-        String tenantDomain = (String) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_DOMAIN);
-
         String usernameWithDomain = UserCoreUtil.addDomainToName(userName, userStoreDomainName);
-        boolean isAccountDisabledEnabled = Boolean.parseBoolean(AccountUtil.getConnectorConfig(AccountConstants
-                .ACCOUNT_DISABLED_PROPERTY, tenantDomain));
-
-        if (!isAccountDisabledEnabled) {
-            if (log.isDebugEnabled()) {
-                log.debug("Account disable feature is disabled for tenant :" + tenantDomain);
-            }
-            return;
-        }
 
         boolean userExists;
         try {
