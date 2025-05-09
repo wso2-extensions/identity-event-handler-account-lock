@@ -76,6 +76,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
     public static final Log AUDIT_LOG = LogFactory.getLog("AUDIT_LOG");
     private static final Log log = LogFactory.getLog(AccountLockHandler.class);
+    public static final String TOKEN_EXCHANGE_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:token-exchange";
 
     private static ThreadLocal<String> lockedState = new ThreadLocal<>();
 
@@ -356,6 +357,14 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
              * handleLockedAccount will return true if the account locking is bypassed for this user
              * in which case we don't need to proceed.
              */
+            return true;
+        }
+
+        // TODO: Move GrantType to IdentityCoreConstants.
+        // Skip updating account lock claims for the token exchange grant type,
+        // as this flow only involves validation and not actual login attempts.
+        if (StringUtils.equals((String) IdentityUtil.threadLocalProperties.get().get("GrantType"),
+                TOKEN_EXCHANGE_GRANT_TYPE)) {
             return true;
         }
 
