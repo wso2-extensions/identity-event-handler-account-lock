@@ -362,7 +362,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             return true;
         }
 
-        if (skipLocalUserClaimUpdate) {
+        if (Boolean.TRUE.equals(skipLocalUserClaimUpdate)) {
             return true;
         }
 
