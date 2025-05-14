@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2024, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2016-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -76,7 +76,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
     public static final Log AUDIT_LOG = LogFactory.getLog("AUDIT_LOG");
     private static final Log log = LogFactory.getLog(AccountLockHandler.class);
-    public static final String TOKEN_EXCHANGE_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:token-exchange";
 
     private static ThreadLocal<String> lockedState = new ThreadLocal<>();
 
@@ -331,6 +330,9 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         // Resolve the claim which stores failed attempts depending on the authenticator.
         Map<String, Object> eventProperties = event.getEventProperties();
         String authenticator = String.valueOf(eventProperties.get(AUTHENTICATOR_NAME));
+        // Skip modifying local user claims (e.g - failed-attempt counts, lock status) for token-exchange flows.
+        Boolean skipLocalUserClaimUpdate =
+                (Boolean) eventProperties.get(IdentityEventConstants.EventProperty.SKIP_LOCAL_USER_CLAIM_UPDATE);
         String failedAttemptsClaim = resolveFailedLoginAttemptsCounterClaim(authenticator, eventProperties);
 
         try {
@@ -360,11 +362,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             return true;
         }
 
-        // TODO: Move GrantType to IdentityCoreConstants.
-        // Skip updating account lock claims for the token exchange grant type,
-        // as this flow only involves validation and not actual login attempts.
-        if (StringUtils.equals((String) IdentityUtil.threadLocalProperties.get().get("GrantType"),
-                TOKEN_EXCHANGE_GRANT_TYPE)) {
+        if (skipLocalUserClaimUpdate) {
             return true;
         }
 
