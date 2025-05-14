@@ -330,9 +330,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         // Resolve the claim which stores failed attempts depending on the authenticator.
         Map<String, Object> eventProperties = event.getEventProperties();
         String authenticator = String.valueOf(eventProperties.get(AUTHENTICATOR_NAME));
-        // Skip modifying local user claims (e.g - failed-attempt counts, lock status) for token-exchange flows.
-        Boolean skipLocalUserClaimUpdate =
-                (Boolean) eventProperties.get(IdentityEventConstants.EventProperty.SKIP_LOCAL_USER_CLAIM_UPDATE);
         String failedAttemptsClaim = resolveFailedLoginAttemptsCounterClaim(authenticator, eventProperties);
 
         try {
@@ -362,7 +359,9 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             return true;
         }
 
-        if (Boolean.TRUE.equals(skipLocalUserClaimUpdate)) {
+        // Skip modifying local user claims (e.g - failed-attempt counts, lock status) for token-exchange flows.
+        if (Boolean.TRUE.equals(
+                (Boolean) eventProperties.get(IdentityEventConstants.EventProperty.SKIP_LOCAL_USER_CLAIM_UPDATE))) {
             return true;
         }
 
