@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2024, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2016-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -356,6 +356,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
              * handleLockedAccount will return true if the account locking is bypassed for this user
              * in which case we don't need to proceed.
              */
+            return true;
+        }
+
+        // Skip modifying local user claims (e.g - failed-attempt counts, lock status) for token-exchange flows.
+        if (Boolean.TRUE.equals(
+                (Boolean) eventProperties.get(IdentityEventConstants.EventProperty.SKIP_LOCAL_USER_CLAIM_UPDATE))) {
             return true;
         }
 
