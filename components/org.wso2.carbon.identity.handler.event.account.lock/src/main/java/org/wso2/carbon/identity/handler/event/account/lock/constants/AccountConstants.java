@@ -89,5 +89,7 @@ public class AccountConstants {
 
     public static final String EMAIL_ACCOUNT_LOCK_ON_CREATION = "EmailVerification.LockOnCreation";
     public static final String DISABLE_ACCOUNT_UNLOCK_NOTIFICATION = "EmailVerification.DisableNotifyUnlockState";
+
+    public static final String RESOLVED_FAILED_LOGIN_ATTEMPT_CLAIM = "ResolvedFailedLoginAttemptClaim";
 }
 
