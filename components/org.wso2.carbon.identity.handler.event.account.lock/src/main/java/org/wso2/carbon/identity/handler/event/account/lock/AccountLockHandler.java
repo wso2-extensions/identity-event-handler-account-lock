@@ -414,6 +414,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 }
                 IdentityUtil.threadLocalProperties.get().put(AccountConstants.ADMIN_INITIATED, false);
             }
+            IdentityUtil.threadLocalProperties.get()
+                    .put(AccountConstants.RESOLVED_FAILED_LOGIN_ATTEMPT_CLAIM, failedAttemptsClaim);
             setUserClaims(userName, tenantDomain, userStoreManager, newClaims);
         } else {
             // User authentication failed.
@@ -503,6 +505,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
             }
             try {
+                IdentityUtil.threadLocalProperties.get()
+                        .put(AccountConstants.RESOLVED_FAILED_LOGIN_ATTEMPT_CLAIM, failedAttemptsClaim);
                 setUserClaims(userName, tenantDomain, userStoreManager, newClaims);
             } catch (NumberFormatException e) {
                 throw new AccountLockException("Error occurred while parsing config values", e);
@@ -688,12 +692,19 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         String newAccountState = null;
         Map<String, String> userClaims = new HashMap<>();
         Map<String, String> claimValues = null;
+        String failedLoginAttemptsClaim = (String) IdentityUtil.threadLocalProperties.get()
+                .get(AccountConstants.RESOLVED_FAILED_LOGIN_ATTEMPT_CLAIM);
+        IdentityUtil.threadLocalProperties.get().remove(AccountConstants.RESOLVED_FAILED_LOGIN_ATTEMPT_CLAIM);
+        if (StringUtils.isBlank(failedLoginAttemptsClaim)) {
+            failedLoginAttemptsClaim = AccountConstants.FAILED_LOGIN_ATTEMPTS_CLAIM;
+        }
 
         try {
             claimValues = userStoreManager.getUserClaimValues(userName,
                     new String[]{AccountConstants.ACCOUNT_STATE_CLAIM_URI, AccountConstants.ACCOUNT_DISABLED_CLAIM,
                             AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI,
-                            AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM}, UserCoreConstants.DEFAULT_PROFILE);
+                            AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM, failedLoginAttemptsClaim},
+                    UserCoreConstants.DEFAULT_PROFILE);
 
         } catch (UserStoreException e) {
             throw new AccountLockException(
