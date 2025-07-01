@@ -815,7 +815,19 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                                     AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_ADMIN_TRIGGERED;
                         }
                     } else {
-                        if (AccountUtil.isTemplateExists(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT,
+                        boolean isMaxAttemptsLockWithAdminUnlock = isMaxAttemptsLockWithAdminUnlock(claimValues);
+                        boolean useAdminUnlockEmailTemplateForFailedAttempts = Boolean.parseBoolean(
+                                IdentityUtil.getProperty(
+                                        AccountConstants.ENABLE_ADMIN_UNLOCK_EMAIL_TEMPLATE_FOR_FAILED_ATTEMPTS));
+                        if (isMaxAttemptsLockWithAdminUnlock && useAdminUnlockEmailTemplateForFailedAttempts) {
+                            if (AccountUtil.isTemplateExists(
+                                    AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT_UNTIL_ADMIN_UNLOCKS,
+                                    tenantDomain)) {
+                                emailTemplateTypeAccLocked = AccountConstants
+                                        .EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT_UNTIL_ADMIN_UNLOCKS;
+                            }
+                        } else if (AccountUtil.isTemplateExists(
+                                AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT,
                                 tenantDomain)) {
                             emailTemplateTypeAccLocked = AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT;
                             Property identityProperty = new Property();
@@ -1377,5 +1389,25 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             throw new AccountLockException("Error while retrieving Email Verification properties.", e);
         }
         return accountLockOnCreationEnabled;
+    }
+
+
+    /**
+     * Checks whether the account is locked due to exceeding the maximum number of login attempts
+     * and whether the unlock method is configured to be manual (i.e., by an administrator).
+     *
+     * This is determined by verifying if the account lock reason is MAX_ATTEMPTS_EXCEEDED and
+     * the unlock time claim is either null, "null", "0", or blank.
+     *
+     * @param claimValues Map of user claim values related to account lock.
+     * @return true if the account is locked due to failed attempts and requires admin intervention to unlock.
+     */
+    private boolean isMaxAttemptsLockWithAdminUnlock(Map<String, String> claimValues) {
+
+        String lockReason = claimValues.get(AccountConstants.ACCOUNT_LOCKED_REASON_CLAIM_URI);
+        String unlockTime = claimValues.get(AccountConstants.ACCOUNT_UNLOCK_TIME_CLAIM);
+
+        return StringUtils.equals(lockReason, MAX_ATTEMPTS_EXCEEDED.toString()) &&
+                (StringUtils.isBlank(unlockTime) || StringUtils.equals(unlockTime, "0"));
     }
 }
