@@ -437,7 +437,7 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                     eventProperties.put(IdentityEventConstants.EventProperty.USER_ID, userId);
                     eventProperties.put(IdentityEventConstants.EventProperty.USER_STORE_DOMAIN, userStoreDomainName);
                 } catch (org.wso2.carbon.user.core.UserStoreException e) {
-                    log.error("Error while retrieving user ID", e);
+                    log.error("Error while retrieving user ID while triggering post account disable event", e);
                 }
             }
             eventProperties.put(IdentityEventConstants.EventProperty.UPDATED_DISABLED_STATUS,
