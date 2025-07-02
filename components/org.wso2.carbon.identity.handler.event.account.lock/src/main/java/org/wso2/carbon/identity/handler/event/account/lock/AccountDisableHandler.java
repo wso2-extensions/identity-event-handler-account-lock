@@ -430,22 +430,15 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
 
             String userName = (String) eventProperties.get(IdentityEventConstants.EventProperty.USER_NAME);
 
-            if (eventProperties.containsKey(IdentityEventConstants.EventProperty.USER_STORE_MANAGER) &&
-                    eventProperties.get(
-                            IdentityEventConstants.EventProperty.USER_STORE_MANAGER) instanceof AbstractUserStoreManager) {
-                AbstractUserStoreManager userStoreManager =
-                        (AbstractUserStoreManager) eventProperties.get(IdentityEventConstants.EventProperty
-                                .USER_STORE_MANAGER);
-
-                String userId = null;
+            Object userStoreManagerObj = eventProperties.get(IdentityEventConstants.EventProperty.USER_STORE_MANAGER);
+            if (userStoreManagerObj instanceof AbstractUserStoreManager ) {
                 try {
-                    userId = userStoreManager.getUserIDFromUserName(userName);
+                    String userId = ((AbstractUserStoreManager)userStoreManagerObj).getUserIDFromUserName(userName);
+                    eventProperties.put(IdentityEventConstants.EventProperty.USER_ID, userId);
                 } catch (org.wso2.carbon.user.core.UserStoreException e) {
                     log.error("Error while retrieving user ID", e);
                 }
-                eventProperties.put(IdentityEventConstants.EventProperty.USER_ID, userId);
             }
-
             eventProperties.put(IdentityEventConstants.EventProperty.UPDATED_DISABLED_STATUS,
                     isDisablePropertySuccessfullyModified);
         }
