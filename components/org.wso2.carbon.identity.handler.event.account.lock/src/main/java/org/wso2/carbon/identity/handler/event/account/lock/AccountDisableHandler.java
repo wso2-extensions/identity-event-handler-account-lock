@@ -301,7 +301,7 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                             userStoreManager, tenantDomain, userName);
                 }
                 publishPostAccountDisabledEvent(IdentityEventConstants.Event.POST_ENABLE_ACCOUNT,
-                        event.getEventProperties(), true);
+                        event.getEventProperties(), userStoreManager, userStoreDomainName, true);
                 auditAccountDisable(AuditConstants.ACCOUNT_ENABLED, userName, userStoreDomainName,
                         null, AuditConstants.AUDIT_SUCCESS,true);
             } else if (disabledStates.DISABLED_MODIFIED.toString().equals(disabledState.get())) {
@@ -317,7 +317,7 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
                             tenantDomain, userName);
                 }
                 publishPostAccountDisabledEvent(IdentityEventConstants.Event.POST_DISABLE_ACCOUNT,
-                        event.getEventProperties(), true);
+                        event.getEventProperties(), userStoreManager, userStoreDomainName, true);
                 auditAccountDisable(AuditConstants.ACCOUNT_DISABLED, userName, userStoreDomainName,
                         null, AuditConstants.AUDIT_SUCCESS, true);
             } else if (disabledStates.DISABLED_UNMODIFIED.toString().equals(disabledState.get())) {
@@ -422,7 +422,8 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
         AccountUtil.publishEvent(accountDisabledEventName, AccountUtil.cloneMap(map));
     }
 
-    private void publishPostAccountDisabledEvent(String accountDisabledEventName, Map<String, Object> map, boolean
+    private void publishPostAccountDisabledEvent(String accountDisabledEventName, Map<String, Object> map,
+                                                 UserStoreManager userStoreManager, String userStoreDomainName, boolean
             isDisablePropertySuccessfullyModified) throws AccountLockException {
 
         Map<String, Object> eventProperties = AccountUtil.cloneMap(map);
@@ -430,11 +431,11 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
 
             String userName = (String) eventProperties.get(IdentityEventConstants.EventProperty.USER_NAME);
 
-            Object userStoreManagerObj = eventProperties.get(IdentityEventConstants.EventProperty.USER_STORE_MANAGER);
-            if (userStoreManagerObj instanceof AbstractUserStoreManager ) {
+            if (userStoreManager instanceof AbstractUserStoreManager ) {
                 try {
-                    String userId = ((AbstractUserStoreManager)userStoreManagerObj).getUserIDFromUserName(userName);
+                    String userId = ((AbstractUserStoreManager)userStoreManager).getUserIDFromUserName(userName);
                     eventProperties.put(IdentityEventConstants.EventProperty.USER_ID, userId);
+                    eventProperties.put(IdentityEventConstants.EventProperty.USER_STORE_DOMAIN, userStoreDomainName);
                 } catch (org.wso2.carbon.user.core.UserStoreException e) {
                     log.error("Error while retrieving user ID", e);
                 }
