@@ -40,6 +40,7 @@ import org.wso2.carbon.identity.handler.event.account.lock.util.AccountUtil;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.user.core.UserCoreConstants;
+import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.ArrayList;
@@ -426,6 +427,25 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
 
         Map<String, Object> eventProperties = AccountUtil.cloneMap(map);
         if (MapUtils.isNotEmpty(eventProperties)) {
+
+            String userName = (String) eventProperties.get(IdentityEventConstants.EventProperty.USER_NAME);
+
+            if (eventProperties.containsKey(IdentityEventConstants.EventProperty.USER_STORE_MANAGER) &&
+                    eventProperties.get(
+                            IdentityEventConstants.EventProperty.USER_STORE_MANAGER) instanceof AbstractUserStoreManager) {
+                AbstractUserStoreManager userStoreManager =
+                        (AbstractUserStoreManager) eventProperties.get(IdentityEventConstants.EventProperty
+                                .USER_STORE_MANAGER);
+
+                String userId = null;
+                try {
+                    userId = userStoreManager.getUserIDFromUserName(userName);
+                } catch (org.wso2.carbon.user.core.UserStoreException e) {
+                    log.error("Error while retrieving user ID", e);
+                }
+                eventProperties.put(IdentityEventConstants.EventProperty.USER_ID, userId);
+            }
+
             eventProperties.put(IdentityEventConstants.EventProperty.UPDATED_DISABLED_STATUS,
                     isDisablePropertySuccessfullyModified);
         }
