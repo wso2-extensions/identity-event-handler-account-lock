@@ -83,12 +83,16 @@ public class AccountConstants {
     public static final String EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_ADMIN_TRIGGERED = "accountunlockadmin";
 
     public static final String EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT = "accountlockfailedattempt";
+    public static final String EMAIL_TEMPLATE_TYPE_ACC_LOCKED_FAILED_ATTEMPT_UNTIL_ADMIN_UNLOCKS =
+            "accountlockfailedattemptuntiladminunlock";
     public static final String EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED_TIME_BASED = "accountunlocktimebased";
 
     public static final String LOCK_DURATION_EMAIL_TEMPLATE_PARAMETER = "lock-duration";
 
     public static final String EMAIL_ACCOUNT_LOCK_ON_CREATION = "EmailVerification.LockOnCreation";
     public static final String DISABLE_ACCOUNT_UNLOCK_NOTIFICATION = "EmailVerification.DisableNotifyUnlockState";
+    public static final String ENABLE_ADMIN_UNLOCK_EMAIL_TEMPLATE_FOR_FAILED_ATTEMPTS =
+            "AccountLock.EmailTemplate.AdminUnlockForFailedAttempts";
 
     public static final String RESOLVED_FAILED_LOGIN_ATTEMPT_CLAIM = "ResolvedFailedLoginAttemptClaim";
 }
