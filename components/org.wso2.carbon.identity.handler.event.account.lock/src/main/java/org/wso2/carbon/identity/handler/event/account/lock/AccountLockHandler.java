@@ -29,6 +29,7 @@ import org.slf4j.MDC;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.model.Property;
+import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
 import org.wso2.carbon.identity.core.handler.InitConfig;
 import org.wso2.carbon.identity.core.model.IdentityErrorMsgContext;
@@ -1190,6 +1191,9 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
     private void auditAccountLock(String action, String target, String userStoreDomainName, boolean isAdminInitiated,
                                   String errorMsg, String result, Boolean isModifiedStatus, Map<String, String> claims) {
 
+        if (LoggerUtils.isEnableV2AuditLogs()) {
+            return;
+        }
         JSONObject dataObject = new JSONObject();
         dataObject.put(AuditConstants.REMOTE_ADDRESS_KEY, MDC.get(AuditConstants.REMOTE_ADDRESS_QUERY_KEY));
         dataObject.put(AuditConstants.USER_AGENT_KEY, MDC.get(AuditConstants.USER_AGENT_QUERY_KEY));
