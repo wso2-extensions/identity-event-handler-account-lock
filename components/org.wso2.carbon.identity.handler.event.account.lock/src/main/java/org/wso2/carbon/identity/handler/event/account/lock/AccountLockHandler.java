@@ -31,6 +31,7 @@ import org.wso2.carbon.identity.application.authentication.framework.util.Framew
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
+import org.wso2.carbon.identity.core.context.IdentityContext;
 import org.wso2.carbon.identity.core.handler.InitConfig;
 import org.wso2.carbon.identity.core.model.IdentityErrorMsgContext;
 import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
@@ -417,7 +418,16 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             }
             IdentityUtil.threadLocalProperties.get()
                     .put(AccountConstants.RESOLVED_FAILED_LOGIN_ATTEMPT_CLAIM, failedAttemptsClaim);
-            setUserClaims(userName, tenantDomain, userStoreManager, newClaims);
+
+            boolean isAccountManagementFlowEntered = false;
+            try {
+                isAccountManagementFlowEntered = AccountUtil.enterAccountManagementFlow(newClaims);
+                setUserClaims(userName, tenantDomain, userStoreManager, newClaims);
+            } finally {
+                if (isAccountManagementFlowEntered) {
+                    IdentityContext.getThreadLocalIdentityContext().exitFlow();
+                }
+            }
         } else {
             // User authentication failed.
             // Skip account lock if account lock by pass is enabled for the userstore manager.
@@ -505,12 +515,21 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                         currentFailedAttempts, maximumFailedAttempts);
                 IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
             }
+            boolean isAccountManagementFlowEntered = false;
             try {
                 IdentityUtil.threadLocalProperties.get()
                         .put(AccountConstants.RESOLVED_FAILED_LOGIN_ATTEMPT_CLAIM, failedAttemptsClaim);
+
+                if (isMaxAttemptsExceeded){
+                    isAccountManagementFlowEntered = AccountUtil.enterAccountManagementFlow(newClaims);
+                }
                 setUserClaims(userName, tenantDomain, userStoreManager, newClaims);
             } catch (NumberFormatException e) {
                 throw new AccountLockException("Error occurred while parsing config values", e);
+            } finally {
+                if (isAccountManagementFlowEntered) {
+                    IdentityContext.getThreadLocalIdentityContext().exitFlow();
+                }
             }
             if (isMaxAttemptsExceeded) {
                 /*

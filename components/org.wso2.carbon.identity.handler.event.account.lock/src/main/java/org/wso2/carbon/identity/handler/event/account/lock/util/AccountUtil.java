@@ -30,6 +30,8 @@ import org.wso2.carbon.email.mgt.exceptions.I18nEmailMgtException;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.central.log.mgt.utils.LogConstants;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
+import org.wso2.carbon.identity.core.context.IdentityContext;
+import org.wso2.carbon.identity.core.context.model.Flow;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
@@ -53,6 +55,9 @@ import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.ACCOUNT_DISABLED_CLAIM_URI;
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.ACCOUNT_LOCKED_CLAIM_URI;
 
 public class AccountUtil {
 
@@ -296,5 +301,47 @@ public class AccountUtil {
 
         return Boolean.parseBoolean(IdentityUtil.getProperty(
                 AccountConstants.PRE_AUTHENTICATION_ACCOUNT_LOCK_CHECK_PROPERTY));
+    }
+
+    /**
+     * Enters the account management flow based on the user claims to be modified.
+     *
+     * @param userClaimsToBeModified Map of user claims to be modified.
+     * @return true if any account management flow is entered, false otherwise.
+     */
+    public static boolean enterAccountManagementFlow(Map<String, String> userClaimsToBeModified) {
+
+        if (userClaimsToBeModified == null || userClaimsToBeModified.isEmpty()) {
+            return false;
+        }
+
+        boolean accountLockFlowEntered = enterFlowIfClaimChanged(userClaimsToBeModified, ACCOUNT_LOCKED_CLAIM_URI,
+                Flow.Name.USER_ACCOUNT_LOCK, Flow.Name.USER_ACCOUNT_UNLOCK);
+
+        boolean accountDisableFlowEntered = enterFlowIfClaimChanged(userClaimsToBeModified, ACCOUNT_DISABLED_CLAIM_URI,
+                Flow.Name.USER_ACCOUNT_DISABLE, Flow.Name.USER_ACCOUNT_ENABLE);
+
+        return accountLockFlowEntered || accountDisableFlowEntered;
+    }
+
+    private static boolean enterFlowIfClaimChanged(Map<String, String> claims, String claimUri,
+                                                   Flow.Name trueFlow, Flow.Name falseFlow) {
+
+        String claimValue = claims.get(claimUri);
+        if (StringUtils.isNotBlank(claimValue)) {
+            boolean state = Boolean.parseBoolean(claimValue);
+
+            Flow.Name flowName = state ? trueFlow : falseFlow;
+
+            Flow flow = new Flow.Builder()
+                    .name(flowName)
+                    .initiatingPersona(Flow.InitiatingPersona.SYSTEM)
+                    .build();
+
+            IdentityContext.getThreadLocalIdentityContext().enterFlow(flow);
+
+            return true;
+        }
+        return false;
     }
 }
