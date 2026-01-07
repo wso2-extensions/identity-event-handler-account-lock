@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.handler.event.account.lock.service;
 
+import org.osgi.annotation.bundle.Capability;
 import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants;
@@ -33,6 +34,13 @@ import java.util.Map;
 /**
  * Service implementation class of {@link AccountDisableService} that returns account disabled state.
  */
+@Capability(
+        namespace = "osgi.service",
+        attribute = {
+                "objectClass=org.wso2.carbon.identity.handler.event.account.lock.service.AccountDisableService",
+                "service.scope=singleton"
+        }
+)
 public class AccountDisableServiceImpl implements AccountDisableService {
 
     @Override
