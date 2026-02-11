@@ -19,10 +19,9 @@ package org.wso2.carbon.identity.handler.event.account.lock.service;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.osgi.annotation.bundle.Capability;
 import org.wso2.carbon.base.MultitenantConstants;
-import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.governance.IdentityGovernanceException;
 import org.wso2.carbon.identity.handler.event.account.lock.constants.AccountConstants;
 import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockException;
 import org.wso2.carbon.identity.handler.event.account.lock.exception.AccountLockServiceException;
@@ -38,6 +37,13 @@ import java.util.Map;
 /**
  * Service implementation class of {@link AccountLockService} that returns account lock states.
  */
+@Capability(
+        namespace = "osgi.service",
+        attribute = {
+                "objectClass=org.wso2.carbon.identity.handler.event.account.lock.service.AccountLockService",
+                "service.scope=singleton"
+        }
+)
 public class AccountLockServiceImpl implements AccountLockService {
 
     private static final Log log = LogFactory.getLog(AccountLockServiceImpl.class);
