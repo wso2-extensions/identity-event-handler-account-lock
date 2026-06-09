@@ -136,6 +136,14 @@ public class AccountDisableHandler extends AbstractEventHandler implements Ident
         String tenantDomain = (String) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_DOMAIN);
 
         String usernameWithDomain = UserCoreUtil.addDomainToName(userName, userStoreDomainName);
+
+        // Added this check to skip the account disabled check when api-manager gateway is running without apim-db.
+        // In such scenarios, the user store manager will be null, and it will throw a null pointer exception.
+        // Since there is no user store to check the account disabled claim, we can skip the account disabled check.
+        if (Boolean.parseBoolean(IdentityUtil.getProperty(AccountConstants.DISABLE_ACCOUNT_DISABLE_HANDLER))) {
+            return;
+        }
+
         boolean isAccountDisabledEnabled = Boolean.parseBoolean(AccountUtil.getConnectorConfig(AccountConstants
                 .ACCOUNT_DISABLED_PROPERTY, tenantDomain));
 
