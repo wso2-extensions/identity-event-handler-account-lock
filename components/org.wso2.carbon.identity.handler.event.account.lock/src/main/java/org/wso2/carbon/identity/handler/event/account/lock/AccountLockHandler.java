@@ -769,11 +769,15 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             AccountConstants.PENDING_LITE_REGISTRATION.equals(previousAccountStateClaimValue);
                     boolean isPendingAskPassword =
                             AccountConstants.PENDING_ASK_PASSWORD.equals(previousAccountStateClaimValue);
+                    /*
+                    The account state claim is updated to UNLOCKED in the same claim update that unlocks the
+                    account, so the post-update value is never PENDING_EV. The pre-update value has to be used
+                    here, consistent with the PENDING_SR, PENDING_LR and PENDING_AP checks above.
+                     */
                     boolean isPendingEmailVerification =
-                            AccountConstants.PENDING_EMAIL_VERIFICATION.equals(existingAccountStateClaimValue);
+                            AccountConstants.PENDING_EMAIL_VERIFICATION.equals(previousAccountStateClaimValue);
                     boolean disableUnlockStateInEmailVerification =
-                            Boolean.parseBoolean(
-                                    IdentityUtil.getProperty(AccountConstants.DISABLE_ACCOUNT_UNLOCK_NOTIFICATION));
+                            isUnlockNotificationDisabledOnEmailVerification(tenantDomain);
                     if (IdentityMgtConstants.AccountStates.PENDING_ADMIN_FORCED_USER_PASSWORD_RESET
                             .equals(previousAccountStateClaimValue)) {
                         if (adminForcedPasswordResetUnlockNotificationEnabled) {
@@ -1147,6 +1151,37 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
             }
         }
         return newAccountstate;
+    }
+
+    /**
+     * Check whether the account unlock notification is disabled for the email verification flow.
+     * <p>
+     * The value is resolved from the tenant's email verification connector configuration so that it can be
+     * controlled per tenant. Deployments that only set the server level identity.xml property continue to work,
+     * because that value seeds the connector default.
+     *
+     * @param tenantDomain Tenant domain.
+     * @return true if the unlock notification should be suppressed for the email verification flow.
+     */
+    private boolean isUnlockNotificationDisabledOnEmailVerification(String tenantDomain) {
+
+        try {
+            String connectorConfig = AccountUtil.getConnectorConfig(
+                    AccountConstants.DISABLE_ACCOUNT_UNLOCK_NOTIFICATION, tenantDomain);
+            if (StringUtils.isNotBlank(connectorConfig)) {
+                return Boolean.parseBoolean(connectorConfig);
+            }
+        } catch (IdentityEventException e) {
+            log.warn("Error while reading " + AccountConstants.DISABLE_ACCOUNT_UNLOCK_NOTIFICATION
+                    + " connector configuration for tenant: " + tenantDomain
+                    + ". Falling back to the server level configuration.");
+            if (log.isDebugEnabled()) {
+                log.debug("Error while reading " + AccountConstants.DISABLE_ACCOUNT_UNLOCK_NOTIFICATION
+                        + " connector configuration for tenant: " + tenantDomain, e);
+            }
+        }
+        return Boolean.parseBoolean(
+                IdentityUtil.getProperty(AccountConstants.DISABLE_ACCOUNT_UNLOCK_NOTIFICATION));
     }
 
     /**
