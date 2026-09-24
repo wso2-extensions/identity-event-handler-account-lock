@@ -1171,9 +1171,6 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 return Boolean.parseBoolean(connectorConfig);
             }
         } catch (IdentityEventException e) {
-            log.warn("Error while reading " + AccountConstants.DISABLE_ACCOUNT_UNLOCK_NOTIFICATION
-                    + " connector configuration for tenant: " + tenantDomain
-                    + ". Falling back to the server level configuration.");
             if (log.isDebugEnabled()) {
                 log.debug("Error while reading " + AccountConstants.DISABLE_ACCOUNT_UNLOCK_NOTIFICATION
                         + " connector configuration for tenant: " + tenantDomain, e);
