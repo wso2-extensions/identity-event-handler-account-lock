@@ -1179,8 +1179,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                         + " connector configuration for tenant: " + tenantDomain, e);
             }
         }
-        return Boolean.parseBoolean(
-                IdentityUtil.getProperty(AccountConstants.DISABLE_ACCOUNT_UNLOCK_NOTIFICATION));
+        return false;
     }
 
     /**
