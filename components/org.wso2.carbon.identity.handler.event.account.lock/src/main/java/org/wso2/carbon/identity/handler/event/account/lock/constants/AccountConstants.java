@@ -45,6 +45,8 @@ public class AccountConstants {
     public static final String NOTIFICATION_INTERNALLY_MANAGE = "account.lock.handler.notification.manageInternally";
     public static final String NOTIFY_ON_LOCK_DURATION_INCREMENT =
             "account.lock.handler.notification.notifyOnLockIncrement";
+    public static final String NOTIFY_ON_ADMIN_INITIATED_ACCOUNT_LOCK =
+            "account.lock.handler.notification.notifyOnAdminInitiatedLock";
     public static final String ADMIN_FORCE_PASSWORD_RESET_ACCOUNT_LOCK_NOTIFICATION_ENABLE_PROPERTY =
             "Recovery.AdminPasswordReset.AccountLockNotification";
     public static final String ADMIN_FORCE_PASSWORD_RESET_ACCOUNT_UNLOCK_NOTIFICATION_ENABLE_PROPERTY =
