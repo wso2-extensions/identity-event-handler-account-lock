@@ -121,6 +121,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         nameMapping.put(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY, "Account lock duration increment factor");
         nameMapping.put(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE, "Manage notification sending internally");
         nameMapping.put(AccountConstants.NOTIFY_ON_LOCK_DURATION_INCREMENT, "Notify user when lock time is increased");
+        nameMapping.put(AccountConstants.NOTIFY_ON_ADMIN_INITIATED_ACCOUNT_LOCK,
+                "Notify users on admin initiated account lock and unlock");
         return nameMapping;
     }
 
@@ -139,6 +141,8 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                 "handles notification sending");
         descriptionMapping.put(AccountConstants.NOTIFY_ON_LOCK_DURATION_INCREMENT, "Notify user when the account " +
                 "lock duration is increased due to continuous failed login attempts.");
+        descriptionMapping.put(AccountConstants.NOTIFY_ON_ADMIN_INITIATED_ACCOUNT_LOCK, "Notify users when the " +
+                "account is locked or unlocked by the administrator");
         return descriptionMapping;
     }
 
@@ -786,8 +790,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             !(isPendingAskPassword && isAccountLockOnCreationEnabled(tenantDomain)) &&
                             !(isPendingEmailVerification
                                     && isUnlockNotificationDisabledOnEmailVerification(tenantDomain))) {
-                        triggerNotification(userName, userStoreDomainName, tenantDomain, identityProperties,
-                                emailTemplateTypeAccUnlocked);
+                        // For admin initiated unlocks, send the notification only if it is enabled in the config.
+                        if (!isAdminInitiated ||
+                                isNotificationEnabledForAdminInitiatedAccountLockScenario(tenantDomain)) {
+                            triggerNotification(userName, userStoreDomainName, tenantDomain, identityProperties,
+                                    emailTemplateTypeAccUnlocked);
+                        }
                     }
                 }
                 newAccountState = buildAccountState(AccountConstants.EMAIL_TEMPLATE_TYPE_ACC_UNLOCKED, tenantDomain,
@@ -857,8 +865,12 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
                             !AccountConstants.PENDING_LITE_REGISTRATION.equals(existingAccountStateClaimValue) &&
                             !(AccountConstants.PENDING_ASK_PASSWORD.equals(existingAccountStateClaimValue) &&
                                     isAccountLockOnCreationEnabled(tenantDomain))) {
-                        triggerNotification(userName, userStoreDomainName, tenantDomain, properties,
-                                emailTemplateTypeAccLocked);
+                        // For admin initiated locks, send the notification only if it is enabled in the config.
+                        if (!isAdminInitiated ||
+                                isNotificationEnabledForAdminInitiatedAccountLockScenario(tenantDomain)) {
+                            triggerNotification(userName, userStoreDomainName, tenantDomain, properties,
+                                    emailTemplateTypeAccLocked);
+                        }
                     }
                 }
                 /* Set new account state only if the accountState claim value is neither PENDING_SR, PENDING_EV,
@@ -906,6 +918,7 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
         properties.add(AccountConstants.LOGIN_FAIL_TIMEOUT_RATIO_PROPERTY);
         properties.add(AccountConstants.NOTIFICATION_INTERNALLY_MANAGE);
         properties.add(AccountConstants.NOTIFY_ON_LOCK_DURATION_INCREMENT);
+        properties.add(AccountConstants.NOTIFY_ON_ADMIN_INITIATED_ACCOUNT_LOCK);
 
         return properties.toArray(new String[properties.size()]);
     }
@@ -1443,5 +1456,34 @@ public class AccountLockHandler extends AbstractEventHandler implements Identity
 
         return StringUtils.equals(lockReason, MAX_ATTEMPTS_EXCEEDED.toString()) &&
                 (StringUtils.isBlank(unlockTime) || StringUtils.equals(unlockTime, "0"));
+    }
+
+    /**
+     * Check whether the user notification is enabled for the admin initiated account lock and unlock scenarios.
+     * If the configuration is not set or cannot be read, notifications are considered enabled to preserve the
+     * existing behaviour.
+     *
+     * @param tenantDomain Tenant domain.
+     * @return True if the notification should be sent when an admin locks the account.
+     */
+    private boolean isNotificationEnabledForAdminInitiatedAccountLockScenario(String tenantDomain) {
+
+        boolean isNotifyUserEnabled = true;
+        try {
+            String configValue = AccountUtil.getConnectorConfig(AccountConstants
+                    .NOTIFY_ON_ADMIN_INITIATED_ACCOUNT_LOCK, tenantDomain);
+            // Keep the existing behavior (notify) when the config is not set.
+            if (StringUtils.isNotBlank(configValue)) {
+                isNotifyUserEnabled = Boolean.parseBoolean(configValue);
+            }
+        } catch (IdentityEventException e) {
+            log.warn("Error while reading notification on admin initiated account lock property in account " +
+                    "lock handler. " + e.getMessage());
+            if (log.isDebugEnabled()) {
+                log.debug("Error while reading notification on admin initiated account lock property in " +
+                        "account lock handler", e);
+            }
+        }
+        return isNotifyUserEnabled;
     }
 }
